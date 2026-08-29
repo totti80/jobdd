@@ -2,6 +2,13 @@
 
 use App\Http\Controllers\IconController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserQueryController;
+
+Route::get('/query', [UserQueryController::class, 'create'])->name('query.create');
+Route::post('/query', [UserQueryController::class, 'store'])->name('query.store');
+
+Route::get('/results/{userQuery}', [UserQueryController::class, 'results'])
+    ->name('query.results');
 
 Route::get('/', function () {
     return view('welcome');
@@ -31,8 +38,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/icon/{id}', [IconController::class, 'destroy'])
         ->name('icon.destroy');
 
-        Route::patch('/icon/{id}', [IconController::class, 'update'])
-    ->name('icon.update');
+    Route::patch('/icon/{id}', [IconController::class, 'update'])
+        ->name('icon.update');
 });
 
 require __DIR__ . '/settings.php';

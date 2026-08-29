@@ -51,7 +51,9 @@ class UserQueryController extends Controller
     public function results(UserQuery $userQuery)
     {
         $results = $userQuery->scoreResults()
-            ->with('agency')
+            ->with([
+                'agency.facts.source',
+            ])
             ->orderByDesc('score')
             ->take(3)
             ->get();

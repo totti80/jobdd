@@ -108,6 +108,7 @@
             </div>
           </div>
 
+
           <div class="text-right">
             <div class="text-sm text-slate-500">
               JobDD Score
@@ -122,6 +123,56 @@
             </div>
           </div>
 
+        </div>
+
+        <div class="mt-4">
+          <details class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <summary class="cursor-pointer font-semibold text-blue-600">
+              根拠を見る
+            </summary>
+
+            <div class="mt-4 space-y-4">
+
+              @forelse ($result->agency->facts as $fact)
+
+              <div class="border-b border-slate-200 pb-3 last:border-b-0">
+
+                <div class="font-semibold text-slate-800">
+                  {{ $fact->fact_value }}
+                </div>
+
+                <div class="mt-1 text-sm text-slate-500">
+                  {{ $fact->fact_type }}
+                  /
+                  {{ $fact->verification_status }}
+                </div>
+
+                @if ($fact->source)
+                <div class="mt-2 text-sm">
+                  <span class="text-slate-500">出典：</span>
+
+                  <a
+                    href="{{ $fact->source->url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-blue-600 underline hover:text-blue-800">
+                    {{ $fact->source->title ?? $fact->source->publisher }}
+                  </a>
+                </div>
+                @endif
+
+              </div>
+
+              @empty
+
+              <p class="text-sm text-slate-500">
+                根拠情報はまだ登録されていません。
+              </p>
+
+              @endforelse
+
+            </div>
+          </details>
         </div>
 
         <div class="mt-6 flex gap-3">

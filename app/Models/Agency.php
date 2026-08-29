@@ -24,4 +24,9 @@ class Agency extends Model
     {
         return $this->hasMany(ScoreResult::class);
     }
+
+    public function facts(): HasMany
+    {
+        return $this->hasMany(AgencyFact::class);
+    }
 }

@@ -34,6 +34,38 @@
       <p class="mt-4 text-slate-600">
         入力内容と紹介会社データをもとに比較しています。
       </p>
+
+      <div class="mx-auto mt-6 max-w-3xl rounded-xl bg-blue-50 px-5 py-4 text-left text-sm text-slate-700">
+        <div class="mb-2 font-semibold text-blue-950">
+          今回の入力条件
+        </div>
+
+        <div class="flex flex-wrap gap-x-6 gap-y-2">
+          <span>
+            職種：
+            <strong>{{ $userQuery->occupation ?? '未指定' }}</strong>
+          </span>
+
+          <span>
+            地域：
+            <strong>{{ $userQuery->region ?? '未指定' }}</strong>
+          </span>
+
+          <span>
+            経験：
+            <strong>
+              {{ $userQuery->experience_years !== null ? $userQuery->experience_years . '年' : '未指定' }}
+            </strong>
+          </span>
+
+          <span>
+            希望年収：
+            <strong>
+              {{ $userQuery->salary_min !== null ? $userQuery->salary_min . '万円以上' : '未指定' }}
+            </strong>
+          </span>
+        </div>
+      </div>
     </div>
 
     <div class="space-y-6">
@@ -92,29 +124,29 @@
 
         </div>
 
-        <div class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div class="mt-6 flex gap-3">
 
-          <div class="rounded-xl bg-slate-50 p-3 text-center">
+          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
             <div class="text-xs text-slate-500">職種適合</div>
             <div class="mt-1 font-bold">{{ $result->occupation_score }}</div>
           </div>
 
-          <div class="rounded-xl bg-slate-50 p-3 text-center">
+          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
             <div class="text-xs text-slate-500">地域適合</div>
             <div class="mt-1 font-bold">{{ $result->region_score }}</div>
           </div>
 
-          <div class="rounded-xl bg-slate-50 p-3 text-center">
+          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
             <div class="text-xs text-slate-500">経験適合</div>
             <div class="mt-1 font-bold">{{ $result->experience_score }}</div>
           </div>
 
-          <div class="rounded-xl bg-slate-50 p-3 text-center">
+          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
             <div class="text-xs text-slate-500">年収適合</div>
             <div class="mt-1 font-bold">{{ $result->salary_score }}</div>
           </div>
 
-          <div class="rounded-xl bg-slate-50 p-3 text-center">
+          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
             <div class="text-xs text-slate-500">求人適合</div>
             <div class="mt-1 font-bold">{{ $result->job_score }}</div>
           </div>

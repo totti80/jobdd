@@ -6,6 +6,16 @@ use App\Http\Controllers\UserQueryController;
 use App\Http\Controllers\RouteComparisonController;
 use App\Models\InteractionLog;
 use Illuminate\Http\Request;
+use App\Http\Controllers\AgencyFactReviewController;
+
+Route::patch('/admin/agency-facts/{agencyFact}/verify', [AgencyFactReviewController::class, 'verify'])
+    ->name('admin.agency-facts.verify');
+
+Route::patch('/admin/agency-facts/{agencyFact}/reject', [AgencyFactReviewController::class, 'reject'])
+    ->name('admin.agency-facts.reject');
+
+Route::get('/admin/agency-facts', [AgencyFactReviewController::class, 'index'])
+    ->name('admin.agency-facts.index');
 
 Route::post('/interaction/contact-clicked', function (Request $request) {
     $validated = $request->validate([

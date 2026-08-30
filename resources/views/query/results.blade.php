@@ -210,6 +210,15 @@
 
     </div>
 
+<div class="mt-6">
+    <a
+        href="{{ route('routes.show', 1) }}"
+        class="block w-full rounded-xl bg-blue-600 px-6 py-4 text-center font-semibold text-white hover:bg-blue-700"
+    >
+        この条件に合う求人の応募経路を比較する
+    </a>
+</div>
+
     <div class="mt-10 text-center">
       <a
         href="{{ route('query.create') }}"

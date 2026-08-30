@@ -7,6 +7,15 @@ use App\Models\UserQuery;
 
 class ScoreService
 {
+
+    public const REQUIRED_FACT_KEYS = [
+        'supported_occupation',
+        'supported_region',
+        'experience_range',
+        'salary_range',
+        'public_job_count',
+    ];
+
     public function calculate(UserQuery $userQuery, Agency $agency): array
     {
         $occupationScore = $this->occupationScore($userQuery, $agency);
@@ -24,7 +33,7 @@ class ScoreService
                 $salaryScore,
                 $jobScore,
             ],
-            fn ($score) => $score !== null
+            fn($score) => $score !== null
         );
 
         $score = count($availableScores) > 0

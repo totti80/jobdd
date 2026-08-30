@@ -126,7 +126,10 @@
         </div>
 
         <div class="mt-4">
-          <details class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <details
+            class="evidence-details rounded-xl border border-slate-200 bg-slate-50 p-4"
+            data-user-query-id="{{ $userQuery->id }}"
+            data-agency-id="{{ $result->agency->id }}">
             <summary class="cursor-pointer font-semibold text-blue-600">
               根拠を見る
             </summary>
@@ -210,14 +213,16 @@
 
     </div>
 
-<div class="mt-6">
-    <a
-        href="{{ route('routes.show', 1) }}"
-        class="block w-full rounded-xl bg-blue-600 px-6 py-4 text-center font-semibold text-white hover:bg-blue-700"
-    >
+    <div class="mt-6">
+      <a
+        href="{{ route('routes.show', [
+    'jobPosting' => 1,
+    'userQuery' => $userQuery->id,
+]) }}"
+        class="block w-full rounded-xl bg-blue-600 px-6 py-4 text-center font-semibold text-white hover:bg-blue-700">
         この条件に合う求人の応募経路を比較する
-    </a>
-</div>
+      </a>
+    </div>
 
     <div class="mt-10 text-center">
       <a
@@ -233,6 +238,54 @@
     </p>
 
   </main>
+
+  <script>
+    console.log('evidence log script loaded');
+
+    document.querySelectorAll('.evidence-details').forEach((details) => {
+      details.addEventListener('toggle', async () => {
+        console.log('evidence toggled', {
+          open: details.open,
+          userQueryId: details.dataset.userQueryId,
+          agencyId: details.dataset.agencyId,
+        });
+
+        if (!details.open) {
+          return;
+        }
+
+        if (details.dataset.logged === 'true') {
+          return;
+        }
+
+        try {
+          const response = await fetch('{{ route("interaction.evidence-opened") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+              user_query_id: Number(details.dataset.userQueryId),
+              agency_id: Number(details.dataset.agencyId),
+            }),
+          });
+
+          console.log('evidence response status:', response.status);
+
+          if (response.ok) {
+            details.dataset.logged = 'true';
+            console.log('evidence log saved');
+          } else {
+            console.error('evidence log failed');
+          }
+        } catch (error) {
+          console.error('evidence fetch error:', error);
+        }
+      });
+    });
+  </script>
 
 </body>
 

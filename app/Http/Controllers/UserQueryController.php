@@ -8,6 +8,7 @@ use App\Models\UserQuery;
 use App\Services\QueryParserService;
 use App\Services\ScoreService;
 use Illuminate\Http\Request;
+use App\Models\InteractionLog;
 
 class UserQueryController extends Controller
 {
@@ -57,6 +58,17 @@ class UserQueryController extends Controller
             ->orderByDesc('score')
             ->take(3)
             ->get();
+
+        InteractionLog::create([
+            'user_query_id' => $userQuery->id,
+            'event_type' => 'results_viewed',
+            'target_type' => 'user_query',
+            'target_id' => $userQuery->id,
+            'metadata' => [
+                'result_count' => $results->count(),
+            ],
+            'occurred_at' => now(),
+        ]);
 
         return view('query.results', [
             'userQuery' => $userQuery,

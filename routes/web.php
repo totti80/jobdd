@@ -4,6 +4,62 @@ use App\Http\Controllers\IconController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserQueryController;
 use App\Http\Controllers\RouteComparisonController;
+use App\Models\InteractionLog;
+use Illuminate\Http\Request;
+
+Route::post('/interaction/contact-clicked', function (Request $request) {
+    $validated = $request->validate([
+        'user_query_id' => ['required', 'integer', 'exists:user_queries,id'],
+        'application_route_id' => ['required', 'integer', 'exists:application_routes,id'],
+    ]);
+
+    InteractionLog::create([
+        'user_query_id' => $validated['user_query_id'],
+        'event_type' => 'contact_clicked',
+        'target_type' => 'application_route',
+        'target_id' => $validated['application_route_id'],
+        'metadata' => null,
+        'occurred_at' => now(),
+    ]);
+
+    return response()->noContent();
+})->name('interaction.contact-clicked');
+
+Route::post('/interaction/route-selected', function (Request $request) {
+    $validated = $request->validate([
+        'user_query_id' => ['required', 'integer', 'exists:user_queries,id'],
+        'application_route_id' => ['required', 'integer', 'exists:application_routes,id'],
+    ]);
+
+    InteractionLog::create([
+        'user_query_id' => $validated['user_query_id'],
+        'event_type' => 'route_selected',
+        'target_type' => 'application_route',
+        'target_id' => $validated['application_route_id'],
+        'metadata' => null,
+        'occurred_at' => now(),
+    ]);
+
+    return response()->noContent();
+})->name('interaction.route-selected');
+
+Route::post('/interaction/evidence-opened', function (Request $request) {
+    $validated = $request->validate([
+        'user_query_id' => ['required', 'integer', 'exists:user_queries,id'],
+        'agency_id' => ['required', 'integer', 'exists:agencies,id'],
+    ]);
+
+    InteractionLog::create([
+        'user_query_id' => $validated['user_query_id'],
+        'event_type' => 'evidence_opened',
+        'target_type' => 'agency',
+        'target_id' => $validated['agency_id'],
+        'metadata' => null,
+        'occurred_at' => now(),
+    ]);
+
+    return response()->noContent();
+})->name('interaction.evidence-opened');
 
 Route::get('/routes/{jobPosting}', [RouteComparisonController::class, 'show'])
     ->name('routes.show');

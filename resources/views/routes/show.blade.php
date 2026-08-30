@@ -130,16 +130,26 @@
 
         </div>
 
+        <button
+          type="button"
+          class="route-select-button mt-6 w-full rounded-xl border border-blue-600 px-5 py-3 text-center font-semibold text-blue-600 hover:bg-blue-50"
+          data-user-query-id="{{ request('userQuery') }}"
+          data-application-route-id="{{ $route->id }}">
+          この経路を選ぶ
+        </button>
+
         @if ($route->application_url)
         <a
           href="{{ $route->application_url }}"
           target="_blank"
           rel="noopener noreferrer"
-          class="mt-6 inline-block w-full rounded-xl bg-blue-600 px-5 py-3 text-center font-semibold text-white hover:bg-blue-700">
+          class="contact-link mt-3 inline-block w-full rounded-xl bg-blue-600 px-5 py-3 text-center font-semibold text-white hover:bg-blue-700"
+          data-user-query-id="{{ request('userQuery') }}"
+          data-application-route-id="{{ $route->id }}">
           応募ページを見る
         </a>
         @else
-        <div class="mt-6 rounded-xl bg-slate-100 px-5 py-3 text-center text-sm text-slate-500">
+        <div class="mt-3 rounded-xl bg-slate-100 px-5 py-3 text-center text-sm text-slate-500">
           応募URL未登録
         </div>
         @endif
@@ -161,6 +171,85 @@
     </div>
 
   </main>
+
+  <script>
+    document.querySelectorAll('.route-select-button').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (button.dataset.logged === 'true') {
+          return;
+        }
+
+        try {
+          const response = await fetch('{{ route("interaction.route-selected") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+              user_query_id: Number(button.dataset.userQueryId),
+              application_route_id: Number(button.dataset.applicationRouteId),
+            }),
+          });
+
+          if (response.ok) {
+            button.dataset.logged = 'true';
+
+            button.textContent = '選択しました';
+            button.disabled = true;
+
+            console.log('route_selected saved', {
+              userQueryId: button.dataset.userQueryId,
+              applicationRouteId: button.dataset.applicationRouteId,
+            });
+          } else {
+            console.error('route_selected failed:', response.status);
+          }
+        } catch (error) {
+          console.error('route_selected fetch error:', error);
+        }
+      });
+    });
+  </script>
+
+  <script>
+    document.querySelectorAll('.contact-link').forEach((link) => {
+      link.addEventListener('click', async (event) => {
+        event.preventDefault();
+
+        const destination = link.href;
+
+        try {
+          const response = await fetch('{{ route("interaction.contact-clicked") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+              user_query_id: Number(link.dataset.userQueryId),
+              application_route_id: Number(link.dataset.applicationRouteId),
+            }),
+          });
+
+          if (response.ok) {
+            console.log('contact_clicked saved', {
+              userQueryId: link.dataset.userQueryId,
+              applicationRouteId: link.dataset.applicationRouteId,
+            });
+
+            window.location.href = destination;
+          } else {
+            console.error('contact_clicked failed:', response.status);
+          }
+        } catch (error) {
+          console.error('contact_clicked fetch error:', error);
+        }
+      });
+    });
+  </script>
 
 </body>
 

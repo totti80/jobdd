@@ -3,6 +3,10 @@
 use App\Http\Controllers\IconController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserQueryController;
+use App\Http\Controllers\RouteComparisonController;
+
+Route::get('/routes/{jobPosting}', [RouteComparisonController::class, 'show'])
+    ->name('routes.show');
 
 Route::get('/query', [UserQueryController::class, 'create'])->name('query.create');
 Route::post('/query', [UserQueryController::class, 'store'])->name('query.store');

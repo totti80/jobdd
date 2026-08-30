@@ -22,6 +22,7 @@ class AgencyFactSeeder extends Seeder
         $this->createFacts($agencyA->id, $sourceA->id, [
             ['occupation', 'supported_occupation', '機械設計'],
             ['region', 'supported_region', '兵庫県'],
+            ['experience', 'experience_range', '5〜20年'],
             ['salary', 'salary_range', '500〜800万円'],
             ['job_count', 'public_job_count', '520件'],
         ]);
@@ -29,6 +30,7 @@ class AgencyFactSeeder extends Seeder
         $this->createFacts($agencyB->id, $sourceB->id, [
             ['occupation', 'supported_occupation', '機械設計'],
             ['region', 'supported_region', '大阪府'],
+            ['experience', 'experience_range', '3〜15年'],
             ['salary', 'salary_range', '450〜700万円'],
             ['job_count', 'public_job_count', '360件'],
         ]);
@@ -36,6 +38,7 @@ class AgencyFactSeeder extends Seeder
         $this->createFacts($agencyC->id, $sourceC->id, [
             ['occupation', 'supported_occupation', 'CADオペレーター'],
             ['region', 'supported_region', '兵庫県'],
+            ['experience', 'experience_range', '0〜10年'],
             ['salary', 'salary_range', '350〜600万円'],
             ['job_count', 'public_job_count', '240件'],
         ]);

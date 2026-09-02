@@ -45,4 +45,17 @@ class RouteComparisonController extends Controller
             'jobPosting' => $jobPosting,
         ]);
     }
+
+    public function action(\App\Models\JobPosting $jobPosting)
+    {
+        $jobPosting->load([
+            'company',
+            'applicationRoutes.agency',
+            'applicationRoutes.platform',
+        ]);
+
+        return view('routes.action', [
+            'jobPosting' => $jobPosting,
+        ]);
+    }
 }

@@ -74,6 +74,12 @@ Route::post('/interaction/evidence-opened', function (Request $request) {
 Route::get('/routes/{jobPosting}', [RouteComparisonController::class, 'show'])
     ->name('routes.show');
 
+Route::get('/routes/{jobPosting}', [RouteComparisonController::class, 'show'])
+    ->name('routes.show');
+
+Route::get('/routes/{jobPosting}/action', [RouteComparisonController::class, 'action'])
+    ->name('routes.action');
+
 Route::get('/query', [UserQueryController::class, 'create'])->name('query.create');
 Route::post('/query', [UserQueryController::class, 'store'])->name('query.store');
 

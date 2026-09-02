@@ -12,230 +12,355 @@
 
 <body class="min-h-screen bg-slate-50 text-slate-900">
 
-  <header class="border-b bg-white">
+  {{-- ヘッダー --}}
+  <header class="border-b border-slate-200 bg-white">
     <div class="mx-auto max-w-6xl px-6 py-5">
-      <div class="text-2xl font-bold text-blue-950">
-        JobDD
-      </div>
+
+      <p class="text-xl font-bold tracking-tight text-blue-950 md:text-3xl">
+        あなた専用 転職コンシェルジュ | JobDD
+      </p>
+
+      <p class="mt-2 text-sm text-slate-600 md:text-base">
+        求人・企業・人材紹介会社・求人媒体を横断して、あなたに合う応募経路を整理します。
+      </p>
+
     </div>
   </header>
 
-  <main class="mx-auto max-w-5xl px-6 py-12">
+  <main class="mx-auto max-w-6xl px-6 py-10">
 
-    <div class="mb-10 text-center">
-      <p class="mb-3 text-sm font-semibold text-blue-600">
-        STEP 3 / 比較
-      </p>
+    {{-- ページ上部 --}}
+    <div class="mb-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
 
-      <h1 class="text-3xl font-bold text-blue-950">
-        あなたに合う人材紹介会社 TOP3
-      </h1>
+      {{-- 見出し --}}
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight text-blue-950 md:text-4xl">
+          あなたに合う人材紹介会社 TOP3
+        </h1>
 
-      <p class="mt-4 text-slate-600">
-        入力内容と紹介会社データをもとに比較しています。
-      </p>
+        <p class="mt-4 text-base leading-7 text-slate-600">
+          入力内容と公開情報をもとに、候補を比較しています。<br class="hidden md:block">
+          Scoreだけでなく、適合理由と根拠も確認できます。
+        </p>
+      </div>
 
-      <div class="mx-auto mt-6 max-w-3xl rounded-xl bg-blue-50 px-5 py-4 text-left text-sm text-slate-700">
-        <div class="mb-2 font-semibold text-blue-950">
-          今回の入力条件
-        </div>
+      {{-- ステップ --}}
+      <div class="flex items-start gap-3 text-sm text-slate-500">
 
-        <div class="flex flex-wrap gap-x-6 gap-y-2">
-          <span>
-            職種：
-            <strong>{{ $userQuery->occupation ?? '未指定' }}</strong>
-          </span>
-
-          <span>
-            地域：
-            <strong>{{ $userQuery->region ?? '未指定' }}</strong>
-          </span>
-
-          <span>
-            経験：
-            <strong>
-              {{ $userQuery->experience_years !== null ? $userQuery->experience_years . '年' : '未指定' }}
-            </strong>
-          </span>
-
-          <span>
-            希望年収：
-            <strong>
-              {{ $userQuery->salary_min !== null ? $userQuery->salary_min . '万円以上' : '未指定' }}
-            </strong>
+        <div class="flex flex-col items-center">
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
+            ✓
+          </div>
+          <span class="mt-2">
+            入力
           </span>
         </div>
+
+        <div class="mt-4 h-px w-10 bg-blue-200"></div>
+
+        <div class="flex flex-col items-center">
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
+            ✓
+          </div>
+          <span class="mt-2">
+            調査
+          </span>
+        </div>
+
+        <div class="mt-4 h-px w-10 bg-blue-200"></div>
+
+        <div class="flex flex-col items-center">
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
+            3
+          </div>
+          <span class="mt-2 font-semibold text-blue-600">
+            比較
+          </span>
+        </div>
+
+        <div class="mt-4 h-px w-10 bg-slate-300"></div>
+
+        <div class="flex flex-col items-center">
+          <div class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white font-semibold">
+            4
+          </div>
+          <span class="mt-2">
+            行動
+          </span>
+        </div>
+
       </div>
     </div>
 
-    <div class="space-y-6">
+    {{-- 今回の入力条件 --}}
+    <section class="mb-8 rounded-2xl bg-blue-50 px-6 py-5 ring-1 ring-blue-100">
+
+      <div class="mb-3 text-sm font-bold text-blue-950">
+        今回の入力条件
+      </div>
+
+      <div class="flex flex-wrap gap-3 text-sm">
+
+        <span class="rounded-full bg-white px-4 py-2 text-slate-700 ring-1 ring-blue-100">
+          職種：
+          <strong>{{ $userQuery->occupation ?? '未指定' }}</strong>
+        </span>
+
+        <span class="rounded-full bg-white px-4 py-2 text-slate-700 ring-1 ring-blue-100">
+          地域：
+          <strong>{{ $userQuery->region ?? '未指定' }}</strong>
+        </span>
+
+        <span class="rounded-full bg-white px-4 py-2 text-slate-700 ring-1 ring-blue-100">
+          経験：
+          <strong>
+            {{ $userQuery->experience_years !== null ? $userQuery->experience_years . '年' : '未指定' }}
+          </strong>
+        </span>
+
+        <span class="rounded-full bg-white px-4 py-2 text-slate-700 ring-1 ring-blue-100">
+          希望年収：
+          <strong>
+            {{ $userQuery->salary_min !== null ? $userQuery->salary_min . '万円以上' : '未指定' }}
+          </strong>
+        </span>
+
+      </div>
+
+    </section>
+
+    {{-- TOP3 --}}
+    <div class="space-y-5">
 
       @foreach ($results as $index => $result)
 
-      <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <article class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 md:p-7">
 
-        <div class="flex items-start justify-between gap-6">
+        {{-- 上部 --}}
+        <div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
 
-          <div>
-            <div class="mb-2 text-sm font-bold text-blue-600">
+          <div class="min-w-0">
+
+            <div class="mb-2 inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-600">
               {{ $index + 1 }}位
             </div>
 
-            <h2 class="text-2xl font-bold text-blue-950">
+            <h2 class="text-2xl font-bold tracking-tight text-blue-950">
               {{ $result->agency->name }}
             </h2>
 
-            <div class="mt-4 space-y-2 text-sm text-slate-700">
+            <div class="mt-4 space-y-2 text-sm leading-6 text-slate-700">
+
               <p>
-                <span class="font-semibold">得意職種：</span>
+                <span class="font-semibold text-slate-900">
+                  得意職種：
+                </span>
                 {{ $result->agency->occupation ?? '情報なし' }}
               </p>
 
               <p>
-                <span class="font-semibold">対応地域：</span>
+                <span class="font-semibold text-slate-900">
+                  対応地域：
+                </span>
                 {{ $result->agency->region ?? '情報なし' }}
               </p>
 
               <p>
-                <span class="font-semibold">適合理由：</span>
+                <span class="font-semibold text-slate-900">
+                  適合理由：
+                </span>
                 {{ $result->reason ?: '現在の公開情報から算定しています。' }}
               </p>
 
               <p>
-                <span class="font-semibold">Evidence Level：</span>
+                <span class="font-semibold text-slate-900">
+                  Evidence Level：
+                </span>
                 {{ $result->agency->evidence_level }}
               </p>
+
             </div>
+
           </div>
 
+          {{-- Score --}}
+          <div class="shrink-0 rounded-2xl bg-blue-50 px-6 py-5 text-center ring-1 ring-blue-100">
 
-          <div class="text-right">
-            <div class="text-sm text-slate-500">
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">
               JobDD Score
             </div>
 
-            <div class="text-5xl font-bold text-blue-600">
+            <div class="mt-1 text-5xl font-bold tracking-tight text-blue-600">
               {{ $result->score }}
             </div>
 
-            <div class="text-sm text-slate-400">
+            <div class="mt-1 text-sm text-slate-400">
               / 100
+            </div>
+
+          </div>
+
+        </div>
+
+        {{-- 5軸 --}}
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+
+          <div class="rounded-xl bg-slate-50 p-3 text-center">
+            <div class="text-xs text-slate-500">
+              職種適合
+            </div>
+            <div class="mt-1 font-bold text-blue-950">
+              {{ $result->occupation_score }}
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 p-3 text-center">
+            <div class="text-xs text-slate-500">
+              地域適合
+            </div>
+            <div class="mt-1 font-bold text-blue-950">
+              {{ $result->region_score }}
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 p-3 text-center">
+            <div class="text-xs text-slate-500">
+              経験適合
+            </div>
+            <div class="mt-1 font-bold text-blue-950">
+              {{ $result->experience_score }}
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 p-3 text-center">
+            <div class="text-xs text-slate-500">
+              年収適合
+            </div>
+            <div class="mt-1 font-bold text-blue-950">
+              {{ $result->salary_score }}
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 p-3 text-center">
+            <div class="text-xs text-slate-500">
+              求人適合
+            </div>
+            <div class="mt-1 font-bold text-blue-950">
+              {{ $result->job_score }}
             </div>
           </div>
 
         </div>
 
-        <div class="mt-4">
+        {{-- Evidence --}}
+        <div class="mt-5">
+
           <details
-            class="evidence-details rounded-xl border border-slate-200 bg-slate-50 p-4"
+            class="evidence-details overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
             data-user-query-id="{{ $userQuery->id }}"
             data-agency-id="{{ $result->agency->id }}">
-            <summary class="cursor-pointer font-semibold text-blue-600">
+
+            <summary class="cursor-pointer px-5 py-4 font-semibold text-blue-600 hover:bg-blue-50">
               根拠を見る
             </summary>
 
-            <div class="mt-4 space-y-4">
+            <div class="border-t border-slate-200 bg-white px-5 py-4">
 
-              @forelse ($result->agency->facts as $fact)
+              <div class="space-y-4">
 
-              <div class="border-b border-slate-200 pb-3 last:border-b-0">
+                @forelse ($result->agency->facts as $fact)
 
-                <div class="font-semibold text-slate-800">
-                  {{ $fact->fact_value }}
+                <div class="border-b border-slate-200 pb-3 last:border-b-0">
+
+                  <div class="font-semibold text-slate-800">
+                    {{ $fact->fact_value }}
+                  </div>
+
+                  <div class="mt-1 text-sm text-slate-500">
+                    {{ $fact->fact_type }}
+                    /
+                    {{ $fact->verification_status }}
+                  </div>
+
+                  @if ($fact->source)
+                  <div class="mt-2 text-sm">
+
+                    <span class="text-slate-500">
+                      出典：
+                    </span>
+
+                    <a
+                      href="{{ $fact->source->url }}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-blue-600 underline hover:text-blue-800">
+                      {{ $fact->source->title ?? $fact->source->publisher }}
+                    </a>
+
+                  </div>
+                  @endif
+
                 </div>
 
-                <div class="mt-1 text-sm text-slate-500">
-                  {{ $fact->fact_type }}
-                  /
-                  {{ $fact->verification_status }}
-                </div>
+                @empty
 
-                @if ($fact->source)
-                <div class="mt-2 text-sm">
-                  <span class="text-slate-500">出典：</span>
+                <p class="text-sm text-slate-500">
+                  根拠情報はまだ登録されていません。
+                </p>
 
-                  <a
-                    href="{{ $fact->source->url }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-blue-600 underline hover:text-blue-800">
-                    {{ $fact->source->title ?? $fact->source->publisher }}
-                  </a>
-                </div>
-                @endif
+                @endforelse
 
               </div>
 
-              @empty
-
-              <p class="text-sm text-slate-500">
-                根拠情報はまだ登録されていません。
-              </p>
-
-              @endforelse
-
             </div>
+
           </details>
-        </div>
-
-        <div class="mt-6 flex gap-3">
-
-          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
-            <div class="text-xs text-slate-500">職種適合</div>
-            <div class="mt-1 font-bold">{{ $result->occupation_score }}</div>
-          </div>
-
-          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
-            <div class="text-xs text-slate-500">地域適合</div>
-            <div class="mt-1 font-bold">{{ $result->region_score }}</div>
-          </div>
-
-          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
-            <div class="text-xs text-slate-500">経験適合</div>
-            <div class="mt-1 font-bold">{{ $result->experience_score }}</div>
-          </div>
-
-          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
-            <div class="text-xs text-slate-500">年収適合</div>
-            <div class="mt-1 font-bold">{{ $result->salary_score }}</div>
-          </div>
-
-          <div class="flex-1 rounded-xl bg-slate-50 p-3 text-center">
-            <div class="text-xs text-slate-500">求人適合</div>
-            <div class="mt-1 font-bold">{{ $result->job_score }}</div>
-          </div>
 
         </div>
 
-      </div>
+      </article>
 
       @endforeach
 
     </div>
 
-    <div class="mt-6">
+    {{-- 次の行動 --}}
+    <div class="mt-8">
+
       <a
         href="{{ route('routes.show', [
-    'jobPosting' => 1,
-    'userQuery' => $userQuery->id,
-]) }}"
-        class="block w-full rounded-xl bg-blue-600 px-6 py-4 text-center font-semibold text-white hover:bg-blue-700">
+          'jobPosting' => 1,
+          'userQuery' => $userQuery->id,
+        ]) }}"
+        class="block w-full rounded-xl bg-blue-600 px-6 py-4 text-center font-bold text-white transition hover:bg-blue-700">
         この条件に合う求人の応募経路を比較する
+        <span class="ml-2">›</span>
       </a>
+
     </div>
 
-    <div class="mt-10 text-center">
+    <div class="mt-5 text-center">
+
       <a
         href="{{ route('query.create') }}"
-        class="inline-block rounded-xl border border-blue-600 px-6 py-3 font-semibold text-blue-600 hover:bg-blue-50">
+        class="inline-block rounded-xl border border-blue-600 px-6 py-3 font-semibold text-blue-600 transition hover:bg-blue-50">
         条件を変えてもう一度試す
       </a>
+
     </div>
 
-    <p class="mt-8 text-center text-sm text-slate-500">
-      RecommendではなくDecision Support。
-      最終判断はご本人が行います。
-    </p>
+    {{-- Decision Support --}}
+    <div class="mt-8 rounded-2xl bg-blue-50 px-6 py-5 ring-1 ring-blue-100">
+
+      <p class="font-semibold text-blue-950">
+        RecommendではなくDecision Support。
+      </p>
+
+      <p class="mt-1 text-sm leading-6 text-slate-600">
+        JobDDは比較材料と根拠を整理します。最終判断はご本人が行います。
+      </p>
+
+    </div>
 
   </main>
 

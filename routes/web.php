@@ -86,9 +86,7 @@ Route::post('/query', [UserQueryController::class, 'store'])->name('query.store'
 Route::get('/results/{userQuery}', [UserQueryController::class, 'results'])
     ->name('query.results');
 
-Route::get('/', function () {
-    return redirect()->route('query.create');
-})->name('home');
+Route::get('/', [UserQueryController::class, 'create'])->name('home');
 
 Route::get('/hello', function () {
     return view('hello');

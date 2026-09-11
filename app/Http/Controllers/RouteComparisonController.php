@@ -40,9 +40,23 @@ class RouteComparisonController extends Controller
             'occurred_at' => now(),
         ]);
 
+        $routeGroups = [
+            'direct' => $jobPosting->applicationRoutes
+                ->where('route_type', 'direct')
+                ->values(),
+
+            'agent' => $jobPosting->applicationRoutes
+                ->where('route_type', 'agent')
+                ->values(),
+
+            'platform' => $jobPosting->applicationRoutes
+                ->where('route_type', 'platform')
+                ->values(),
+        ];
 
         return view('routes.show', [
             'jobPosting' => $jobPosting,
+            'routeGroups' => $routeGroups,
         ]);
     }
 

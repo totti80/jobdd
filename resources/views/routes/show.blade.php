@@ -127,13 +127,27 @@
           <span class="rounded-full bg-blue-50 px-4 py-2 text-slate-700 ring-1 ring-blue-100">
             年収：
             <strong>
-              @if ($jobPosting->salary_min || $jobPosting->salary_max)
-              {{ $jobPosting->salary_min ?? '?' }}
-              〜
-              {{ $jobPosting->salary_max ?? '?' }}
-              万円
+              @php
+              $salaryMin = $jobPosting->salary_min && $jobPosting->salary_min > 0
+              ? $jobPosting->salary_min
+              : null;
+
+              $salaryMax = $jobPosting->salary_max && $jobPosting->salary_max > 0
+              ? $jobPosting->salary_max
+              : null;
+              @endphp
+
+              @if ($salaryMin && $salaryMax)
+              {{ $salaryMin }}〜{{ $salaryMax }}万円
+
+              @elseif ($salaryMin)
+              {{ $salaryMin }}万円以上
+
+              @elseif ($salaryMax)
+              {{ $salaryMax }}万円以下
+
               @else
-              未指定
+              非公開
               @endif
             </strong>
           </span>
@@ -156,11 +170,11 @@
       </h2>
 
       <p class="mt-2 text-sm leading-6 text-slate-600">
-        企業公式・人材紹介会社・求人媒体について、
+        確認できた応募経路について、
         <strong class="text-slate-800">
-          応募可否・応募方法・サポート・企業との直接性
+          応募可否・応募方法・情報源
         </strong>
-        を確認しています。
+        を整理しています。未確認の経路は「未確認」と表示します。
       </p>
 
     </section>
@@ -168,33 +182,27 @@
     {{-- 3経路サマリー --}}
     <section class="grid gap-5 md:grid-cols-3">
 
-      @foreach ($jobPosting->applicationRoutes as $route)
+      @foreach ($routeGroups as $routeType => $routes)
+
+      @continue($routes->isEmpty())
 
       @php
-      $isDirect = $route->route_type === 'direct';
-      $isAgent = $route->route_type === 'agent';
-      $isPlatform = $route->route_type === 'platform';
-
-      $availabilityLabel = match ($route->availability_status) {
-      'available' => '応募可能',
-      'unavailable' => '応募不可',
-      default => $route->availability_status,
-      };
+      $isDirect = $routeType === 'direct';
+      $isAgent = $routeType === 'agent';
+      $isPlatform = $routeType === 'platform';
       @endphp
 
       <article class="flex flex-col rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 
-        {{-- 経路名 --}}
         <div>
 
           <p
             class="
-              text-sm font-bold uppercase tracking-wide
-              {{ $isDirect ? 'text-blue-600' : '' }}
-              {{ $isAgent ? 'text-emerald-600' : '' }}
-              {{ $isPlatform ? 'text-violet-600' : '' }}
-            ">
-
+            text-sm font-bold uppercase tracking-wide
+            {{ $isDirect ? 'text-blue-600' : '' }}
+            {{ $isAgent ? 'text-emerald-600' : '' }}
+            {{ $isPlatform ? 'text-violet-600' : '' }}
+          ">
             @if ($isDirect)
             Direct
             @elseif ($isAgent)
@@ -202,11 +210,9 @@
             @elseif ($isPlatform)
             Platform
             @endif
-
           </p>
 
           <h2 class="mt-2 text-2xl font-bold text-blue-950">
-
             @if ($isDirect)
             企業へ直接応募
             @elseif ($isAgent)
@@ -214,26 +220,59 @@
             @elseif ($isPlatform)
             求人媒体経由
             @endif
-
           </h2>
 
-          {{-- カードでは要点だけ表示 --}}
-          <div class="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+          <div class="mt-4 space-y-3 text-sm leading-6 text-slate-600">
 
             @if ($isDirect)
 
-            <p>✓ 企業公式ページから応募可能</p>
-            <p>✓ 企業と直接やり取りする経路</p>
+            @foreach ($routes as $route)
+            <div class="rounded-xl bg-blue-50 px-4 py-3">
+              <p class="font-semibold text-blue-950">
+                企業公式採用ページ
+              </p>
+
+              <p class="mt-1">
+                {{ $route->availability_status === 'available' ? '応募可能' : '応募状況を確認' }}
+              </p>
+            </div>
+            @endforeach
 
             @elseif ($isAgent)
 
-            <p>✓ 人材紹介会社を通じて応募</p>
-            <p>✓ 転職支援を受けながら進められる</p>
+            @foreach ($routes as $route)
+            <div class="rounded-xl bg-emerald-50 px-4 py-3">
+              <p class="font-semibold text-emerald-950">
+                {{ $route->agency?->name ?? '人材紹介会社' }}
+              </p>
+
+              <p class="mt-1">
+                {{ $route->availability_status === 'available' ? '応募可能' : '応募状況を確認' }}
+              </p>
+            </div>
+            @endforeach
 
             @elseif ($isPlatform)
 
-            <p>✓ 求人媒体を通じて応募</p>
-            <p>✓ 媒体の仕組みに沿って手続きを進める</p>
+            @foreach ($routes as $route)
+            <div class="rounded-xl bg-violet-50 px-4 py-3">
+
+              <p class="font-semibold text-violet-950">
+                {{ $route->platform?->name ?? '求人媒体' }}
+              </p>
+
+              <p class="mt-1">
+                {{ $route->availability_status === 'available' ? '応募可能' : '応募状況を確認' }}
+              </p>
+
+              @if ($route->notes)
+              <p class="mt-1 text-xs text-slate-500">
+                {{ $route->notes }}
+              </p>
+              @endif
+
+            </div>
+            @endforeach
 
             @endif
 
@@ -241,37 +280,54 @@
 
         </div>
 
-        {{-- 選択 --}}
         <div class="mt-auto pt-6">
 
-          <button
-            type="button"
-            class="route-select-button w-full rounded-xl border border-blue-600 px-5 py-3 text-center font-semibold text-blue-600 transition hover:bg-blue-50"
-            data-user-query-id="{{ request('userQuery') }}"
-            data-application-route-id="{{ $route->id }}">
-            この経路を選ぶ
-          </button>
+          @foreach ($routes as $route)
 
-          @if ($route->application_url)
+          <div class="{{ !$loop->first ? 'mt-4 border-t border-slate-100 pt-4' : '' }}">
 
-          <a
-            href="{{ $route->application_url }}"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="contact-link mt-3 inline-block w-full rounded-xl bg-blue-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-blue-700"
-            data-user-query-id="{{ request('userQuery') }}"
-            data-application-route-id="{{ $route->id }}">
-            応募ページを見る
-            <span class="ml-2">›</span>
-          </a>
+            <button
+              type="button"
+              class="route-select-button w-full rounded-xl border border-blue-600 px-5 py-3 text-center font-semibold text-blue-600 transition hover:bg-blue-50"
+              data-user-query-id="{{ request('userQuery') }}"
+              data-application-route-id="{{ $route->id }}">
+              @if ($isPlatform && $route->platform)
+              {{ $route->platform->name }}を選ぶ
+              @elseif ($isAgent && $route->agency)
+              {{ $route->agency->name }}を選ぶ
+              @else
+              この経路を選ぶ
+              @endif
+            </button>
 
-          @else
+            @if ($route->application_url)
 
-          <div class="mt-3 rounded-xl bg-slate-100 px-5 py-3 text-center text-sm text-slate-500">
-            応募URL未登録
+            <a
+              href="{{ $route->application_url }}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="contact-link mt-3 inline-block w-full rounded-xl bg-blue-600 px-5 py-3 text-center font-semibold text-white transition hover:bg-blue-700"
+              data-user-query-id="{{ request('userQuery') }}"
+              data-application-route-id="{{ $route->id }}">
+              @if ($isPlatform && $route->platform)
+              {{ $route->platform->name }}の応募ページを見る
+              @else
+              応募ページを見る
+              @endif
+              <span class="ml-2">›</span>
+            </a>
+
+            @else
+
+            <div class="mt-3 rounded-xl bg-slate-100 px-5 py-3 text-center text-sm text-slate-500">
+              応募URL未登録
+            </div>
+
+            @endif
+
           </div>
 
-          @endif
+          @endforeach
 
         </div>
 
@@ -291,14 +347,19 @@
         </p>
 
         <h2 class="mt-2 text-xl font-bold text-blue-950">
-          応募経路ごとの違い
+          今回確認できた事実と、経路ごとの一般的な特徴
         </h2>
+
+        <p class="mt-2 text-sm leading-6 text-slate-600">
+          上段はこの求人について確認できた内容、
+          下段は応募経路そのものの一般的な特徴です。
+        </p>
 
       </div>
 
       <div class="overflow-x-auto">
 
-        <table class="w-full min-w-[760px] border-collapse text-sm">
+        <table class="w-full min-w-[820px] border-collapse text-sm">
 
           <thead>
 
@@ -326,6 +387,55 @@
 
           <tbody class="divide-y divide-slate-100">
 
+            {{-- 今回確認できたFACT --}}
+            <tr class="bg-slate-50">
+
+              <td
+                colspan="4"
+                class="px-4 py-3 font-bold text-slate-700">
+                今回の求人で確認できたこと
+              </td>
+
+            </tr>
+
+            {{-- 確認状況 --}}
+            <tr>
+
+              <td class="px-4 py-4 font-semibold text-slate-700">
+                確認状況
+              </td>
+
+              @foreach (['direct', 'agent', 'platform'] as $type)
+
+              @php
+              $comparisonRoutes = $jobPosting->applicationRoutes
+              ->where('route_type', $type)
+              ->values();
+              @endphp
+
+              <td class="px-4 py-4 text-center">
+
+                @if ($comparisonRoutes->isEmpty())
+
+                <span class="text-slate-400">
+                  未確認
+                </span>
+
+                @else
+
+                <span class="font-semibold text-emerald-700">
+                  {{ $comparisonRoutes->count() }}件確認済み
+                </span>
+
+                @endif
+
+              </td>
+
+              @endforeach
+
+            </tr>
+
+            {{-- 応募可否 --}}
             <tr>
 
               <td class="px-4 py-4 font-semibold text-slate-700">
@@ -335,40 +445,174 @@
               @foreach (['direct', 'agent', 'platform'] as $type)
 
               @php
-              $comparisonRoute = $jobPosting->applicationRoutes
-              ->firstWhere('route_type', $type);
+              $comparisonRoutes = $jobPosting->applicationRoutes
+              ->where('route_type', $type)
+              ->values();
 
-              $comparisonAvailability = match ($comparisonRoute?->availability_status) {
-              'available' => '○ 応募可能',
-              'unavailable' => '× 応募不可',
-              default => $comparisonRoute?->availability_status ?? '情報なし',
-              };
+              $availableCount = $comparisonRoutes
+              ->where('availability_status', 'available')
+              ->count();
               @endphp
 
               <td class="px-4 py-4 text-center">
-                {{ $comparisonAvailability }}
+
+                @if ($comparisonRoutes->isEmpty())
+
+                未確認
+
+                @elseif ($availableCount === $comparisonRoutes->count())
+
+                ○ {{ $availableCount }}件とも応募可能
+
+                @elseif ($availableCount > 0)
+
+                ○ {{ $availableCount }}件応募可能
+
+                @else
+
+                応募可能な経路は未確認
+
+                @endif
+
               </td>
 
               @endforeach
 
             </tr>
 
+            {{-- 確認できた経路 --}}
             <tr>
 
               <td class="px-4 py-4 font-semibold text-slate-700">
-                応募方法
+                確認できた経路
               </td>
 
-              <td class="px-4 py-4 text-center">
-                企業公式から直接
-              </td>
+              @foreach (['direct', 'agent', 'platform'] as $type)
+
+              @php
+              $comparisonRoutes = $jobPosting->applicationRoutes
+              ->where('route_type', $type)
+              ->values();
+              @endphp
 
               <td class="px-4 py-4 text-center">
-                人材紹介会社を経由
+
+                @if ($comparisonRoutes->isEmpty())
+
+                <span class="text-slate-400">
+                  ―
+                </span>
+
+                @else
+
+                <div class="space-y-1">
+
+                  @foreach ($comparisonRoutes as $comparisonRoute)
+
+                  <div>
+
+                    @if ($type === 'direct')
+
+                    企業公式採用ページ
+
+                    @elseif ($type === 'agent')
+
+                    {{ $comparisonRoute->agency?->name ?? '人材紹介会社' }}
+
+                    @elseif ($type === 'platform')
+
+                    {{ $comparisonRoute->platform?->name ?? '求人媒体' }}
+
+                    @endif
+
+                  </div>
+
+                  @endforeach
+
+                </div>
+
+                @endif
+
               </td>
 
+              @endforeach
+
+            </tr>
+
+            {{-- 応募URL --}}
+            <tr>
+
+              <td class="px-4 py-4 font-semibold text-slate-700">
+                応募URL
+              </td>
+
+              @foreach (['direct', 'agent', 'platform'] as $type)
+
+              @php
+              $comparisonRoutes = $jobPosting->applicationRoutes
+              ->where('route_type', $type)
+              ->values();
+              @endphp
+
               <td class="px-4 py-4 text-center">
-                求人媒体を経由
+
+                @if ($comparisonRoutes->isEmpty())
+
+                <span class="text-slate-400">
+                  未確認
+                </span>
+
+                @else
+
+                <div class="space-y-1">
+
+                  @foreach ($comparisonRoutes as $comparisonRoute)
+
+                  @if ($comparisonRoute->application_url)
+
+                  <div>
+                    <a
+                      href="{{ $comparisonRoute->application_url }}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="font-semibold text-blue-600 underline hover:text-blue-800">
+                      @if ($type === 'platform')
+                      {{ $comparisonRoute->platform?->name ?? '求人媒体' }}
+                      @elseif ($type === 'agent')
+                      {{ $comparisonRoute->agency?->name ?? '人材紹介会社' }}
+                      @else
+                      企業公式
+                      @endif
+                    </a>
+                  </div>
+
+                  @else
+
+                  <div class="text-slate-500">
+                    URL未登録
+                  </div>
+
+                  @endif
+
+                  @endforeach
+
+                </div>
+
+                @endif
+
+              </td>
+
+              @endforeach
+
+            </tr>
+
+            {{-- 一般説明 --}}
+            <tr class="bg-slate-50">
+
+              <td
+                colspan="4"
+                class="px-4 py-3 font-bold text-slate-700">
+                経路ごとの一般的な特徴
               </td>
 
             </tr>
@@ -376,19 +620,19 @@
             <tr>
 
               <td class="px-4 py-4 font-semibold text-slate-700">
-                サポート
+                一般的な応募方法
               </td>
 
               <td class="px-4 py-4 text-center">
-                なし
+                企業公式サイト等から直接応募
               </td>
 
               <td class="px-4 py-4 text-center">
-                あり
+                人材紹介会社を通じて応募
               </td>
 
               <td class="px-4 py-4 text-center">
-                サービスによる
+                求人媒体の仕組みに沿って応募
               </td>
 
             </tr>
@@ -396,19 +640,39 @@
             <tr>
 
               <td class="px-4 py-4 font-semibold text-slate-700">
-                企業との直接性
+                一般的なサポート
               </td>
 
               <td class="px-4 py-4 text-center">
-                高い
+                原則として自分で進める
               </td>
 
               <td class="px-4 py-4 text-center">
-                低い
+                面談・応募・選考支援を受けられる場合がある
               </td>
 
               <td class="px-4 py-4 text-center">
-                中程度
+                媒体・サービスによる
+              </td>
+
+            </tr>
+
+            <tr>
+
+              <td class="px-4 py-4 font-semibold text-slate-700">
+                企業とのやり取り
+              </td>
+
+              <td class="px-4 py-4 text-center">
+                企業と直接やり取りすることが多い
+              </td>
+
+              <td class="px-4 py-4 text-center">
+                紹介会社が間に入ることが多い
+              </td>
+
+              <td class="px-4 py-4 text-center">
+                媒体経由で進める場合がある
               </td>
 
             </tr>
@@ -419,26 +683,42 @@
 
       </div>
 
-      {{-- 確認元 --}}
+      {{-- 今回確認できた情報源 --}}
       <div class="mt-5 border-t border-slate-200 pt-5">
 
         <p class="text-sm font-semibold text-slate-700">
-          今回の確認元
+          今回確認できた情報源
         </p>
 
         <div class="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
 
+          @forelse ($jobPosting->applicationRoutes as $route)
+
           <span class="rounded-full bg-slate-50 px-4 py-2">
+
+            @if ($route->route_type === 'direct')
+
             企業公式採用ページ
+
+            @elseif ($route->route_type === 'agent')
+
+            {{ $route->agency?->name ?? '人材紹介会社' }}
+
+            @elseif ($route->route_type === 'platform')
+
+            {{ $route->platform?->name ?? '求人媒体' }}
+
+            @endif
+
           </span>
 
-          <span class="rounded-full bg-slate-50 px-4 py-2">
-            人材紹介会社の公開情報
+          @empty
+
+          <span class="text-slate-400">
+            現在確認できた応募経路はありません。
           </span>
 
-          <span class="rounded-full bg-slate-50 px-4 py-2">
-            求人媒体の公開情報
-          </span>
+          @endforelse
 
         </div>
 

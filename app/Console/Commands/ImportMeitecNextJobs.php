@@ -1,0 +1,326 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Models\ApplicationRoute;
+use App\Models\Company;
+use App\Models\JobPosting;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Throwable;
+
+class ImportMeitecNextJobs extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'crawler:import-meitec-next-jobs';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Import Meitec Next job postings from crawler JSON';
+
+    /**
+     * メイテックネクストの agencies.id
+     */
+    private const MEITEC_NEXT_AGENCY_ID = 7;
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(): int
+    {
+        $path = storage_path(
+            'app/private/crawler/meitec_next_jobs.json'
+        );
+
+        if (! File::exists($path)) {
+            $this->error(
+                "JSON file not found: {$path}"
+            );
+
+            return self::FAILURE;
+        }
+
+        $json = File::get($path);
+
+        $data = json_decode(
+            $json,
+            true
+        );
+
+        if (! is_array($data)) {
+            $this->error(
+                'Invalid JSON format.'
+            );
+
+            return self::FAILURE;
+        }
+
+        $jobs = $data['jobs'] ?? [];
+
+        if (! is_array($jobs)) {
+            $this->error(
+                'jobs key is missing or invalid.'
+            );
+
+            return self::FAILURE;
+        }
+
+        $this->info(
+            'Meitec Next import start'
+        );
+
+        $this->info(
+            'JSON jobs: ' . count($jobs)
+        );
+
+        $createdCompanies = 0;
+        $createdJobs = 0;
+        $updatedJobs = 0;
+        $createdRoutes = 0;
+        $updatedRoutes = 0;
+        $skipped = 0;
+        $errors = 0;
+
+        foreach ($jobs as $index => $jobData) {
+            $number = $index + 1;
+
+            $companyName = trim(
+                (string) ($jobData['company_name'] ?? '')
+            );
+
+            $title = trim(
+                (string) ($jobData['title'] ?? '')
+            );
+
+            $region = trim(
+                (string) ($jobData['region'] ?? '')
+            );
+
+            $sourceUrl = trim(
+                (string) ($jobData['source_url'] ?? '')
+            );
+
+            if (
+                $companyName === ''
+                || $title === ''
+                || $sourceUrl === ''
+            ) {
+                $this->warn(
+                    "[{$number}] skipped: required field missing"
+                );
+
+                $skipped++;
+
+                continue;
+            }
+
+            try {
+                DB::transaction(
+                    function () use (
+                        $jobData,
+                        $companyName,
+                        $title,
+                        $region,
+                        $sourceUrl,
+                        &$createdCompanies,
+                        &$createdJobs,
+                        &$updatedJobs,
+                        &$createdRoutes,
+                        &$updatedRoutes
+                    ) {
+                        // ----------------------------------------
+                        // Company
+                        // ----------------------------------------
+
+                        $company = Company::firstOrCreate(
+                            [
+                                'name' => $companyName,
+                            ],
+                            [
+                                'website_url' => null,
+                                'industry' => null,
+                                'region' => (
+                                    $region !== ''
+                                    ? $region
+                                    : null
+                                ),
+                            ]
+                        );
+
+                        if ($company->wasRecentlyCreated) {
+                            $createdCompanies++;
+                        }
+
+                        // ----------------------------------------
+                        // JobPosting
+                        // ----------------------------------------
+
+                        $jobPosting = JobPosting::updateOrCreate(
+                            [
+                                'company_id' => $company->id,
+                                'title' => $title,
+                                'region' => (
+                                    $region !== ''
+                                    ? $region
+                                    : null
+                                ),
+                            ],
+                            [
+                                'occupation' => (
+                                    $jobData['occupation']
+                                    ?? '機械設計'
+                                ),
+
+                                'industry' => null,
+
+                                'salary_min' => (
+                                    $jobData['salary_min']
+                                    ?? null
+                                ),
+
+                                'salary_max' => (
+                                    $jobData['salary_max']
+                                    ?? null
+                                ),
+
+                                'description' => (
+                                    $jobData['description']
+                                    ?? null
+                                ),
+
+                                'employment_type' => (
+                                    $jobData['employment_type']
+                                    ?? null
+                                ),
+
+                                'source_url' => (
+                                    $sourceUrl
+                                ),
+                            ]
+                        );
+
+                        if ($jobPosting->wasRecentlyCreated) {
+                            $createdJobs++;
+                        } else {
+                            $updatedJobs++;
+                        }
+
+                        // ----------------------------------------
+                        // ApplicationRoute
+                        // ----------------------------------------
+
+                        $route = ApplicationRoute::updateOrCreate(
+                            [
+                                'job_posting_id' => (
+                                    $jobPosting->id
+                                ),
+
+                                'route_type' => (
+                                    'agent'
+                                ),
+
+                                'agency_id' => (
+                                    self::MEITEC_NEXT_AGENCY_ID
+                                ),
+                            ],
+                            [
+                                'platform_id' => null,
+
+                                'application_url' => (
+                                    $sourceUrl
+                                ),
+
+                                'availability_status' => (
+                                    'available'
+                                ),
+
+                                'notes' => (
+                                    'メイテックネクスト公開求人から自動取得'
+                                ),
+                            ]
+                        );
+
+                        if ($route->wasRecentlyCreated) {
+                            $createdRoutes++;
+                        } else {
+                            $updatedRoutes++;
+                        }
+                    }
+                );
+
+                $this->line(
+                    "[{$number}] {$companyName} | {$title}"
+                );
+            } catch (Throwable $e) {
+                $errors++;
+
+                $this->error(
+                    "[{$number}] import error: "
+                        . $companyName
+                        . ' | '
+                        . $title
+                );
+
+                $this->error(
+                    $e->getMessage()
+                );
+            }
+        }
+
+        $this->newLine();
+
+        $this->info(
+            '=============================='
+        );
+
+        $this->info(
+            'Import completed'
+        );
+
+        $this->info(
+            "companies created: {$createdCompanies}"
+        );
+
+        $this->info(
+            "jobs created: {$createdJobs}"
+        );
+
+        $this->info(
+            "jobs updated: {$updatedJobs}"
+        );
+
+        $this->info(
+            "routes created: {$createdRoutes}"
+        );
+
+        $this->info(
+            "routes updated: {$updatedRoutes}"
+        );
+
+        $this->info(
+            "skipped: {$skipped}"
+        );
+
+        $this->info(
+            "errors: {$errors}"
+        );
+
+        $this->info(
+            '=============================='
+        );
+
+        return (
+            $errors === 0
+            ? self::SUCCESS
+            : self::FAILURE
+        );
+    }
+}

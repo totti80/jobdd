@@ -7,12 +7,14 @@ use App\Models\UserQuery;
 
 class ScoreService
 {
-
     public const REQUIRED_FACT_KEYS = [
         'supported_occupation',
         'supported_region',
         'experience_range',
         'salary_range',
+
+        // Scoreには使用しない。
+        // Evidenceとして保持・表示するため、調査対象には残す。
         'public_job_count',
     ];
 
@@ -22,16 +24,16 @@ class ScoreService
         $regionScore = $this->regionScore($userQuery, $agency);
         $experienceScore = $this->experienceScore($userQuery, $agency);
         $salaryScore = $this->salaryScore($userQuery, $agency);
-        $jobScore = $this->jobScore($agency);
 
-        // 根拠が存在する軸だけで総合点を計算する
+        // v0.3:
+        // 公開求人件数はAgentの総求人保有力を表さないため、
+        // JobDD Scoreには含めない。
         $availableScores = array_filter(
             [
                 $occupationScore,
                 $regionScore,
                 $experienceScore,
                 $salaryScore,
-                $jobScore,
             ],
             fn($score) => $score !== null
         );
@@ -46,15 +48,18 @@ class ScoreService
             'region_score' => $regionScore,
             'experience_score' => $experienceScore,
             'salary_score' => $salaryScore,
-            'job_score' => $jobScore,
+
+            // 既存DB・Viewとの互換性のためキーは残す。
+            // v0.3ではScore計算には使用しない。
+            'job_score' => null,
+
             'reason' => $this->buildReason(
                 $occupationScore,
                 $regionScore,
                 $experienceScore,
-                $salaryScore,
-                $jobScore
+                $salaryScore
             ),
-            'score_model_version' => 'v0.2',
+            'score_model_version' => 'v0.3',
         ];
     }
 
@@ -75,9 +80,14 @@ class ScoreService
             return null;
         }
 
-        return $userQuery->occupation === $occupation
-            ? 100
-            : 25;
+        if (
+            $occupation === '全職種' ||
+            str_contains($occupation, $userQuery->occupation)
+        ) {
+            return 100;
+        }
+
+        return 25;
     }
 
     private function regionScore(
@@ -97,9 +107,15 @@ class ScoreService
             return null;
         }
 
-        return $userQuery->region === $region
-            ? 100
-            : 50;
+        if (
+            str_contains($region, '全国') ||
+            str_contains($region, '日本国内') ||
+            str_contains($region, $userQuery->region)
+        ) {
+            return 100;
+        }
+
+        return 50;
     }
 
     private function experienceScore(
@@ -163,31 +179,6 @@ class ScoreService
             : 25;
     }
 
-    private function jobScore(Agency $agency): ?int
-    {
-        $jobCountText = $this->verifiedFact(
-            $agency,
-            'public_job_count'
-        );
-
-        if ($jobCountText === null) {
-            return null;
-        }
-
-        if (!preg_match('/(\d+)/', $jobCountText, $matches)) {
-            return null;
-        }
-
-        $jobCount = (int) $matches[1];
-
-        return match (true) {
-            $jobCount >= 500 => 100,
-            $jobCount >= 300 => 75,
-            $jobCount >= 100 => 50,
-            default => 25,
-        };
-    }
-
     private function verifiedFact(
         Agency $agency,
         string $factKey
@@ -221,8 +212,7 @@ class ScoreService
         ?int $occupationScore,
         ?int $regionScore,
         ?int $experienceScore,
-        ?int $salaryScore,
-        ?int $jobScore
+        ?int $salaryScore
     ): string {
         $reasons = [];
 
@@ -231,7 +221,7 @@ class ScoreService
         }
 
         if ($regionScore === 100) {
-            $reasons[] = '確認済み情報で希望地域との一致が確認できる';
+            $reasons[] = '確認済み情報で希望地域への対応が確認できる';
         }
 
         if ($experienceScore === 100) {
@@ -240,10 +230,6 @@ class ScoreService
 
         if ($salaryScore === 100) {
             $reasons[] = '確認済み情報で希望年収への対応が確認できる';
-        }
-
-        if ($jobScore !== null && $jobScore >= 75) {
-            $reasons[] = '確認済みの公開求人件数が比較的多い';
         }
 
         if (empty($reasons)) {

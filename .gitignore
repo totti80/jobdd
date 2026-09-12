@@ -26,3 +26,6 @@ crawler/.venv/
 
 crawler/.venv/
 crawler/.venv-docker/
+
+crawler/__pycache__/
+crawler/data/

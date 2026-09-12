@@ -146,7 +146,7 @@ test('Coverage reportは18セルを出力する', function () {
   $output = Artisan::output();
 
   expect($result)->toBe(0)
-    ->and(substr_count($output, 'empty'))->toBeGreaterThanOrEqual(1)
+    ->and($output)->toContain('not_collected')
     ->and($output)->toContain('大阪府')
     ->and($output)->toContain('和歌山県')
     ->and($output)->toContain('施工管理');

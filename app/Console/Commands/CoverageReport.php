@@ -31,18 +31,21 @@ class CoverageReport extends Command
     );
 
     $this->table(
-      ['Region', 'Occupation', 'Direct', 'Agent', 'Platform', 'Direct Evidence', 'Agent Evidence', 'Platform Evidence', 'Latest Seen', 'Status'],
+      ['Region', 'Occupation', 'Direct', 'Agent', 'Platform', 'Direct Status', 'Agent Status', 'Platform Status', 'Direct Evidence', 'Agent Evidence', 'Platform Evidence', 'Latest Seen', 'Overall Status'],
       $rows->map(fn(array $row) => [
         $row['region'],
         $row['occupation'],
         $row['direct_count'],
         $row['agent_count'],
         $row['platform_count'],
+        $row['direct_status'],
+        $row['agent_status'],
+        $row['platform_status'],
         $row['direct_evidence_count'],
         $row['agent_evidence_count'],
         $row['platform_evidence_count'],
         $row['latest_seen_at'] ?? '未確認',
-        $row['status'],
+        $row['overall_status'],
       ])->all()
     );
 
@@ -70,15 +73,40 @@ class CoverageReport extends Command
     }
 
     $latest = $matched->pluck('last_seen_at')->filter()->max();
-    $hasThree = collect(['direct_count', 'agent_count', 'platform_count'])->every(fn(string $key) => $counts[$key] >= 3);
-    $hasAny = collect($counts)->filter(fn(int $count, string $key) => str_ends_with($key, '_count') && !str_ends_with($key, '_evidence_count'))->sum() > 0;
+    $directWasCollected = \App\Models\DirectReverseLookupCandidate::query()
+      ->where('region', $region)
+      ->where('occupation', $occupation)
+      ->exists();
+
+    $statuses = collect(['direct', 'agent', 'platform'])->mapWithKeys(
+      fn(string $type) => [$type . '_status' => $this->statusFor(
+        $counts[$type . '_count'],
+        $type === 'direct' ? $directWasCollected : $counts[$type . '_count'] > 0
+      )]
+    );
 
     return [
       'region' => $region,
       'occupation' => $occupation,
       ...$counts,
+      ...$statuses,
       'latest_seen_at' => $latest?->format('Y-m-d H:i:s'),
-      'status' => $hasThree ? 'sufficient' : ($hasAny ? 'thin' : 'empty'),
+      'overall_status' => $statuses->every(fn(string $status) => $status === 'sufficient')
+        ? 'sufficient'
+        : 'thin',
     ];
+  }
+
+  private function statusFor(int $count, bool $wasCollected): string
+  {
+    if ($count >= 3) {
+      return 'sufficient';
+    }
+
+    if ($count > 0) {
+      return 'thin';
+    }
+
+    return $wasCollected ? 'empty' : 'not_collected';
   }
 }

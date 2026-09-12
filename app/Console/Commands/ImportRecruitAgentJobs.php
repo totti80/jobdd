@@ -27,7 +27,7 @@ class ImportRecruitAgentJobs extends Command
      *
      * @var string
      */
-    protected $signature = 'crawler:import-recruit-agent-jobs';
+    protected $signature = 'crawler:import-recruit-agent-jobs {--path= : JSON filename under storage/app/private/crawler}';
 
     /**
      * The console command description.
@@ -52,9 +52,26 @@ class ImportRecruitAgentJobs extends Command
         |--------------------------------------------------------------------------
         */
 
-        $path = storage_path(
-            'app/private/' . self::JSON_PATH
-        );
+        $customPath = trim((string) $this->option('path'));
+
+        $isPartialImport = $customPath !== '';
+
+        if ($isPartialImport) {
+            // ファイル名のみ許可。 ../ などのパストラバーサルは禁止。
+            if (basename($customPath) !== $customPath) {
+                $this->error('Invalid --path. Specify filename only.');
+
+                return self::FAILURE;
+            }
+
+            $path = storage_path(
+                'app/private/crawler/' . $customPath
+            );
+        } else {
+            $path = storage_path(
+                'app/private/' . self::JSON_PATH
+            );
+        }
 
         if (! file_exists($path)) {
             $this->error(
@@ -63,6 +80,16 @@ class ImportRecruitAgentJobs extends Command
 
             return self::FAILURE;
         }
+
+        $this->line(
+            'import file: ' . basename($path)
+        );
+
+        $this->line(
+            'import mode: ' . ($isPartialImport ? 'partial' : 'full')
+        );
+
+        $this->newLine();
 
         /*
         |--------------------------------------------------------------------------
@@ -568,16 +595,31 @@ class ImportRecruitAgentJobs extends Command
             }
         }
 
-        if (($data['completed'] ?? false) === true) {
+        if (
+            ! $isPartialImport
+            && ($data['completed'] ?? false) === true
+        ) {
             $seenIds = collect($jobs)
-                ->map(fn(array $row) => $this->cleanString($row['external_id'] ?? $row['id'] ?? $row['source_url'] ?? null))
+                ->map(
+                    fn(array $row) =>
+                    $this->cleanString(
+                        $row['external_id']
+                            ?? $row['id']
+                            ?? $row['source_url']
+                            ?? null
+                    )
+                )
                 ->filter()
                 ->values();
 
             ApplicationRoute::query()
                 ->where('provider_key', 'recruit_agent')
                 ->where('availability_status', 'available')
-                ->when($seenIds->isNotEmpty(), fn($query) => $query->whereNotIn('external_id', $seenIds))
+                ->when(
+                    $seenIds->isNotEmpty(),
+                    fn($query) =>
+                    $query->whereNotIn('external_id', $seenIds)
+                )
                 ->update([
                     'availability_status' => 'unavailable',
                     'unavailable_at' => now(),

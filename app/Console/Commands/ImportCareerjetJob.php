@@ -36,7 +36,11 @@ class ImportCareerjetJob extends Command
 
             $json = Storage::disk('local')->get($path);
 
-            $jobs = json_decode($json, true);
+            $payload = json_decode($json, true);
+
+            $jobs = is_array($payload) && array_key_exists('jobs', $payload)
+                ? ($payload['jobs'] ?? [])
+                : $payload;
 
             if (!is_array($jobs)) {
                 throw new \RuntimeException('Invalid JSON.');
@@ -51,7 +55,7 @@ class ImportCareerjetJob extends Command
                 try {
                     $companyName = trim((string) ($job['company'] ?? ''));
                     $title = trim((string) ($job['title'] ?? ''));
-                    $location = trim((string) ($job['locations'] ?? ''));
+                    $location = trim((string) ($job['region'] ?? $job['locations'] ?? ''));
                     $description = (string) ($job['description'] ?? '');
                     $sourceUrl = trim((string) ($job['url'] ?? ''));
                     $externalId = trim((string) ($job['external_id'] ?? $job['id'] ?? ''));

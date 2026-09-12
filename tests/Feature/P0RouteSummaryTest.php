@@ -6,6 +6,7 @@ use App\Models\ApplicationRoute;
 use App\Models\Company;
 use App\Models\JobPosting;
 use App\Models\Platform;
+use App\Models\DirectReverseLookupCandidate;
 use App\Services\RouteSummaryService;
 use App\Services\OccupationNormalizer;
 use Illuminate\Support\Facades\Artisan;
@@ -138,4 +139,40 @@ test('Meitec importerを2回実行してもrouteが増えない', function () {
 
   expect($firstCount)->toBeGreaterThan(0)
     ->and($secondCount)->toBe($firstCount);
+});
+
+test('Coverage reportは18セルを出力する', function () {
+  $result = Artisan::call('jobdd:coverage-report');
+  $output = Artisan::output();
+
+  expect($result)->toBe(0)
+    ->and(substr_count($output, 'empty'))->toBeGreaterThanOrEqual(1)
+    ->and($output)->toContain('大阪府')
+    ->and($output)->toContain('和歌山県')
+    ->and($output)->toContain('施工管理');
+});
+
+test('Direct reverse lookupは未確認候補をconfirmedにしない', function () {
+  $company = Company::create([
+    'name' => '実在候補企業',
+    'website_url' => 'https://example.test',
+  ]);
+  $job = JobPosting::create([
+    'company_id' => $company->id,
+    'title' => '機械設計担当',
+    'occupation' => '機械設計',
+    'region' => '兵庫県神戸市',
+  ]);
+  ApplicationRoute::create([
+    'job_posting_id' => $job->id,
+    'route_type' => 'agent',
+    'provider_key' => 'recruit_agent',
+    'external_id' => 'test-direct-1',
+    'application_url' => 'https://agent.example.test/job/1',
+    'availability_status' => 'available',
+  ]);
+
+  Artisan::call('jobdd:build-direct-reverse-lookup');
+
+  expect(DirectReverseLookupCandidate::query()->sole()->direct_status)->toBe('unverified');
 });

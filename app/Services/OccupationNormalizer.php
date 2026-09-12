@@ -127,6 +127,29 @@ class OccupationNormalizer
         if ($this->containsAny(
             $title,
             [
+                '施工管理',
+                'プラント施工',
+                '設備施工',
+                '工場施工',
+                '設備工事',
+                'プラント工事',
+            ]
+        ) && $this->containsAny(
+            $title,
+            [
+                'プラント',
+                '設備',
+                '工場',
+                '機械',
+                '電気',
+            ]
+        )) {
+            return '施工管理';
+        }
+
+        if ($this->containsAny(
+            $title,
+            [
                 '機械設計',
                 '機構設計',
                 '筐体設計',
@@ -298,6 +321,27 @@ class OccupationNormalizer
         | ソフトウェア・IT
         |--------------------------------------------------------------------------
         */
+
+        if ($this->containsAny(
+            $description,
+            [
+                '施工管理',
+                'プラント施工管理',
+                '設備施工管理',
+                '工場設備施工管理',
+            ]
+        ) && $this->containsAny(
+            $description,
+            [
+                'プラント',
+                '設備',
+                '工場',
+                '機械',
+                '電気',
+            ]
+        )) {
+            return '施工管理';
+        }
 
         if ($this->containsAny(
             $description,

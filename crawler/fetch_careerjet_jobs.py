@@ -10,7 +10,7 @@ import requests
 API_URL = "https://search.api.careerjet.net/v4/query"
 REGIONS = ["大阪府", "兵庫県", "京都府", "滋賀県", "奈良県", "和歌山県"]
 OCCUPATIONS = ["機械設計", "電気設計", "施工管理"]
-PAGE_SIZE = min(int(os.getenv("CAREERJET_PAGE_SIZE", "100")), 100)
+PAGE_SIZE = min(int(os.getenv("CAREERJET_PAGE_SIZE", "20")), 20)
 MAX_PAGES = min(int(os.getenv("CAREERJET_MAX_PAGES", "3")), 3)
 REQUEST_INTERVAL = float(os.getenv("CAREERJET_REQUEST_INTERVAL", "1.0"))
 
@@ -28,7 +28,7 @@ def fetch_cell(session: requests.Session, region: str, occupation: str) -> list[
                 "page": page,
                 "page_size": PAGE_SIZE,
                 "user_ip": os.getenv("USER_IP", "127.0.0.1"),
-                "user_agent": os.getenv("USER_AGENT", "JobDD-MVP-Crawler/1.0"),
+                "user_agent": os.getenv("USER_AGENT", "Mozilla/5.0"),
             },
             auth=(os.environ["CAREERJET_API_KEY"], ""),
             headers={"Referer": "https://jobdd.jp/find-jobs/", "Accept": "application/json"},

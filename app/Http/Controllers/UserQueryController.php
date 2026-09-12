@@ -7,7 +7,9 @@ use App\Models\ScoreResult;
 use App\Models\UserQuery;
 use App\Services\QueryParserService;
 use App\Services\ScoreService;
+use App\Services\RouteSummaryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Models\InteractionLog;
 use App\Models\JobPosting;
 
@@ -25,14 +27,42 @@ class UserQueryController extends Controller
     ) {
         $validated = $request->validate([
             'raw_text' => ['required', 'string', 'max:2000'],
+            'occupation' => ['nullable', 'in:機械設計'],
+            'prefecture' => ['nullable', 'in:兵庫県'],
+            'salary' => ['nullable', 'regex:/^(こだわらない|[0-9]+万円以上)$/u'],
+            'experience' => ['nullable', 'regex:/^(未経験|[0-9]+年)$/u'],
         ]);
 
         $parsed = $parser->parse($validated['raw_text']);
 
+        if (! empty($validated['occupation'])) {
+            $parsed['occupation'] = $validated['occupation'];
+            $parsed['validation_domain'] = '製造・プラント系';
+        }
+
+        if (! empty($validated['prefecture'])) {
+            $parsed['region'] = $validated['prefecture'];
+        }
+
+        if (! empty($validated['experience']) && $validated['experience'] !== '未経験') {
+            $parsed['experience_years'] = (int) $validated['experience'];
+        }
+
+        if (! empty($validated['salary']) && $validated['salary'] !== 'こだわらない') {
+            $parsed['salary_min'] = (int) $validated['salary'];
+        }
+
         $userQuery = UserQuery::create([
+            'public_id' => (string) Str::uuid(),
+            'session_token' => Str::random(64),
             'raw_text' => $validated['raw_text'],
             ...$parsed,
         ]);
+
+        $request->session()->put(
+            'jobdd_query_token_' . $userQuery->public_id,
+            $userQuery->session_token
+        );
 
         $agencies = Agency::query()
             ->whereIn('id', [7, 8, 9])
@@ -49,11 +79,19 @@ class UserQueryController extends Controller
         }
 
         return redirect()
-            ->route('query.results', $userQuery);
+            ->route('query.results', ['userQuery' => $userQuery->public_id]);
     }
 
-    public function results(UserQuery $userQuery)
+    public function results(Request $request, UserQuery $userQuery, RouteSummaryService $routeSummaryService)
     {
+        abort_unless(
+            hash_equals(
+                (string) $userQuery->session_token,
+                (string) $request->session()->get('jobdd_query_token_' . $userQuery->public_id)
+            ),
+            404
+        );
+
         $results = $userQuery->scoreResults()
             ->with([
                 'agency.facts.source',
@@ -71,7 +109,7 @@ class UserQueryController extends Controller
             ->whereHas('company', function ($query) {
                 $query->where('name', '!=', 'A製作所');
             })
-            
+
             ->when(
                 $userQuery->occupation,
                 fn($query, $occupation) =>
@@ -166,6 +204,7 @@ class UserQueryController extends Controller
             'results' => $results,
             'jobPostings' => $jobPostings,
             'agentJobEvidence' => $agentJobEvidence,
+            'routeSummaries' => $routeSummaryService->summarize($userQuery),
         ]);
     }
 }

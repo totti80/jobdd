@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class UserQuery extends Model
 {
     protected $fillable = [
+        'public_id',
+        'session_token',
         'raw_text',
         'occupation',
         'industry',
@@ -16,6 +18,10 @@ class UserQuery extends Model
         'salary_min',
         'salary_max',
         'validation_domain',
+    ];
+
+    protected $casts = [
+        'public_id' => 'string',
     ];
 
     public function scoreResults(): HasMany

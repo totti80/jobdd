@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\OccupationNormalizer;
 
 class ImportCareerjetJob extends Command
 {
@@ -12,7 +13,7 @@ class ImportCareerjetJob extends Command
 
     protected $description = 'Import Careerjet job JSON into JobDD';
 
-    public function handle(): int
+    public function handle(OccupationNormalizer $occupationNormalizer): int
     {
         $runId = DB::table('crawl_runs')->insertGetId([
             'crawler_name' => 'careerjet_job_import',
@@ -53,12 +54,17 @@ class ImportCareerjetJob extends Command
                     $location = trim((string) ($job['locations'] ?? ''));
                     $description = (string) ($job['description'] ?? '');
                     $sourceUrl = trim((string) ($job['url'] ?? ''));
+                    $externalId = trim((string) ($job['external_id'] ?? $job['id'] ?? ''));
+                    $externalId = $externalId !== ''
+                        ? $externalId
+                        : hash('sha256', $sourceUrl);
 
                     $salaryMinRaw = $job['salary_min'] ?? null;
                     $salaryMaxRaw = $job['salary_max'] ?? null;
                     $salaryType = $job['salary_type'] ?? null;
 
                     if (!$companyName) {
+                        $this->warn('Skipped Careerjet job: company_name is missing.');
                         $skippedCount++;
                         continue;
                     }
@@ -84,6 +90,8 @@ class ImportCareerjetJob extends Command
                         $location,
                         $description,
                         $sourceUrl,
+                        $externalId,
+                        $occupationNormalizer,
                         $salaryMin,
                         $salaryMax,
                         &$createdCount,
@@ -131,8 +139,18 @@ class ImportCareerjetJob extends Command
                             'description' => $description,
                             'employment_type' => '正社員',
                             'source_url' => $sourceUrl,
+                            'provider_key' => 'careerjet',
+                            'external_id' => $externalId ?: null,
+                            'first_seen_at' => now(),
+                            'last_seen_at' => now(),
+                            'unavailable_at' => null,
                             'updated_at' => now(),
                         ];
+
+                        $jobPostingData['occupation'] = $occupationNormalizer->normalize(
+                            $title,
+                            $description
+                        );
 
                         if (!$jobPosting) {
                             $jobPostingData['created_at'] = now();
@@ -146,7 +164,9 @@ class ImportCareerjetJob extends Command
 
                             DB::table('job_postings')
                                 ->where('id', $jobPostingId)
-                                ->update($jobPostingData);
+                                ->update(array_merge($jobPostingData, [
+                                    'first_seen_at' => $jobPosting->first_seen_at ?: now(),
+                                ]));
 
                             $updatedCount++;
                         }
@@ -195,6 +215,10 @@ class ImportCareerjetJob extends Command
                         }
 
                         $route = DB::table('application_routes')
+                            ->where('provider_key', 'careerjet')
+                            ->where('external_id', $externalId)
+                            ->first()
+                            ?? DB::table('application_routes')
                             ->where('job_posting_id', $jobPostingId)
                             ->where('route_type', 'platform')
                             ->where('platform_id', $platform->id)
@@ -207,6 +231,11 @@ class ImportCareerjetJob extends Command
                             'platform_id' => $platform->id,
                             'application_url' => $sourceUrl,
                             'availability_status' => 'available',
+                            'provider_key' => 'careerjet',
+                            'external_id' => $externalId ?: null,
+                            'first_seen_at' => now(),
+                            'last_seen_at' => now(),
+                            'unavailable_at' => null,
                             'notes' => 'Careerjetで確認した求人です。',
                             'updated_at' => now(),
                         ];
@@ -220,7 +249,9 @@ class ImportCareerjetJob extends Command
                         } else {
                             DB::table('application_routes')
                                 ->where('id', $route->id)
-                                ->update($routeData);
+                                ->update(array_merge($routeData, [
+                                    'job_posting_id' => $jobPostingId,
+                                ]));
 
                             $updatedCount++;
                         }
@@ -248,6 +279,28 @@ class ImportCareerjetJob extends Command
                     'failed_count' => $failedCount,
                     'updated_at' => now(),
                 ]);
+
+            if (($data['completed'] ?? false) === true) {
+                $seenIds = collect($jobs)
+                    ->map(function (array $job) {
+                        $externalId = trim((string) ($job['external_id'] ?? $job['id'] ?? ''));
+                        $sourceUrl = trim((string) ($job['url'] ?? ''));
+
+                        return $externalId !== '' ? $externalId : hash('sha256', $sourceUrl);
+                    })
+                    ->filter()
+                    ->values();
+
+                DB::table('application_routes')
+                    ->where('provider_key', 'careerjet')
+                    ->where('availability_status', 'available')
+                    ->when($seenIds->isNotEmpty(), fn($query) => $query->whereNotIn('external_id', $seenIds))
+                    ->update([
+                        'availability_status' => 'unavailable',
+                        'unavailable_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+            }
 
             $this->info('Careerjet jobs imported successfully.');
 

@@ -15,6 +15,17 @@ class ApplicationRoute extends Model
         'application_url',
         'availability_status',
         'notes',
+        'provider_key',
+        'external_id',
+        'first_seen_at',
+        'last_seen_at',
+        'unavailable_at',
+    ];
+
+    protected $casts = [
+        'first_seen_at' => 'datetime',
+        'last_seen_at' => 'datetime',
+        'unavailable_at' => 'datetime',
     ];
 
     public function jobPosting(): BelongsTo

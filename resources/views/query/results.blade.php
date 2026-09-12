@@ -4,8 +4,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>応募経路比較 | JobDD</title>
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
 
-  <title>紹介会社TOP3 | JobDD</title>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto max-w-6xl px-6 py-5">
+      <p class="text-xl font-bold tracking-tight text-blue-950 md:text-3xl">JobDD | 応募経路Decision Support</p>
+      <p class="mt-2 text-sm text-slate-600 md:text-base">公開情報とEvidenceを整理し、最終判断はあなた自身が行います。</p>
+    </div>
+  </header>
+  <main class="mx-auto max-w-6xl px-6 py-10">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold tracking-tight text-blue-950 md:text-4xl">応募経路を比較</h1>
+      <p class="mt-4 text-base leading-7 text-slate-600">Direct / Agent / Platformを同じ基準で確認できます。件数やScoreだけで優劣を決めません。</p>
+    </div>
+    <section class="mb-8 rounded-2xl bg-blue-50 px-6 py-5 ring-1 ring-blue-100">
+      <div class="mb-3 text-sm font-bold text-blue-950">今回の入力条件</div>
+      <div class="flex flex-wrap gap-3 text-sm"><span class="rounded-full bg-white px-4 py-2 ring-1 ring-blue-100">職種：<strong>{{ $userQuery->occupation ?? '未指定' }}</strong></span><span class="rounded-full bg-white px-4 py-2 ring-1 ring-blue-100">地域：<strong>{{ $userQuery->region ?? '未指定' }}</strong></span><span class="rounded-full bg-white px-4 py-2 ring-1 ring-blue-100">経験：<strong>{{ $userQuery->experience_years !== null ? $userQuery->experience_years . '年' : '未指定' }}</strong></span><span class="rounded-full bg-white px-4 py-2 ring-1 ring-blue-100">希望年収：<strong>{{ $userQuery->salary_min !== null ? $userQuery->salary_min . '万円以上' : '未指定' }}</strong></span></div>
+    </section>
+    <section class="grid gap-5 md:grid-cols-3">
+      @foreach ($routeSummaries as $summary)
+      <article class="flex flex-col rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+        <p class="text-sm font-bold uppercase tracking-wide text-blue-600">{{ $summary['label'] }}</p>
+        <h2 class="mt-2 text-2xl font-bold text-blue-950">{{ $summary['route_type'] === 'direct' ? '企業へ直接応募' : ($summary['route_type'] === 'agent' ? '人材紹介会社経由' : '求人媒体経由') }}</h2>
+        <p class="mt-4 text-sm leading-6 text-slate-600">{{ $summary['summary_reason'] }}</p>
+        <dl class="mt-5 grid grid-cols-2 gap-3 text-sm">
+          <div class="rounded-xl bg-slate-50 p-3">
+            <dt class="text-slate-500">確認済み</dt>
+            <dd class="mt-1 font-bold">{{ $summary['evidence_count'] }}件</dd>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-3">
+            <dt class="text-slate-500">候補数</dt>
+            <dd class="mt-1 font-bold">{{ $summary['candidate_count'] }}件</dd>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-3">
+            <dt class="text-slate-500">職種</dt>
+            <dd class="mt-1 font-bold">{{ $summary['occupation_match'] === true ? '一致' : '未確認' }}</dd>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-3">
+            <dt class="text-slate-500">地域</dt>
+            <dd class="mt-1 font-bold">{{ $summary['region_match'] === true ? '一致' : '未確認' }}</dd>
+          </div>
+        </dl>
+        <div class="mt-5 text-sm">
+          <p class="font-semibold text-slate-800">根拠</p>
+          <p class="mt-1 text-slate-600">応募可能URL、情報源、最終確認日を候補ごとに表示します。</p>
+          <p class="mt-3 font-semibold text-slate-800">未確認</p>
+          <ul class="mt-1 list-disc pl-5 text-slate-600">@foreach ($summary['missing_items'] as $item)<li>{{ $item }}</li>@endforeach</ul>
+        </div>
+        @if (count($summary['representative_candidates']) > 0)<div class="mt-5 space-y-3">
+          <p class="font-semibold text-blue-950">代表候補</p>@foreach ($summary['representative_candidates'] as $candidate)<div class="rounded-xl border border-slate-200 p-3 text-sm">
+            <p class="font-semibold">{{ $candidate['company_name'] ?? ($candidate['agency_name'] ?? $candidate['platform_name'] ?? '候補') }}</p>
+            <p class="mt-1 text-slate-700">{{ $candidate['title'] }}</p>
+            <p class="mt-1 text-slate-500">{{ $candidate['region'] ?: '地域未確認' }}</p>@if ($candidate['application_url'])<a class="mt-2 inline-block font-semibold text-blue-600 underline" href="{{ $candidate['application_url'] }}" target="_blank" rel="noopener noreferrer">外部リンクを確認</a>@endif
+          </div>@endforeach
+        </div>@endif
+        <a href="#candidates-{{ $summary['route_type'] }}" class="mt-6 inline-flex justify-center rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700">この経路の候補を見る</a>
+      </article>
+      @endforeach
+    </section>
+    @foreach ($routeSummaries as $summary)
+    <section id="candidates-{{ $summary['route_type'] }}" class="mt-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+      <h2 class="text-xl font-bold text-blue-950">{{ $summary['label'] }}の今回条件に近い公開求人</h2>
+      <p class="mt-2 text-sm text-slate-600">Evidence Level: 公開URLと確認日がある候補のみ表示</p>@if (count($summary['representative_candidates']) === 0)<p class="mt-4 text-sm text-slate-600">現在確認できるEvidenceがありません。求人が存在しないことを意味しません。</p>@else<div class="mt-4 grid gap-4 md:grid-cols-3">@foreach ($summary['representative_candidates'] as $candidate)<article class="rounded-xl border border-slate-200 p-4">
+          <p class="font-semibold text-slate-900">{{ $candidate['company_name'] ?? ($candidate['agency_name'] ?? $candidate['platform_name'] ?? '候補') }}</p>
+          <h3 class="mt-1 font-bold">{{ $candidate['title'] }}</h3>
+          <p class="mt-2 text-sm text-slate-600">地域：{{ $candidate['region'] ?: '未確認' }}</p>
+          <p class="text-sm text-slate-600">年収：{{ $candidate['salary_min'] ? $candidate['salary_min'] . '万円以上' : '未確認' }}</p>
+          <p class="mt-2 text-xs text-slate-500">確認日：{{ optional($candidate['confirmed_at'])->format('Y-m-d') ?: '未確認' }}</p>@if ($candidate['application_url'])<a class="mt-3 inline-block text-sm font-semibold text-blue-600 underline" href="{{ $candidate['application_url'] }}" target="_blank" rel="noopener noreferrer">応募可能URLを開く</a>@endif
+        </article>@endforeach</div>@endif
+    </section>
+    @endforeach
+    <div class="mt-8 rounded-2xl bg-blue-50 px-6 py-5 ring-1 ring-blue-100">
+      <p class="font-semibold text-blue-950">RecommendではなくDecision Support</p>
+      <p class="mt-1 text-sm leading-6 text-slate-600">JobDDは比較材料とEvidenceを整理します。最終判断はご本人が行います。</p>
+    </div>
+  </main>
+</body>
+
+</html>
+<!-- Legacy Agent-only result screen retained for reference but excluded from public rendering.
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Legacy result screen | JobDD</title>
 
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -35,7 +123,7 @@
       {{-- 見出し --}}
       <div>
         <h1 class="text-3xl font-bold tracking-tight text-blue-950 md:text-4xl">
-          あなたに合う人材紹介会社を比較
+          Legacy agent result screen
         </h1>
 
         <p class="mt-4 text-base leading-7 text-slate-600">
@@ -670,3 +758,4 @@
 </body>
 
 </html>
+-->

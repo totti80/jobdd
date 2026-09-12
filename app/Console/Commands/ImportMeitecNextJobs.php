@@ -108,6 +108,10 @@ class ImportMeitecNextJobs extends Command
                 (string) ($jobData['source_url'] ?? '')
             );
 
+            $externalId = trim(
+                (string) ($jobData['external_id'] ?? $jobData['id'] ?? $sourceUrl)
+            );
+
             if (
                 $companyName === ''
                 || $title === ''
@@ -130,6 +134,7 @@ class ImportMeitecNextJobs extends Command
                         $title,
                         $region,
                         $sourceUrl,
+                        $externalId,
                         &$createdCompanies,
                         &$createdJobs,
                         &$updatedJobs,
@@ -163,49 +168,65 @@ class ImportMeitecNextJobs extends Command
                         // JobPosting
                         // ----------------------------------------
 
-                        $jobPosting = JobPosting::updateOrCreate(
-                            [
-                                'company_id' => $company->id,
-                                'title' => $title,
-                                'region' => (
-                                    $region !== ''
-                                    ? $region
-                                    : null
-                                ),
-                            ],
-                            [
-                                'occupation' => (
-                                    $jobData['occupation']
-                                    ?? '機械設計'
-                                ),
+                        $jobPosting = JobPosting::query()
+                            ->where('provider_key', 'meitec_next')
+                            ->where('external_id', $externalId)
+                            ->first()
+                            ?? JobPosting::updateOrCreate(
+                                [
+                                    'company_id' => $company->id,
+                                    'title' => $title,
+                                    'region' => (
+                                        $region !== ''
+                                        ? $region
+                                        : null
+                                    ),
+                                ],
+                                [
+                                    'occupation' => (
+                                        $jobData['occupation']
+                                        ?? '機械設計'
+                                    ),
 
-                                'industry' => null,
+                                    'industry' => null,
 
-                                'salary_min' => (
-                                    $jobData['salary_min']
-                                    ?? null
-                                ),
+                                    'salary_min' => (
+                                        $jobData['salary_min']
+                                        ?? null
+                                    ),
 
-                                'salary_max' => (
-                                    $jobData['salary_max']
-                                    ?? null
-                                ),
+                                    'salary_max' => (
+                                        $jobData['salary_max']
+                                        ?? null
+                                    ),
 
-                                'description' => (
-                                    $jobData['description']
-                                    ?? null
-                                ),
+                                    'description' => (
+                                        $jobData['description']
+                                        ?? null
+                                    ),
 
-                                'employment_type' => (
-                                    $jobData['employment_type']
-                                    ?? null
-                                ),
+                                    'employment_type' => (
+                                        $jobData['employment_type']
+                                        ?? null
+                                    ),
 
-                                'source_url' => (
-                                    $sourceUrl
-                                ),
-                            ]
-                        );
+                                    'source_url' => (
+                                        $sourceUrl
+                                    ),
+                                    'provider_key' => 'meitec_next',
+                                    'external_id' => $externalId,
+                                    'first_seen_at' => now(),
+                                    'last_seen_at' => now(),
+                                    'unavailable_at' => null,
+                                ]
+                            );
+
+                        $jobPosting->update([
+                            'provider_key' => 'meitec_next',
+                            'external_id' => $externalId,
+                            'last_seen_at' => now(),
+                            'unavailable_at' => null,
+                        ]);
 
                         if ($jobPosting->wasRecentlyCreated) {
                             $createdJobs++;
@@ -217,36 +238,36 @@ class ImportMeitecNextJobs extends Command
                         // ApplicationRoute
                         // ----------------------------------------
 
-                        $route = ApplicationRoute::updateOrCreate(
-                            [
-                                'job_posting_id' => (
-                                    $jobPosting->id
-                                ),
+                        $route = ApplicationRoute::query()
+                            ->where('provider_key', 'meitec_next')
+                            ->where('external_id', $externalId)
+                            ->first()
+                            ?? ApplicationRoute::query()
+                            ->where('job_posting_id', $jobPosting->id)
+                            ->where('route_type', 'agent')
+                            ->where('agency_id', self::MEITEC_NEXT_AGENCY_ID)
+                            ->first();
 
-                                'route_type' => (
-                                    'agent'
-                                ),
+                        $routeData = [
+                            'job_posting_id' => $jobPosting->id,
+                            'route_type' => 'agent',
+                            'agency_id' => self::MEITEC_NEXT_AGENCY_ID,
+                            'platform_id' => null,
+                            'application_url' => $sourceUrl,
+                            'availability_status' => 'available',
+                            'notes' => 'メイテックネクスト公開求人から自動取得',
+                            'first_seen_at' => $route?->first_seen_at ?? now(),
+                            'last_seen_at' => now(),
+                            'unavailable_at' => null,
+                            'provider_key' => 'meitec_next',
+                            'external_id' => $externalId,
+                        ];
 
-                                'agency_id' => (
-                                    self::MEITEC_NEXT_AGENCY_ID
-                                ),
-                            ],
-                            [
-                                'platform_id' => null,
-
-                                'application_url' => (
-                                    $sourceUrl
-                                ),
-
-                                'availability_status' => (
-                                    'available'
-                                ),
-
-                                'notes' => (
-                                    'メイテックネクスト公開求人から自動取得'
-                                ),
-                            ]
-                        );
+                        if ($route) {
+                            $route->update($routeData);
+                        } else {
+                            $route = ApplicationRoute::create($routeData);
+                        }
 
                         if ($route->wasRecentlyCreated) {
                             $createdRoutes++;
@@ -273,6 +294,22 @@ class ImportMeitecNextJobs extends Command
                     $e->getMessage()
                 );
             }
+        }
+
+        if (($data['completed'] ?? false) === true) {
+            $seenIds = collect($jobs)
+                ->map(fn(array $row) => trim((string) ($row['external_id'] ?? $row['id'] ?? $row['source_url'] ?? '')))
+                ->filter()
+                ->values();
+
+            ApplicationRoute::query()
+                ->where('provider_key', 'meitec_next')
+                ->where('availability_status', 'available')
+                ->when($seenIds->isNotEmpty(), fn($query) => $query->whereNotIn('external_id', $seenIds))
+                ->update([
+                    'availability_status' => 'unavailable',
+                    'unavailable_at' => now(),
+                ]);
         }
 
         $this->newLine();

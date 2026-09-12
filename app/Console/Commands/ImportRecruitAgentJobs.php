@@ -182,6 +182,10 @@ class ImportRecruitAgentJobs extends Command
                     $row['source_url'] ?? null
                 );
 
+                $externalId = $this->cleanString(
+                    $row['external_id'] ?? $row['id'] ?? $sourceUrl
+                );
+
                 if (
                     ! $companyName
                     || ! $title
@@ -249,6 +253,7 @@ class ImportRecruitAgentJobs extends Command
                     $title,
                     $region,
                     $sourceUrl,
+                    $externalId,
                     $occupation,
                     $description,
                     $employmentType,
@@ -318,6 +323,10 @@ class ImportRecruitAgentJobs extends Command
                     */
 
                     $jobPosting = JobPosting::query()
+                        ->where('provider_key', 'recruit_agent')
+                        ->where('external_id', $externalId)
+                        ->first()
+                        ?? JobPosting::query()
                         ->where(
                             'company_id',
                             $company->id
@@ -358,6 +367,11 @@ class ImportRecruitAgentJobs extends Command
                             'employment_type' => $employmentType,
 
                             'source_url' => $sourceUrl,
+                            'provider_key' => 'recruit_agent',
+                            'external_id' => $externalId,
+                            'first_seen_at' => now(),
+                            'last_seen_at' => now(),
+                            'unavailable_at' => null,
                         ]);
 
                         $jobsCreated++;
@@ -431,6 +445,12 @@ class ImportRecruitAgentJobs extends Command
                             );
                         }
 
+                        $updateData['provider_key'] = 'recruit_agent';
+                        $updateData['external_id'] = $externalId;
+                        $updateData['last_seen_at'] = now();
+                        $updateData['unavailable_at'] = null;
+                        $jobPosting->update($updateData);
+
                         $jobsUpdated++;
                     }
 
@@ -447,17 +467,15 @@ class ImportRecruitAgentJobs extends Command
 
                     $route = ApplicationRoute::query()
                         ->where(
-                            'job_posting_id',
-                            $jobPosting->id
+                            'provider_key',
+                            'recruit_agent'
                         )
-                        ->where(
-                            'route_type',
-                            'agent'
-                        )
-                        ->where(
-                            'agency_id',
-                            self::AGENCY_ID
-                        )
+                        ->where('external_id', $externalId)
+                        ->first()
+                        ?? ApplicationRoute::query()
+                        ->where('job_posting_id', $jobPosting->id)
+                        ->where('route_type', 'agent')
+                        ->where('agency_id', self::AGENCY_ID)
                         ->first();
 
                     if (! $route) {
@@ -483,12 +501,21 @@ class ImportRecruitAgentJobs extends Command
 
                             'notes' =>
                             'Recruit Agent public job',
+                            'provider_key' => 'recruit_agent',
+                            'external_id' => $externalId,
+                            'first_seen_at' => now(),
+                            'last_seen_at' => now(),
+                            'unavailable_at' => null,
                         ]);
 
                         $routesCreated++;
                     } else {
 
                         $route->update([
+                            'job_posting_id' => $jobPosting->id,
+                            'route_type' => 'agent',
+                            'agency_id' => self::AGENCY_ID,
+                            'platform_id' => null,
                             'application_url' =>
                             $sourceUrl,
 
@@ -497,6 +524,10 @@ class ImportRecruitAgentJobs extends Command
 
                             'notes' =>
                             'Recruit Agent public job',
+                            'last_seen_at' => now(),
+                            'unavailable_at' => null,
+                            'provider_key' => 'recruit_agent',
+                            'external_id' => $externalId,
                         ]);
 
                         $routesUpdated++;
@@ -535,6 +566,22 @@ class ImportRecruitAgentJobs extends Command
                     )
                 );
             }
+        }
+
+        if (($data['completed'] ?? false) === true) {
+            $seenIds = collect($jobs)
+                ->map(fn(array $row) => $this->cleanString($row['external_id'] ?? $row['id'] ?? $row['source_url'] ?? null))
+                ->filter()
+                ->values();
+
+            ApplicationRoute::query()
+                ->where('provider_key', 'recruit_agent')
+                ->where('availability_status', 'available')
+                ->when($seenIds->isNotEmpty(), fn($query) => $query->whereNotIn('external_id', $seenIds))
+                ->update([
+                    'availability_status' => 'unavailable',
+                    'unavailable_at' => now(),
+                ]);
         }
 
         /*

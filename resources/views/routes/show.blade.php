@@ -824,52 +824,35 @@
     document.querySelectorAll('.contact-link').forEach((link) => {
 
       link.addEventListener('click', async (event) => {
-
-        event.preventDefault();
-
         const destination = link.href;
+        const payload = JSON.stringify({
+          user_query_id: Number(link.dataset.userQueryId) || null,
+          application_route_id: Number(link.dataset.applicationRouteId),
+        });
 
         try {
-
-          const response = await fetch('{{ route("interaction.contact-clicked") }}', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-              user_query_id: Number(link.dataset.userQueryId),
-              application_route_id: Number(link.dataset.applicationRouteId),
-            }),
-          });
-
-          if (response.ok) {
-
-            console.log('contact_clicked saved', {
-              userQueryId: link.dataset.userQueryId,
-              applicationRouteId: link.dataset.applicationRouteId,
+          if (navigator.sendBeacon) {
+            const body = new Blob([payload], {
+              type: 'application/json'
             });
-
-            window.location.href = destination;
-
+            navigator.sendBeacon('{{ route("interaction.contact-clicked") }}', body);
           } else {
-
-            console.error(
-              'contact_clicked failed:',
-              response.status
-            );
-
+            fetch('{{ route("interaction.contact-clicked") }}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+              },
+              body: payload,
+              keepalive: true,
+            });
           }
-
         } catch (error) {
-
-          console.error(
-            'contact_clicked fetch error:',
-            error
-          );
-
+          console.error('contact_clicked best effort failed:', error);
         }
+
+        window.location.href = destination;
       });
     });
   </script>

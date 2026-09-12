@@ -13,8 +13,10 @@ class RouteComparisonController extends Controller
 
         $jobPosting->load([
             'company',
-            'applicationRoutes.agency',
-            'applicationRoutes.platform',
+            'applicationRoutes' => fn($query) => $query
+                ->where('availability_status', 'available')
+                ->whereNull('unavailable_at')
+                ->with(['agency', 'platform']),
         ]);
 
         $jobPosting->setRelation(
@@ -29,16 +31,20 @@ class RouteComparisonController extends Controller
                 ->values()
         );
 
-        InteractionLog::create([
-            'user_query_id' => $request->integer('userQuery'),
-            'event_type' => 'route_opened',
-            'target_type' => 'job_posting',
-            'target_id' => $jobPosting->id,
-            'metadata' => [
-                'route_count' => $jobPosting->applicationRoutes->count(),
-            ],
-            'occurred_at' => now(),
-        ]);
+        try {
+            InteractionLog::create([
+                'user_query_id' => $request->integer('userQuery') ?: null,
+                'event_type' => 'route_opened',
+                'target_type' => 'job_posting',
+                'target_id' => $jobPosting->id,
+                'metadata' => [
+                    'route_count' => $jobPosting->applicationRoutes->count(),
+                ],
+                'occurred_at' => now(),
+            ]);
+        } catch (\Throwable) {
+            // Route display must not fail when analytics storage is unavailable.
+        }
 
         $routeGroups = [
             'direct' => $jobPosting->applicationRoutes
@@ -64,8 +70,10 @@ class RouteComparisonController extends Controller
     {
         $jobPosting->load([
             'company',
-            'applicationRoutes.agency',
-            'applicationRoutes.platform',
+            'applicationRoutes' => fn($query) => $query
+                ->where('availability_status', 'available')
+                ->whereNull('unavailable_at')
+                ->with(['agency', 'platform']),
         ]);
 
         return view('routes.action', [

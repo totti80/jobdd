@@ -19,6 +19,17 @@ class JobPosting extends Model
         'description',
         'employment_type',
         'source_url',
+        'provider_key',
+        'external_id',
+        'first_seen_at',
+        'last_seen_at',
+        'unavailable_at',
+    ];
+
+    protected $casts = [
+        'first_seen_at' => 'datetime',
+        'last_seen_at' => 'datetime',
+        'unavailable_at' => 'datetime',
     ];
 
     public function company(): BelongsTo

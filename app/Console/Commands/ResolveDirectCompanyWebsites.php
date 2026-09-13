@@ -13,7 +13,7 @@ class ResolveDirectCompanyWebsites extends Command
         {--output=storage/app/private/crawler/direct_company_website_review.json}
         {--limit=5}';
 
-    protected $description = 'Extract website seed candidates from stored evidence only; no HTTP or DB updates.';
+    protected $description = 'Resolve website candidates from stored evidence, with search fallback for unresolved companies.';
 
     public function handle(CompanyWebsiteResolver $discovery): int
     {
@@ -51,6 +51,8 @@ class ResolveDirectCompanyWebsites extends Command
             File::ensureDirectoryExists(dirname($output), 0700);
             File::replace($output, json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n", 0600);
             $this->info('Review companies: '.count($results));
+            $calls = array_map(fn ($row) => $row['search']['api_calls'], $results);
+            $this->info('Search API calls: '.(in_array(null, $calls, true) ? 'unknown (provider failure)' : array_sum($calls)));
             $this->info($output);
 
             return self::SUCCESS;

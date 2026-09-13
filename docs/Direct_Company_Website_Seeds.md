@@ -1,6 +1,6 @@
 # 企業公式サイトSeed候補の根拠付き抽出
 
-Master v3.3、Decision Log v2.7、Direct Lookup Queue / Official Page Discoveryの前提を維持する。今回のCommandは**取得済みデータを読むだけ**であり、HTTP・検索・DB更新・公式性の自動確認は行わない。
+Master v3.3、Decision Log v2.7、Direct Lookup Queue / Official Page Discoveryの前提を維持する。既定のCommandは**取得済みデータを読むだけ**であり、HTTP・検索・DB更新・公式性の自動確認は行わない。未解決企業向けの検索Provider接続点は追加したが、無料Providerの採用はOPENで、既定実装は必ずskipする。詳細は[Search fallback](Direct_Company_Website_Search.md)。
 
 ## 現状調査
 

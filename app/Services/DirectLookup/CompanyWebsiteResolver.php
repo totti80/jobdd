@@ -10,12 +10,12 @@ use App\Models\Platform;
 use App\Models\Source;
 use Illuminate\Support\Facades\File;
 
-/** Offline extraction only. A stored URL is evidence of an observation, not official verification. */
+/** Stored evidence first, then search candidates only. Never verifies official identity. */
 class CompanyWebsiteResolver
 {
     private array $blockedHosts = [];
 
-    public function __construct()
+    public function __construct(private CompanyWebsiteSearchProviderInterface $search)
     {
         $urls = Agency::pluck('website_url')->merge(Platform::pluck('website_url'))
             ->merge(ApplicationRoute::whereIn('route_type', ['agent', 'platform'])->pluck('application_url'));
@@ -128,14 +128,67 @@ class CompanyWebsiteResolver
             }
         }
 
+        $searchResult = ['status' => 'not_needed', 'api_calls' => 0];
+        if (! $found) {
+            $searchResult = $this->searchFallback($company, $found, $checkedAt);
+        }
+
         return [
             'company_id' => $company->id, 'company_name' => $company->name,
             'source_candidate_ids' => array_values(array_unique(array_filter(array_merge([$record['candidate_id'] ?? null], array_column($record['discovery_candidates'], 'candidate_id'))))),
             'discovery_candidates' => $record['discovery_candidates'],
             'status' => 'unverified', 'review_status' => 'needs_review',
-            'resolution_status' => $found ? 'candidates_found' : 'not_resolved',
+            'resolution_status' => $found ? 'candidates_found' : ($searchResult['status'] === 'search_failed' ? 'search_failed' : 'not_resolved'),
+            'search' => $searchResult,
             'checked_at' => $checkedAt, 'website_candidates' => array_values($found), 'warnings' => $warnings,
         ];
+    }
+
+    private function searchFallback(Company $company, array &$found, string $checkedAt): array
+    {
+        try {
+            $response = $this->search->search($company->name);
+        } catch (\Throwable) {
+            // Never expose provider exceptions, which may contain credentials.
+            return ['status' => 'search_failed', 'reason' => 'provider_exception', 'api_calls' => null];
+        }
+        if (($response['status'] ?? null) !== 'searched') {
+            unset($response['results']);
+
+            return $response;
+        }
+        foreach (array_slice($response['results'] ?? [], 0, 5) as $result) {
+            if (! is_array($result) || ! is_string($result['url'] ?? null)
+                || ! is_string($result['title'] ?? null) || ! is_string($result['snippet'] ?? null)
+                || ! is_int($result['rank'] ?? null) || $result['rank'] < 1) {
+                continue;
+            }
+            $url = $this->websiteUrl($result['url']);
+            if (! $url || isset($found[$url])) {
+                continue;
+            }
+            $name = preg_replace('/[\s　]+/u', '', $company->name);
+            $titleMatch = str_contains(preg_replace('/[\s　]+/u', '', $result['title']), $name);
+            $snippetMatch = str_contains(preg_replace('/[\s　]+/u', '', $result['snippet']), $name);
+            $score = ($titleMatch ? 2 : 0) + ($snippetMatch ? 1 : 0);
+            $reason = 'Search candidate only; '.($titleMatch ? 'company name matches title' : ($snippetMatch ? 'company name matches snippet' : 'provider-ranked result; employer identity not matched'));
+            $evidence = [
+                'source_type' => 'search_api', 'source_url' => $result['url'], 'found_via' => 'search_fallback',
+                'evidence_field' => 'results[].url', 'provider' => $response['provider'], 'query' => $response['query'],
+                'searched_at' => $response['searched_at'], 'rank' => $result['rank'],
+            ];
+            $found[$url] = [
+                'company_id' => $company->id, 'company_name' => $company->name,
+                'url' => $url, 'candidate_url' => $url, ...$evidence,
+                'title' => $result['title'], 'snippet' => $result['snippet'], 'candidate_score' => $score,
+                'reason' => $reason, 'confidence_reason' => $reason,
+                'review_status' => 'needs_review', 'checked_at' => $checkedAt, 'evidence' => [$evidence],
+            ];
+        }
+        uasort($found, fn ($a, $b) => [$b['candidate_score'], -$b['rank']] <=> [$a['candidate_score'], -$a['rank']]);
+        unset($response['results']);
+
+        return $response;
     }
 
     private function extractStructured(array $data, string $companyName, array $evidence, callable $add, string $path, int $depth = 0): void
@@ -233,7 +286,7 @@ class CompanyWebsiteResolver
             return null;
         }
         $host = strtolower(parse_url($url, PHP_URL_HOST));
-        foreach (array_merge($this->blockedHosts, ['jobviewtrack.com', 'careerjet.jp', 'ee-ties.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com', 'youtube.com', 'youtu.be', 'tiktok.com', 'google.com', 'google.co.jp', 'bing.com', 'yahoo.co.jp', 'hrmos.co', 'herp.careers', 'greenhouse.io', 'greenhouse.com', 'lever.co', 'myworkdayjobs.com', 'myworkdaysite.com', 'talentio.com', 'talentio.co.jp', 'jobcan.jp']) as $blocked) {
+        foreach (array_merge($this->blockedHosts, ['wikipedia.org', 'xn--pckua2a7gp15o89zb.com', 'jobviewtrack.com', 'careerjet.jp', 'ee-ties.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'x.com', 'twitter.com', 'youtube.com', 'youtu.be', 'tiktok.com', 'google.com', 'google.co.jp', 'bing.com', 'yahoo.co.jp', 'hrmos.co', 'herp.careers', 'greenhouse.io', 'greenhouse.com', 'lever.co', 'myworkdayjobs.com', 'myworkdaysite.com', 'talentio.com', 'talentio.co.jp', 'jobcan.jp']) as $blocked) {
             if ($host === $blocked || str_ends_with($host, '.'.$blocked)) {
                 return null;
             }

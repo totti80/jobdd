@@ -31,3 +31,5 @@ crawler/__pycache__/
 crawler/data/
 !crawler/data/
 !crawler/data/direct_reverse_lookup_slice.json
+
+crawler/data/

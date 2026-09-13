@@ -51,7 +51,6 @@ class BuildDirectReverseLookupCandidates extends Command
             [
               'matching_job_count' => $cellJobs->count(),
               'website_url' => $company->website_url,
-              'direct_status' => 'unverified',
               'last_seen_at' => now(),
             ]
           );

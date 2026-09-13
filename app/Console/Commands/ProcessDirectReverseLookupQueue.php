@@ -32,6 +32,13 @@ class ProcessDirectReverseLookupQueue extends Command
 
     private function process(array $record, OccupationNormalizer $normalizer): void
     {
+        // Generated discovery records are pending work, never reviewed evidence.
+        if (($record['status'] ?? null) === 'unverified') {
+            $this->line('Official verification pending; skipped: '.($record['company_name'] ?? 'unknown'));
+
+            return;
+        }
+
         foreach (['company_name', 'region', 'occupation', 'official_site_url', 'official_recruit_url', 'status'] as $field) {
             if (blank($record[$field] ?? null)) {
                 throw new \InvalidArgumentException("Missing {$field}");

@@ -238,6 +238,8 @@ class ImportMeitecNextJobs extends Command
                         // ApplicationRoute
                         // ----------------------------------------
 
+                        app(\App\Services\DirectLookup\CompanyUrlEvidence::class)->save($jobPosting->id, $company->id, $jobData, 'meitec_next');
+
                         $route = ApplicationRoute::query()
                             ->where('provider_key', 'meitec_next')
                             ->where('external_id', $externalId)

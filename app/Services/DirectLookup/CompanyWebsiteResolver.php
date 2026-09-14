@@ -62,6 +62,17 @@ class CompanyWebsiteResolver
             $add($source->url, $this->evidence('official_source', $source->url, "sources:{$source->id}", 'url'));
         }
         foreach ($jobs as $job) {
+            foreach ($job->company_url_evidence ?? [] as $entry) {
+                if (($entry['company_name'] ?? null) !== $company->name) {
+                    continue;
+                }
+                $add($entry['raw_value'] ?? null, [
+                    ...$entry, 'source_type' => 'imported_company_url',
+                    'found_via' => 'saved_company_url_evidence',
+                    'evidence_field' => $entry['raw_field'],
+                    'evidence_locator' => "job_postings:{$job->id}.company_url_evidence",
+                ]);
+            }
             if (is_string($job->description) && is_string($job->source_url) && $job->source_url !== '') {
                 $this->extractText($job->description, $company->name, $this->evidence('job_description', $job->source_url, "job_postings:{$job->id}", 'description'), $add);
             }
@@ -113,6 +124,15 @@ class CompanyWebsiteResolver
                 foreach (['company_website_url', 'company_url', 'employer_url', 'official_site_url', 'website_url'] as $field) {
                     if (isset($row[$field])) {
                         $add($row[$field], [...$evidence, 'evidence_field' => $field, 'found_via' => 'explicit_company_field']);
+                    }
+                }
+                foreach ($row['company_url_evidence'] ?? [] as $entry) {
+                    if (is_array($entry) && ($entry['company_name'] ?? null) === $company->name
+                        && is_string($entry['source_url'] ?? null) && is_string($entry['raw_field'] ?? null)) {
+                        $add($entry['raw_value'] ?? null, [
+                            ...$evidence, ...$entry, 'source_type' => 'crawler_json',
+                            'found_via' => 'saved_company_url_evidence', 'evidence_field' => $entry['raw_field'],
+                        ]);
                     }
                 }
                 $this->extractStructured($row, $company->name, $evidence, $add, '$');

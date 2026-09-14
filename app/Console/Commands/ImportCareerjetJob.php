@@ -89,6 +89,7 @@ class ImportCareerjetJob extends Command
                     );
 
                     DB::transaction(function () use (
+                        $job,
                         $companyName,
                         $title,
                         $location,
@@ -174,6 +175,8 @@ class ImportCareerjetJob extends Command
 
                             $updatedCount++;
                         }
+
+                        app(\App\Services\DirectLookup\CompanyUrlEvidence::class)->save($jobPostingId, $companyId, $job, 'careerjet');
 
                         /*
                          * 3. Source

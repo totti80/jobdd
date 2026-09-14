@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import requests
+from company_url_evidence import extract_company_url_evidence
 from bs4 import BeautifulSoup
 
 
@@ -601,6 +602,7 @@ def normalize_jobposting(
     # ----------------------------------------
 
     return {
+        "company_url_evidence": extract_company_url_evidence(data, company_name, source_url, "meitec_next"),
 
         "external_id": (
             external_id
@@ -776,6 +778,10 @@ def fetch_job_detail(
         )
 
         return None
+
+    job["company_url_evidence"] = extract_company_url_evidence(
+        data, job.get("company_name"), url, "meitec_next", html=html
+    )
 
     print(
         f"[{index}/{total}] "

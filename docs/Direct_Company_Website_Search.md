@@ -47,3 +47,7 @@ fake Providerで既存Seedのskip、未解決のみ呼出、除外、候補順�
 ```bash
 ./vendor/bin/sail artisan jobdd:resolve-direct-company-websites --limit=5 --output=storage/app/private/crawler/direct_company_website_search_review.json
 ```
+
+## 追記：crawler / importer Evidence保存
+
+企業URLの取得時保存とDB経由の再利用を追加した。既存説明中の「未保存」は追加前の調査結果。現在の方式・制約・実データ結果は[Crawler企業URL Evidence保存](Crawler_Company_URL_Evidence.md)を参照。公式性確認やDirect confirmed条件は変更しない。

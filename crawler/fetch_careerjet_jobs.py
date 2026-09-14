@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
+from company_url_evidence import extract_company_url_evidence
 
 
 API_URL = "https://search.api.careerjet.net/v4/query"
@@ -38,6 +39,9 @@ def fetch_cell(session: requests.Session, region: str, occupation: str) -> list[
         data = response.json()
         page_jobs = data.get("jobs", [])
         for job in page_jobs:
+            job["company_url_evidence"] = extract_company_url_evidence(
+                job, job.get("company"), job.get("url"), "careerjet"
+            )
             job["region"] = region
             job["search_occupation"] = occupation
             jobs.append(job)

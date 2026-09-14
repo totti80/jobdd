@@ -81,3 +81,7 @@ source_type：company_record / candidate_record / official_source / job_descript
 これは既存データ内のURL観測を確認した結果であり、当該サイトの現在の公式性や公開求人・直接応募可否を確認した結果ではない。
 
 検証：Sail全テスト85 passed / 318 assertions。差分自己レビューとgit diff --checkを実施。
+
+## 追記：crawler / importer Evidence保存
+
+企業URLの取得時保存とDB経由の再利用を追加した。既存説明中の「未保存」は追加前の調査結果。現在の方式・制約・実データ結果は[Crawler企業URL Evidence保存](Crawler_Company_URL_Evidence.md)を参照。公式性確認やDirect confirmed条件は変更しない。

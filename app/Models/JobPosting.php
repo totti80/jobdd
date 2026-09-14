@@ -10,6 +10,7 @@ class JobPosting extends Model
 {
     protected $fillable = [
         'company_id',
+        'company_url_evidence',
         'title',
         'occupation',
         'industry',
@@ -27,6 +28,7 @@ class JobPosting extends Model
     ];
 
     protected $casts = [
+        'company_url_evidence' => 'array',
         'first_seen_at' => 'datetime',
         'last_seen_at' => 'datetime',
         'unavailable_at' => 'datetime',

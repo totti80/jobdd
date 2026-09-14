@@ -276,6 +276,7 @@ class ImportRecruitAgentJobs extends Command
                 */
 
                 DB::transaction(function () use (
+                    $row,
                     $companyName,
                     $title,
                     $region,
@@ -491,6 +492,8 @@ class ImportRecruitAgentJobs extends Command
                     | という応募経路を保存する。
                     |
                     */
+
+                    app(\App\Services\DirectLookup\CompanyUrlEvidence::class)->save($jobPosting->id, $company->id, $row, 'recruit_agent');
 
                     $route = ApplicationRoute::query()
                         ->where(

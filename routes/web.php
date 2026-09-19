@@ -1,12 +1,13 @@
 <?php
 
+use App\Http\Controllers\AgencyFactReviewController;
 use App\Http\Controllers\IconController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserQueryController;
+use App\Http\Controllers\JobDecisionController;
 use App\Http\Controllers\RouteComparisonController;
+use App\Http\Controllers\UserQueryController;
 use App\Models\InteractionLog;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AgencyFactReviewController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/admin/agency-facts/{agencyFact}/verify', [AgencyFactReviewController::class, 'verify'])
@@ -34,7 +35,7 @@ Route::post('/interaction/contact-clicked', function (Request $request) {
             'metadata' => null,
             'occurred_at' => now(),
         ]);
-    } catch (\Throwable) {
+    } catch (Throwable) {
         // Logging must never block an external application link.
     }
 
@@ -83,7 +84,12 @@ Route::get('/routes/{jobPosting}', [RouteComparisonController::class, 'show'])
 Route::get('/routes/{jobPosting}/action', [RouteComparisonController::class, 'action'])
     ->name('routes.action');
 
-Route::get('/query/{userQuery:public_id}/jobs', \App\Http\Controllers\JobDecisionController::class)
+Route::get('/query/{userQuery:public_id}/jobs/compare', [JobDecisionController::class, 'compare'])
+    ->name('query.jobs.compare');
+Route::get('/query/{userQuery:public_id}/jobs/{job}', [JobDecisionController::class, 'show'])
+    ->whereNumber('job')->name('query.jobs.show');
+
+Route::get('/query/{userQuery:public_id}/jobs', JobDecisionController::class)
     ->name('query.jobs');
 
 Route::get('/query', [UserQueryController::class, 'create'])->name('query.create');
@@ -114,4 +120,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('icon.update');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

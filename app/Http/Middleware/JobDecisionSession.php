@@ -10,7 +10,7 @@ class JobDecisionSession extends StartSession
 {
     public function handle($request, Closure $next)
     {
-        if (! $request->routeIs('query.jobs')) {
+        if (! $request->routeIs('query.jobs', 'query.jobs.show', 'query.jobs.compare')) {
             return parent::handle($request, $next);
         }
 

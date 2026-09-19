@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgencyFactReviewController;
 use App\Http\Controllers\IconController;
 use App\Http\Controllers\JobDecisionController;
+use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\RouteComparisonController;
 use App\Http\Controllers\UserQueryController;
 use App\Models\InteractionLog;
@@ -83,6 +84,9 @@ Route::get('/routes/{jobPosting}', [RouteComparisonController::class, 'show'])
 
 Route::get('/routes/{jobPosting}/action', [RouteComparisonController::class, 'action'])
     ->name('routes.action');
+
+Route::get('/jobs/start', [JobSearchController::class, 'create'])->name('jobs.start');
+Route::post('/jobs/start', [JobSearchController::class, 'store'])->name('jobs.store');
 
 Route::get('/query/{userQuery:public_id}/jobs/compare', [JobDecisionController::class, 'compare'])
     ->name('query.jobs.compare');

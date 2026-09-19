@@ -30,6 +30,7 @@
   </header>
 
   <main class="mx-auto max-w-6xl px-6 py-10">
+    <a href="{{ route('jobs.start') }}" class="mb-6 inline-block rounded-lg bg-blue-800 px-5 py-3 font-semibold text-white">新しい求人比較を試す</a>
 
     {{-- ページ上部 --}}
     <div class="mb-8 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">

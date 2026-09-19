@@ -14,6 +14,7 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 @include('query.partials.selection-header', ['heading' => '求人詳細と根拠'])
 <main class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
+    <p class="text-sm leading-6 text-slate-600">他の求人と比較するには、<a href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]).'#compare-selection' }}" class="font-semibold text-blue-800 underline">一覧で比較する求人を選ぶ</a>。応募方法はこのページの最後にあります。</p>
     <article data-job-id="{{ $job->id }}" class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
         <p class="break-words font-semibold text-slate-600">{{ $item['company_name'] }}</p>
         <h2 class="mt-2 break-words text-2xl font-bold text-blue-950">{{ $job->title }}</h2>

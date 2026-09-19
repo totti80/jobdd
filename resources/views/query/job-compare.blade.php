@@ -9,7 +9,7 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
 @include('query.partials.selection-header', ['heading' => '選んだ求人を比較する'])
 <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-    <p class="mb-5 text-sm leading-6 text-slate-600">選択した順に並べています。未確認は不一致を意味しません。根拠を確認し、あなた自身で判断してください。</p>
+    <p class="mb-5 text-sm leading-6 text-slate-600">どれが一番かをJobDDが決めるのではなく、確認できた情報を横に並べています。選択した順に表示します。未確認は、求人本文から確認できない情報です。合わないという意味ではありません。</p>
     <div class="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-slate-200" tabindex="0" role="region" aria-label="選んだ求人の比較表（横にスクロールできます）">
         <table class="w-full min-w-[720px] table-fixed border-collapse text-left text-sm">
             <caption class="sr-only">{{ count($items) }}求人の掲載情報と希望条件との比較</caption>

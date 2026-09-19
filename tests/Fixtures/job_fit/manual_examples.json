@@ -1,0 +1,912 @@
+{
+  "provenance": "Batch 4.4 manually frozen expectations, copied from read-only Batch 5 baseline. Unsupported action reason follows the newer Batch 5 prompt; old labels are not changed. No DB dependency.",
+  "cases": [
+    {
+      "job": {
+        "id": 230,
+        "title": "No.3307【兵庫/神戸市】鉄道車両の機械設計/無期雇用派遣 機構設計",
+        "description": "仕事内容\n企業名\n株式会社メイテック\n求人名\nNo.3307【兵庫/神戸市】鉄道車両の機械設計/無期雇用派遣\n仕事の内容\n鉄道車両の機械設計をご担当いただきます。\n車両業界に携わり、設計補助業務を通じて経験を積んだ後は、業界を問わず設計・開発業務へステップアップすることが可能です。\n【担当工程】鉄道車両の台車設計・振動解析\n【製品】在来線/私鉄車両/新幹線\n【ツール/開発環境】Excel、PowerPoint、Word、Auto-CAD、Solidworks\n募集職種\nNo.3307【兵庫/神戸市】鉄道車両の機械設計/無期雇用派遣\n求めている人材\n必要な経験・能力等\n【必須】周囲と円滑にコミュニケーションが取れる方、鉄道車両に興味のある方\n【歓迎】CADの使用経験や知識をお持ちの方\n【魅力ポイント】\n●常に新しいことに挑戦し続けることができます！\n●ご自身のキャリアに合わせて業務変更相談可能！\n●入社後に研修受講可能！（分野問わず内容充実）\n●懇親会などエンジニア同士のコミュニティも充実（参加自由）\n学歴・資格\n学歴：大学院 大学 高専 短大 専修学校 高校\n語学力：\n資格：\n職場環境\n配属先情報\n30名程度のチーム",
+        "occupation": "機械設計",
+        "region": "兵庫県",
+        "salary_min": 547,
+        "salary_max": 747,
+        "source_url": "https://www.r-agent.com/viewjob/jk01ae1019cb8b5f3c/",
+        "provider_key": "recruit_agent",
+        "last_seen_at": "2026-09-12 14:11:18",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "機械設計",
+        "region": "兵庫県",
+        "salary_min": 500,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "solidworks",
+            "action": "use"
+          },
+          {
+            "fact_key": "nx",
+            "action": "use"
+          }
+        ],
+        "hard_axes": []
+      },
+      "facts": [
+        {
+          "id": 375,
+          "job_posting_id": 230,
+          "source_id": null,
+          "fact_category": "tool",
+          "fact_key": "solidworks",
+          "fact_value": "Solidworks",
+          "normalized_value": "SolidWorks",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "... 【担当工程】鉄道車両の台車設計・振動解析 【製品】在来線/私鉄車両/新幹線 【ツール/開発環境】Excel、PowerPoint、Word、Auto-CAD、Solidworks 募集職種 No.3307【兵庫/神戸市】鉄道車両の機械設計/無期雇用派遣 求めている人材 必要な経験・能力等 【必須】周囲と円滑にコミュニケーションが取れる方...",
+          "observed_at": "2026-09-19 09:53:15",
+          "created_at": "2026-09-19 09:52:18",
+          "updated_at": "2026-09-19 09:53:15"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "match",
+          "reason_code": "same_occupation"
+        },
+        {
+          "key": "region",
+          "status": "match",
+          "reason_code": "same_prefecture"
+        },
+        {
+          "key": "salary",
+          "status": "match",
+          "reason_code": "salary_floor_meets"
+        },
+        {
+          "key": "tool_use:solidworks",
+          "status": "match",
+          "reason_code": "confirmed_tool_use"
+        },
+        {
+          "key": "tool_use:nx",
+          "status": "unknown",
+          "reason_code": "presence_not_found"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 5,
+        "confirmed_matches": 4,
+        "confirmed_mismatches": 0,
+        "unknowns": 1,
+        "hard_mismatch_keys": []
+      }
+    },
+    {
+      "job": {
+        "id": 8,
+        "title": "製品開発（機械設計）",
+        "description": "【職種】\n機械設計\n【仕事内容】\n当社製品（組合せ計量機）のカスタマイズ設計・応用開発業務を担当します。モータ、エアシリンダなどを組み合わせた設計、試作機の組立・検証を通した開発設計実務、また、必要に応じて開発機、受注機の現地納品、設置、調整の一連の業務を担当いただきます。※顧客要望に合わせたシステム製品の機械設計、検証、応用開発に関する設計実務\n\n【やりがい】日本だけでなく、海外展開でも成功を納めています。特にアメリカやEU等の先進国で高い伸びを見せています。同社の流通・産機システムには国内外で圧倒的なシェアを持つ製品や特許取得済みの技術も多く、高い性能と実績を持ちます。単品の計量機だけでなく、運ぶ、計る、検査する、包むの一連の工程を提案できることが強み。\n【製品例】たとえば柿ピーが柿の種とピーナッツが常に一定の割合になるように計れるのはイシダの組み合わせ計量器のおかげです。\n【応募条件】\n・製品設計の実務経験３年以上を有する方（機械製品の仕様検討の経験がある方）\n・CAD設計が可能な方（Solidworks、AutoCAD ME10等）\n【歓迎】：モーター、エア機器等を用いた機械設計\n■以下の設計経験をお持ちの方の面接実績あり\n・量産型の民生品の開発設計、食品・医薬・FA製造ライン等で用いられる省力化機器、ロボット、自動化ライン装置等、搬送機器（ベルトコンベヤ、フィルム搬送等）、PLCシーケンス駆動の自動機、産業ロボットを含む機械装置、半導体製造装置\n【休日休暇】\n土・日・祝日、慶弔休暇　年末年始　夏期休暇　有給休暇\n【年間休日数】\n118日\n【就業時間】\n08:30～17:15\n【企業概要】\n1893 年の創業以来、民間初のハカリメーカーとしてはかる・包む・検査する・表示するの領域を軸足に事業を展開\n■【生産ライン支援システム】計量・包装・製函・封函をはじめ、その前後を統合したシステム　■【物流支援システム】モノの入庫・出庫の確実性と効率化　■【小売流通支援システム】入庫・検品・計量・包装・値付・精算や価格の一元管理などストアオートメーション支援システム\n■【パイオニア企業】日本初の民間ハカリメーカーとしてスタートして以来、業界のパイオニアとして1969年には業界初の電子計算ハカリ、1972年には世界初のコンピュータスケールなど次々と高度な新テクノロジーを開発、さらに1980年代には他社に先駆けて世界へ進出するなど、常に業界をリードし続けてきました。\n■【一体提案】運ぶ、分ける、計る、検査する、包装するの一連の機器をシステムとしてラインごと一括提案。近年は工場の内部の製造ラインを一括で請け負い提案することも。こちらの一括提案は売上、利益の規模が圧倒的であり好業績を下支えしています。\n【従業員数】\n3,968人",
+        "occupation": "機械設計",
+        "region": "滋賀県",
+        "salary_min": 450,
+        "salary_max": 770,
+        "source_url": "https://www.m-next.jp/job/mechanical/mechanicaldesign/148259/",
+        "provider_key": "meitec_next",
+        "last_seen_at": "2026-09-12 03:02:18",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "機械設計",
+        "region": "滋賀県",
+        "salary_min": 600,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "autocad",
+            "action": "use"
+          }
+        ],
+        "hard_axes": []
+      },
+      "facts": [
+        {
+          "id": 25,
+          "job_posting_id": 8,
+          "source_id": null,
+          "fact_category": "tool",
+          "fact_key": "autocad",
+          "fact_value": "AutoCAD",
+          "normalized_value": "AutoCAD",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...せ計量器のおかげです。 【応募条件】 ・製品設計の実務経験３年以上を有する方（機械製品の仕様検討の経験がある方） ・CAD設計が可能な方（Solidworks、AutoCAD ME10等） 【歓迎】：モーター、エア機器等を用いた機械設計 ■以下の設計経験をお持ちの方の面接実績あり ・量産型の民生品の開発設計、食品・医薬・FA製造ライ...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-18 14:54:38",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 26,
+          "job_posting_id": 8,
+          "source_id": null,
+          "fact_category": "tool",
+          "fact_key": "solidworks",
+          "fact_value": "Solidworks",
+          "normalized_value": "SolidWorks",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...るのはイシダの組み合わせ計量器のおかげです。 【応募条件】 ・製品設計の実務経験３年以上を有する方（機械製品の仕様検討の経験がある方） ・CAD設計が可能な方（Solidworks、AutoCAD ME10等） 【歓迎】：モーター、エア機器等を用いた機械設計 ■以下の設計経験をお持ちの方の面接実績あり ・量産型の民生品の開発設計、食品・医...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-18 14:54:38",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 27,
+          "job_posting_id": 8,
+          "source_id": null,
+          "fact_category": "tool_system",
+          "fact_key": "plc",
+          "fact_value": "PLC",
+          "normalized_value": "PLC",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...あり ・量産型の民生品の開発設計、食品・医薬・FA製造ライン等で用いられる省力化機器、ロボット、自動化ライン装置等、搬送機器（ベルトコンベヤ、フィルム搬送等）、PLCシーケンス駆動の自動機、産業ロボットを含む機械装置、半導体製造装置 【休日休暇】 土・日・祝日、慶弔休暇 年末年始 夏期休暇 有給休暇 【年間休日数】 118日...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-18 14:54:38",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 28,
+          "job_posting_id": 8,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "sequence_control",
+          "fact_value": "シーケンス",
+          "normalized_value": "シーケンス",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...・量産型の民生品の開発設計、食品・医薬・FA製造ライン等で用いられる省力化機器、ロボット、自動化ライン装置等、搬送機器（ベルトコンベヤ、フィルム搬送等）、PLCシーケンス駆動の自動機、産業ロボットを含む機械装置、半導体製造装置 【休日休暇】 土・日・祝日、慶弔休暇 年末年始 夏期休暇 有給休暇 【年間休日数】 118日 【就業時...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-18 14:54:38",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 29,
+          "job_posting_id": 8,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "fa",
+          "fact_value": "FA",
+          "normalized_value": "FA",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...utoCAD ME10等） 【歓迎】：モーター、エア機器等を用いた機械設計 ■以下の設計経験をお持ちの方の面接実績あり ・量産型の民生品の開発設計、食品・医薬・FA製造ライン等で用いられる省力化機器、ロボット、自動化ライン装置等、搬送機器（ベルトコンベヤ、フィルム搬送等）、PLCシーケンス駆動の自動機、産業ロボットを含む機...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-18 14:54:38",
+          "updated_at": "2026-09-19 09:53:14"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "match",
+          "reason_code": "same_occupation"
+        },
+        {
+          "key": "region",
+          "status": "match",
+          "reason_code": "same_prefecture"
+        },
+        {
+          "key": "salary",
+          "status": "unknown",
+          "reason_code": "salary_overlap"
+        },
+        {
+          "key": "tool_use:autocad",
+          "status": "unknown",
+          "reason_code": "context_not_responsibility"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 4,
+        "confirmed_matches": 2,
+        "confirmed_mismatches": 0,
+        "unknowns": 2,
+        "hard_mismatch_keys": []
+      }
+    },
+    {
+      "job": {
+        "id": 20,
+        "title": "【大阪】次世代製品開発のメカエンジニア～超精密機械加工とエレクトロニクス技術の融合～",
+        "description": "【職種】\n機械設計\n【仕事内容】\n＜職務内容＞\n同社の優位性ある精密機械部品、小型モータ、各種アクチュエータ、センサー等活用し、次世代FA・ロボティクスや車載、医療向け新製品の開発をお任せします。\n\n＜採用の背景＞\n同社は、ミネベアの超精密機械加工技術と、ミツミ電機のエレクトロニクス技術を融合させ、IoT時代に貢献する「エレクトロ・メカニクス・ソリューションズR」プロバイダーとして、様々な世界シェアトップ製品を保有し世界のものづくりに邁進しております。\nミネベアのボールベアリング、航空機用ロッドエンドベアリングやピボットアッセンブリーなどの機械加工品事業を原点に、モーター、ライティングデバイス、計測機器などの電子機器事業に活躍、ミツミ電機の半導体デバイスや光デバイス、機構部品、高周波部品、電源部品が加わり、更にユーシンの車載用モジュール事業、ABLICのアナログ半導体、オムロンのMEMS事業などの統合により、新たな戦略分野への挑戦を進めています。\n現在私共では、これら部品デバイスからモジュール製品を組合せ、計測制御・通信技術や、更にはAIやIoT技術を実装して、「エレクトロ・メカニクス・ソリューションズR」の次世代新製品開発により、車載・産業・ゲーム・医療ヘルスケア分野等でのお客様の課題解決を実現します。今回関西に開発拠点を設けて社外の大学・企業とも連携を強化し、スマート・アシスト・リモートをキーワードに新製品開発を加速する計画です。共に挑戦頂ける意欲ある方を募集致します。\n\n「エレクトロ・メカニクス・ソリューションズR」\nミネベアの超精密機械加工技術と、ミツミ電機のエレクトロニクス技術を融合させ、IoT時代に貢献する* エレクトロ メカニクス ソリューションズは、ミネベアミツミ株式会社の登録商標です。登録番号は5863395号です。\n\n＜会社の特徴＞\n◆更なる成長を続ける「カギ」　～オーガニック成長×M＆A成長～\n同社は1951年に日本で初めてのミニチュアベアリング専業メーカーとして誕生し、この約70年間、積極的なM&Aを経て企業を拡大してまいりました。\n同社の売上高は、2022年度においては1兆円を達成し、9期連続で過去最高を更新中。\n今後同社が目指す目標である、2029年3月期における売上高2.5兆円、営業利益2500億円の達成にむけ、「オーガニック（自律）成長」と「積極的なM&A」を両輪で行ってまいります。\n◆積極的な海外進出\n同社は世界シェアNo.1の製品を多数有する国内屈指のグローバルメーカーです。世界27ヶ国で93製造拠点を展開。グループ全体の生産高に占める海外比率は約9割となります。\n◆More Info...\nhttps://www.minebeamitsumi.com/corp/recruit/recruitinfo/more/\n【応募条件】\n※応募時は証明写真の提出をお願い致します。\n【必須】\n■機構設計開発経験\n【歓迎】\n■3D CADでの機構設計開発経験（目安5年以上）\n■構造解析、機構解析、樹脂流動解析、磁場解析などCAEの活用経験\n■歯車、モータ、センサなど機械要素を組み合わせた機構、モールド部品や金属部品の設計経験\n■新製品開発業務経験（目安5年以上）\n■小型家電製品、産業用機器等の電気、ソフト、機構メカ、機能安全設計経験\n■電気HW/SW、計測制御、機構系など各分野技術クロスファンクションチームでの開発経験\n■市場性検討や競合分析、技術戦略など上流工程からの先行開発経験\n【休日休暇】\n完全週休2日制(土日祝)、夏季・年末年始休暇、年次有給休暇、慶弔休暇、その他特別休暇制度\n【年間休日数】\n121日\n【就業時間】\n08:45～17:30\n【企業概要】\n【ベアリングに代表される超精密機械加工製品からモーター、センサー、半導体、無線技術等のエレクトロニクス製品を扱うミネベアミツミグループ】\n■機械加工品事業：ミニチュア・小径ボールベアリング、ピボットアッセンブリー、電磁クラッチ・電磁ブレーキ 等\n■電子機器事業：ステッピングモーター、回転角センサ、液晶用ライティングデバイス 、ひずみゲージ、フォースセンサー、圧力計、トルク変換器、ベクトルセンサー、デジタル指示計、引張圧縮試験機 等\n■ミツミ事業：ミツミ電機の展開する各種電子部品（電源IC、リチウムイオン電池用保護IC、オートフォーカス用アクチュエーター、通信機器、アンテナ、パワーインダクタ、トランス、コイル、DCミニモータ、ACアダプタ、内蔵型電源 等） \n■ユーシン事業：キーセット、電動ステアリングロック、ドアハンドル等の自動車製品、スイッチ等の産業機器製品、電気錠等の住宅製品　等\n\n\n【従業員数】\n81,383人",
+        "occupation": "機械設計",
+        "region": "大阪府",
+        "salary_min": 450,
+        "salary_max": 850,
+        "source_url": "https://www.m-next.jp/job/mechanical/mechanicaldesign/230220/",
+        "provider_key": "meitec_next",
+        "last_seen_at": "2026-09-12 03:02:18",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "機械設計",
+        "region": "大阪府",
+        "salary_min": null,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "cae",
+            "action": "analyze"
+          }
+        ],
+        "hard_axes": []
+      },
+      "facts": [
+        {
+          "id": 75,
+          "job_posting_id": 20,
+          "source_id": null,
+          "fact_category": "analysis",
+          "fact_key": "cae",
+          "fact_value": "CAE",
+          "normalized_value": "CAE",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...をお願い致します。 【必須】 ■機構設計開発経験 【歓迎】 ■3D CADでの機構設計開発経験（目安5年以上） ■構造解析、機構解析、樹脂流動解析、磁場解析などCAEの活用経験 ■歯車、モータ、センサなど機械要素を組み合わせた機構、モールド部品や金属部品の設計経験 ■新製品開発業務経験（目安5年以上） ■小型家電製品、産業用...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 76,
+          "job_posting_id": 20,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "mechanism_design",
+          "fact_value": "機構設計",
+          "normalized_value": "機構設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...eamitsumi.com/corp/recruit/recruitinfo/more/ 【応募条件】 ※応募時は証明写真の提出をお願い致します。 【必須】 ■機構設計開発経験 【歓迎】 ■3D CADでの機構設計開発経験（目安5年以上） ■構造解析、機構解析、樹脂流動解析、磁場解析などCAEの活用経験 ■歯車、モータ、センサ...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 77,
+          "job_posting_id": 20,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "fa",
+          "fact_value": "FA",
+          "normalized_value": "FA",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "【職種】 機械設計 【仕事内容】 ＜職務内容＞ 同社の優位性ある精密機械部品、小型モータ、各種アクチュエータ、センサー等活用し、次世代FA・ロボティクスや車載、医療向け新製品の開発をお任せします。 ＜採用の背景＞ 同社は、ミネベアの超精密機械加工技術と、ミツミ電機のエレクトロニクス技術を融合させ、IoT時代に貢献する「エレ...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "match",
+          "reason_code": "same_occupation"
+        },
+        {
+          "key": "region",
+          "status": "match",
+          "reason_code": "same_prefecture"
+        },
+        {
+          "key": "analyze:cae",
+          "status": "unknown",
+          "reason_code": "unsupported_tier2_requirement"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 3,
+        "confirmed_matches": 2,
+        "confirmed_mismatches": 0,
+        "unknowns": 1,
+        "hard_mismatch_keys": []
+      }
+    },
+    {
+      "job": {
+        "id": 39,
+        "title": "【京都】センサ等の製品開発における機構設計(係長～専門職）",
+        "description": "【職種】\n機械設計\n【仕事内容】\n■新製品の企画立案、構想設計\n■プロジェクト管理\n■光学機能製品の光学設計、及び筐体、機構設計\n■機能性評価、治具の構想設計\n■各種評価試験、及び対策\n■製品の量産立ち上げ確認\n■特注設計対応、設計変更対応\n\n（※参考　当社使用CAD：SolidWorks、Creo Elements/Direct）\n\n【応募条件】\n■製品設計経験をお持ちの方\n\n【歓迎】\n■射出成形部品設計\n■超音波溶接、接着設計\n■自動車運転免許\n■光学設計、照明設計\n【休日休暇】\n慶弔休暇、年末年始、夏期休暇、有給休暇、完全週休2日制（土・日・祝）、夏期休暇、年末年始休暇、リフレッシュ休暇（勤続5年毎）\n【年間休日数】\n127日\n【就業時間】\n09:00～17:30\n【企業概要】\n■ファクトリー・オートメーション用光電センサ関連機器、装置の企画開発・製造・販売等\n【取扱い製品】：光電センサ、変位センサ、画像センサ・画像検査装置、LED照明・電源、その他\n【拠点】：本社（京都）、営業所（東京、海老名、名古屋、神戸、九州）\n【関係会社】：オプテックス、シーシーエス、オーパルオプテックス\n\n・東証一部上場のオプテックス株式会社の産業用光電センサ部門を分社化して設立されました。その後、世界No.1 産業用センサメーカーであるSICK AG 社（独）と提携し、ジック・オプテックスを合弁会社として設立しました。最先端のセンサ技術が集積する日本市場での技術動向を踏まえながら、短期間での開発が可能な強みを活かし、主に光電センサ・レーザ変位センサの開発を担っています。\n※上記、売上、従業員数の数値は連結での数値です。\n【従業員数】\n234人",
+        "occupation": "機械設計",
+        "region": "京都府",
+        "salary_min": 550,
+        "salary_max": 900,
+        "source_url": "https://www.m-next.jp/job/mechanical/mechanicaldesign/242121/",
+        "provider_key": "meitec_next",
+        "last_seen_at": "2026-09-12 03:02:18",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "機械設計",
+        "region": "京都府",
+        "salary_min": 600,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "solidworks",
+            "action": "use"
+          }
+        ],
+        "hard_axes": []
+      },
+      "facts": [
+        {
+          "id": 114,
+          "job_posting_id": 39,
+          "source_id": null,
+          "fact_category": "tool",
+          "fact_key": "solidworks",
+          "fact_value": "SolidWorks",
+          "normalized_value": "SolidWorks",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...、及び筐体、機構設計 ■機能性評価、治具の構想設計 ■各種評価試験、及び対策 ■製品の量産立ち上げ確認 ■特注設計対応、設計変更対応 （※参考 当社使用CAD：SolidWorks、Creo Elements/Direct） 【応募条件】 ■製品設計経験をお持ちの方 【歓迎】 ■射出成形部品設計 ■超音波溶接、接着設計 ■自動車運転免許 ...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 115,
+          "job_posting_id": 39,
+          "source_id": null,
+          "fact_category": "tool",
+          "fact_key": "creo",
+          "fact_value": "Creo",
+          "normalized_value": "Creo",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...■機能性評価、治具の構想設計 ■各種評価試験、及び対策 ■製品の量産立ち上げ確認 ■特注設計対応、設計変更対応 （※参考 当社使用CAD：SolidWorks、Creo Elements/Direct） 【応募条件】 ■製品設計経験をお持ちの方 【歓迎】 ■射出成形部品設計 ■超音波溶接、接着設計 ■自動車運転免許 ■光学設計...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 116,
+          "job_posting_id": 39,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "mechanism_design",
+          "fact_value": "機構設計",
+          "normalized_value": "機構設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "【職種】 機械設計 【仕事内容】 ■新製品の企画立案、構想設計 ■プロジェクト管理 ■光学機能製品の光学設計、及び筐体、機構設計 ■機能性評価、治具の構想設計 ■各種評価試験、及び対策 ■製品の量産立ち上げ確認 ■特注設計対応、設計変更対応 （※参考 当社使用CAD：SolidWorks、Creo Elements/Direc...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 117,
+          "job_posting_id": 39,
+          "source_id": null,
+          "fact_category": "process_stage",
+          "fact_key": "concept_design",
+          "fact_value": "構想設計",
+          "normalized_value": "構想設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "【職種】 機械設計 【仕事内容】 ■新製品の企画立案、構想設計 ■プロジェクト管理 ■光学機能製品の光学設計、及び筐体、機構設計 ■機能性評価、治具の構想設計 ■各種評価試験、及び対策 ■製品の量産立ち上げ確認 ■特注設計対応、設計変更対応 （※参考 当社使用CAD：SolidWorks、Creo Elements/Direc...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "match",
+          "reason_code": "same_occupation"
+        },
+        {
+          "key": "region",
+          "status": "match",
+          "reason_code": "same_prefecture"
+        },
+        {
+          "key": "salary",
+          "status": "unknown",
+          "reason_code": "salary_overlap"
+        },
+        {
+          "key": "tool_use:solidworks",
+          "status": "unknown",
+          "reason_code": "context_not_responsibility"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 4,
+        "confirmed_matches": 2,
+        "confirmed_mismatches": 0,
+        "unknowns": 2,
+        "hard_mismatch_keys": []
+      }
+    },
+    {
+      "job": {
+        "id": 324,
+        "title": "【兵庫】機械設計 ベテラン歓迎 パナソニック製品等/年休125日/無期雇用派遣 機構設計",
+        "description": "仕事内容\n企業名\nパーソルエクセルＨＲパートナーズ株式会社\n求人名\n【兵庫】機械設計★ベテラン歓迎★パナソニック製品等/年休125日/無期雇用派遣\n仕事の内容\nベテラン・シニア歓迎！定年後再雇用に悩んでいる方も是非！60歳以降の方も長期就業の実績あり！●パナソニック製品、その他大手メーカー製品の設計開発業務、及び後輩育成に携わっていただきます。\n家電・生産設備・FA機器の設計開発業務《開発例》■デジタル家電・白物家電（エアコン・冷蔵庫・洗濯機・掃除機）の機械設計■生産設備（実装機）の機械設計■検査装置、医療機器、各種FA装置、自動車関連（駆動系部品、内外装樹脂製品、エレクトロニクス・デバイス機器部品など）の機械設計・大手メーカーの新規商品要素開発（先行開発技術試作のメカ設計 及び、性能検証）・車載デバイス部品の製造組み立て装置の開発\n募集職種\n【兵庫】機械設計★ベテラン歓迎★パナソニック製品等/年休125日/無期雇用派遣\n求めている人材\n必要な経験・能力等\n【必須】・3D-CADによる設計経験10年以上【歓迎】・家電機器、生産設備の何れかの機構設計スキル ・各種機構部品の基本的な加工法に関する知識(切削、樹脂成形、板金プレス等)\n【やりがい】\n★大手メーカーの案件を多数取り扱っているため、最先端の技術や知識を習得かつ汎用性の高いスキルを身につけることが可能！\n★クライアントからの評価に伴い給与もアップ！\n★短期間に配属先が変わるのではなく、1つの配属的に長期で就業可能です!\n学歴・資格\n学歴：大学院 大学 高専 短大 専修学校 高校\n語学力：\n資格：",
+        "occupation": "機械設計",
+        "region": "兵庫県",
+        "salary_min": 654,
+        "salary_max": 749,
+        "source_url": "https://www.r-agent.com/viewjob/jk19b5e0519645dee5/",
+        "provider_key": "recruit_agent",
+        "last_seen_at": "2026-09-12 14:11:28",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "機械設計",
+        "region": "兵庫県",
+        "salary_min": 650,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "fa",
+            "action": "design"
+          }
+        ],
+        "hard_axes": []
+      },
+      "facts": [
+        {
+          "id": 475,
+          "job_posting_id": 324,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "mechanism_design",
+          "fact_value": "機構設計",
+          "normalized_value": "機構設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...ック製品等/年休125日/無期雇用派遣 求めている人材 必要な経験・能力等 【必須】・3D-CADによる設計経験10年以上【歓迎】・家電機器、生産設備の何れかの機構設計スキル ・各種機構部品の基本的な加工法に関する知識(切削、樹脂成形、板金プレス等) 【やりがい】 ★大手メーカーの案件を多数取り扱っているため、最先端の技術や知...",
+          "observed_at": "2026-09-19 09:53:15",
+          "created_at": "2026-09-19 09:52:18",
+          "updated_at": "2026-09-19 09:53:15"
+        },
+        {
+          "id": 476,
+          "job_posting_id": 324,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "fa",
+          "fact_value": "FA",
+          "normalized_value": "FA",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...る方も是非！60歳以降の方も長期就業の実績あり！●パナソニック製品、その他大手メーカー製品の設計開発業務、及び後輩育成に携わっていただきます。 家電・生産設備・FA機器の設計開発業務《開発例》■デジタル家電・白物家電（エアコン・冷蔵庫・洗濯機・掃除機）の機械設計■生産設備（実装機）の機械設計■検査装置、医療機器、各種FA装...",
+          "observed_at": "2026-09-19 09:53:15",
+          "created_at": "2026-09-19 09:52:18",
+          "updated_at": "2026-09-19 09:53:15"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "match",
+          "reason_code": "same_occupation"
+        },
+        {
+          "key": "region",
+          "status": "match",
+          "reason_code": "same_prefecture"
+        },
+        {
+          "key": "salary",
+          "status": "match",
+          "reason_code": "salary_floor_meets"
+        },
+        {
+          "key": "design:fa",
+          "status": "unknown",
+          "reason_code": "unsupported_tier2_requirement"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 4,
+        "confirmed_matches": 3,
+        "confirmed_mismatches": 0,
+        "unknowns": 1,
+        "hard_mismatch_keys": []
+      }
+    },
+    {
+      "job": {
+        "id": 1103,
+        "title": "【大阪・高槻市】電気設計エンジニア｜リモート可｜年間休日125日以上｜医療・ヘルスケア分野｜資格取得支援制度あり｜成長中の中堅企業| Web・オープン系 SE【アプリケーション設計】 正社員 | 大阪府高槻市",
+        "description": "【大阪・高槻市】<b>電気設計</b>エンジニア｜リモート可｜年間休日125日以上｜医療・ヘルスケア分野｜資格取得支援制度あり｜成長中の中堅企業   [仕事内容]  〜人材大手のパーソルと、日本...ドウェア開発  <b>電気</b>・電子回路<b>設計</b>、FPGA<b>設計</b>、機械構造<b>設計</b>  （2）ソフトウェア開発  組込ソフトウェア開発、PC・スマホアプリケーション開発、データベース開発、サーバーアプリケーション開発、AIアプリケーション開発、AR・VRアプ",
+        "occupation": "電気設計",
+        "region": "大阪府",
+        "salary_min": 400,
+        "salary_max": 750,
+        "source_url": "https://jobviewtrack.com/v2/WExfH5bXnUbMOQDbPXfZqx-pjJQJB9iqhX_kzd0KuWW6-i2_QDp1hbDq32d2xtCe32CdAr753U1KLd7TwBXAOgmZBA25JM4jPG8cy1wXGifAF-QlCKCt_LGTAQzHX-zkfueuWAQ0UZM5o_0TxoziG5rqZPlW3UQZuPD1q2T1wi_Lx5afbmy1J-bq6cFwxx16saG3iAXF-3J7M71D7zLK7NYcO_uwtg8cXTmlLyVuBGA",
+        "provider_key": "careerjet",
+        "last_seen_at": "2026-09-12 11:55:17",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "電気設計",
+        "region": "兵庫県",
+        "salary_min": 650,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "circuit_design",
+            "action": "design"
+          }
+        ],
+        "hard_axes": [
+          "region"
+        ]
+      },
+      "facts": [
+        {
+          "id": 1298,
+          "job_posting_id": 1103,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "circuit_design",
+          "fact_value": "回路設計",
+          "normalized_value": "回路設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...可｜年間休日125日以上｜医療・ヘルスケア分野｜資格取得支援制度あり｜成長中の中堅企業 [仕事内容] 〜人材大手のパーソルと、日本...ドウェア開発 電気・電子回路設計、FPGA設計、機械構造設計 （2）ソフトウェア開発 組込ソフトウェア開発、PC・スマホアプリケーション開発、データベース開発、サーバーアプリケーション開発、A...",
+          "observed_at": "2026-09-19 09:53:18",
+          "created_at": "2026-09-19 09:52:21",
+          "updated_at": "2026-09-19 09:53:18"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "match",
+          "reason_code": "same_occupation"
+        },
+        {
+          "key": "region",
+          "status": "mismatch",
+          "reason_code": "different_prefecture"
+        },
+        {
+          "key": "salary",
+          "status": "unknown",
+          "reason_code": "salary_overlap"
+        },
+        {
+          "key": "design:circuit_design",
+          "status": "unknown",
+          "reason_code": "unsupported_tier2_requirement"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 4,
+        "confirmed_matches": 1,
+        "confirmed_mismatches": 1,
+        "unknowns": 2,
+        "hard_mismatch_keys": [
+          "region"
+        ]
+      }
+    },
+    {
+      "job": {
+        "id": 1171,
+        "title": "【産業用装置の電気設計（京都）】未経験歓迎／年休129日／オーダーメイド／残業月10h程度で働きやすい",
+        "description": "産業用自動機及び検査装置をオーダーメイド<b>設計</b>・製作している当社にて<b>電気設計</b>をお任せいたします。  入社後は、上司や先輩社員によるサポート体制のもと、段階的に業務を習得していただきます。   組立装置や検査装置など産業設備の<b>電気回路設計及び制御設計</b>...(PLC制御)をお任せ。   《詳細》  [1]どのような設備をつくるのか、機械<b>設計エンジニアとの打ち合わせから電気回路設計</b>  [2]機器の選定や発注（モーター／ロボットなど機構に必要なアクチュエーター、また制御盤／操作盤等）  [3]設備",
+        "occupation": "電気設計",
+        "region": "京都府",
+        "salary_min": 300,
+        "salary_max": 336,
+        "source_url": "https://jobviewtrack.com/v2/pX5oee0BbJz3CY2KoHMkcNsD-lBs9SJkWx-ZSdY5uj7kYL_tvPwr6QvixnAi9_5hjlX5t5iIvWAJR3_wKDxq5FNbste0qcX_wrafmxZzTMtQBSEST1R06AdsN-_HaOMCGHPJKdqnIklKv7YzboHTh8iicjdwQUZKRhUrNvBU0_uaSIAtZm-7N78vp57Pb6-Vd8CTjNhqS0auypOYfDftY5eP_ATrYB3ZMTXjAAdMd0g",
+        "provider_key": "careerjet",
+        "last_seen_at": "2026-09-12 11:55:19",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "電気設計",
+        "region": "京都府",
+        "salary_min": 400,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "control_panel",
+            "action": "design"
+          }
+        ],
+        "hard_axes": []
+      },
+      "facts": [
+        {
+          "id": 1355,
+          "job_posting_id": 1171,
+          "source_id": null,
+          "fact_category": "tool_system",
+          "fact_key": "plc",
+          "fact_value": "PLC",
+          "normalized_value": "PLC",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...ます。 入社後は、上司や先輩社員によるサポート体制のもと、段階的に業務を習得していただきます。 組立装置や検査装置など産業設備の電気回路設計及び制御設計...(PLC制御)をお任せ。 《詳細》 [1]どのような設備をつくるのか、機械設計エンジニアとの打ち合わせから電気回路設計 [2]機器の選定や発注（モーター／ロボットなど機...",
+          "observed_at": "2026-09-19 09:53:18",
+          "created_at": "2026-09-19 09:52:21",
+          "updated_at": "2026-09-19 09:53:18"
+        },
+        {
+          "id": 1356,
+          "job_posting_id": 1171,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "control_panel",
+          "fact_value": "制御盤",
+          "normalized_value": "制御盤",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...]どのような設備をつくるのか、機械設計エンジニアとの打ち合わせから電気回路設計 [2]機器の選定や発注（モーター／ロボットなど機構に必要なアクチュエーター、また制御盤／操作盤等） [3]設備",
+          "observed_at": "2026-09-19 09:53:18",
+          "created_at": "2026-09-19 09:52:21",
+          "updated_at": "2026-09-19 09:53:18"
+        },
+        {
+          "id": 1357,
+          "job_posting_id": 1171,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "circuit_design",
+          "fact_value": "回路設計",
+          "normalized_value": "回路設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...社にて電気設計をお任せいたします。 入社後は、上司や先輩社員によるサポート体制のもと、段階的に業務を習得していただきます。 組立装置や検査装置など産業設備の電気回路設計及び制御設計...(PLC制御)をお任せ。 《詳細》 [1]どのような設備をつくるのか、機械設計エンジニアとの打ち合わせから電気回路設計 [2]機器の選定や発注...",
+          "observed_at": "2026-09-19 09:53:18",
+          "created_at": "2026-09-19 09:52:21",
+          "updated_at": "2026-09-19 09:53:18"
+        },
+        {
+          "id": 1358,
+          "job_posting_id": 1171,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "control_design",
+          "fact_value": "制御設計",
+          "normalized_value": "制御設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...計をお任せいたします。 入社後は、上司や先輩社員によるサポート体制のもと、段階的に業務を習得していただきます。 組立装置や検査装置など産業設備の電気回路設計及び制御設計...(PLC制御)をお任せ。 《詳細》 [1]どのような設備をつくるのか、機械設計エンジニアとの打ち合わせから電気回路設計 [2]機器の選定や発注（モーター／...",
+          "observed_at": "2026-09-19 09:53:18",
+          "created_at": "2026-09-19 09:52:21",
+          "updated_at": "2026-09-19 09:53:18"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "match",
+          "reason_code": "same_occupation"
+        },
+        {
+          "key": "region",
+          "status": "match",
+          "reason_code": "same_prefecture"
+        },
+        {
+          "key": "salary",
+          "status": "mismatch",
+          "reason_code": "salary_ceiling_below"
+        },
+        {
+          "key": "design:control_panel",
+          "status": "unknown",
+          "reason_code": "unsupported_tier2_requirement"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 4,
+        "confirmed_matches": 2,
+        "confirmed_mismatches": 1,
+        "unknowns": 1,
+        "hard_mismatch_keys": []
+      }
+    },
+    {
+      "job": {
+        "id": 21,
+        "title": "【開発／生産設計】ハード（電気）設計エンジニア",
+        "description": "【職種】\n機械設計\n【仕事内容】\n半導体製造装置のハード（電気）の電気配線の開発・設計業務を担当していただきます。\n・機械(半導体製造装置)の制御システム開発／生産設計\n・電気回路の開発／生産設計\n・制御盤の設計\n\n半導体製造装置の電気設計者として、メカ設計エンジニア、ソフト設計エンジニアと協力しながら、装置に求められる機能や性能を実現するための、制御システムを検討・提案し、一つの装置を作り上げるお仕事です。\n（参考　AUTOCAD ELECTORICALを用いて設計を行います。）\n\n【仕事の魅力】\n・開発の全工程を自社で行っており、「メカ」、「電気ハード」、「ソフトウェア」の各セクションから人選しチームを組んで、開発工程における一連の流れを直に感じることができる業務体系です。\n・設計オフィスと工場が同じ社屋にあり実際に装置を見ながら設計にフィードバックすることができ、またアイデア出しからお客様の工場でのセットアップまで幅広く関わっていただけますので、ものづくりを身近に感じながらお仕事をしていただけるもの特徴です。\n・成長著しい半導体市場において、5GやIoT、AIなどDX（デジタルトランスフォーメーション）の推進に設計エンジニアとして携わっていただける非常にやりがいのあるお仕事です。\n・個別のユーザー様要求に対して、プラットフォームに含まれない機能をオプション設計いたしますので、チームで協力しながら案件対応設計を進めていただきます\n\n業務内容の変更の範囲：当社業務全般\n【応募条件】\n即戦力としてご不安があっても、興味のある業種かつ取り組む意欲があれば、是非ご応募ください。\n\n【必要条件】\n■電気設計エンジニアのご経験（3年以上）\n\n【歓迎条件】\n■FA装置のメンテナンス等で、制御盤やPLCを扱ったことがある方\n■国内／海外の安全規格設計経験（CE、SEMI）、電子回路設計経験\nシステム装置（半導体製造装置、工作機械、自動機など）のハード（電気）設計経験\n■ビジネス英語・中国語（初級レベル）\n【休日休暇】\n年間123日（＋一斉年次有給休暇取得日2日）\n完全週休2日制（基本土日祝、弊社カレンダーに準ずる）／長期休暇（GW・夏期・盆・年末年始休暇）／年次有給休暇（入社日より付与）／結婚・配偶者出産休暇／忌引休暇／永年勤続表彰特別有給休暇　など\n【年間休日数】\n125日\n【就業時間】\n08:30～17:30\n【企業概要】\n【事業概要】\n半導体製造において、樹脂によって半導体チップを保護する工程を担う半導体モールディング装置・金型の世界シェアNo.1の企業です。超精密金型という世界に冠たるコア技術を持ち、業界標準となった「マルチプランジャシステム」の開発など様々な技術革新を成し遂げてきました。近年拡大を続けるAI（人工知能）・EV（電気自動車）や自動運転などでも、今後さらなる市場拡大が見込まれます。産業社会が最も求める『技術開発』を根幹に、クォーター・リードに徹した『新製品・新商品』の創成に向けて取り組んでおります。\n\n【事業内容】\n■半導体事業：モールディング装置、シンギュレーション装置の開発・設計・製造および販売\n■新事業：自社開発のエンドミルの販売、超精密加工技術やコーティング技術を応用した受託加工ビジネス、半導体製造装置のアフターサービスや改造・修理、中古機の販売など\n\n【事業拠点】\n■国内拠点：本社・工場(京都府京都市)・京都東事業所(京都府綴喜郡)・坂東記念研究所(京都府宇治市)・九州事業所(佐賀県鳥栖市)・東京営業所(東京都文京区)・長野営業所（長野県長野市）\n■海外拠点：アメリカ・シンガポール・マレーシア・タイ・韓国・中国・台湾・フィリピン・オランダ・ドイツ\n【従業員数】\n1,494人",
+        "occupation": "機械設計",
+        "region": "京都府",
+        "salary_min": 450,
+        "salary_max": 650,
+        "source_url": "https://www.m-next.jp/job/mechanical/mechanicaldesign/231553/",
+        "provider_key": "meitec_next",
+        "last_seen_at": "2026-09-12 03:02:18",
+        "published_at": null,
+        "provider_updated_at": null,
+        "unavailable_at": null
+      },
+      "query": {
+        "occupation": "機械設計",
+        "region": "兵庫県",
+        "salary_min": 700,
+        "salary_max": null,
+        "detailed_skills": null,
+        "priorities": null
+      },
+      "requirements": {
+        "desired": [
+          {
+            "fact_key": "autocad",
+            "action": "use"
+          }
+        ],
+        "hard_axes": [
+          "region"
+        ]
+      },
+      "facts": [
+        {
+          "id": 78,
+          "job_posting_id": 21,
+          "source_id": null,
+          "fact_category": "tool",
+          "fact_key": "autocad",
+          "fact_value": "AUTOCAD",
+          "normalized_value": "AutoCAD",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...ジニア、ソフト設計エンジニアと協力しながら、装置に求められる機能や性能を実現するための、制御システムを検討・提案し、一つの装置を作り上げるお仕事です。 （参考 AUTOCAD ELECTORICALを用いて設計を行います。） 【仕事の魅力】 ・開発の全工程を自社で行っており、「メカ」、「電気ハード」、「ソフトウェア」の各セクションか...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 79,
+          "job_posting_id": 21,
+          "source_id": null,
+          "fact_category": "tool_system",
+          "fact_key": "plc",
+          "fact_value": "PLC",
+          "normalized_value": "PLC",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...業種かつ取り組む意欲があれば、是非ご応募ください。 【必要条件】 ■電気設計エンジニアのご経験（3年以上） 【歓迎条件】 ■FA装置のメンテナンス等で、制御盤やPLCを扱ったことがある方 ■国内／海外の安全規格設計経験（CE、SEMI）、電子回路設計経験 システム装置（半導体製造装置、工作機械、自動機など）のハード（電気）設...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 80,
+          "job_posting_id": 21,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "control_panel",
+          "fact_value": "制御盤",
+          "normalized_value": "制御盤",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...製造装置のハード（電気）の電気配線の開発・設計業務を担当していただきます。 ・機械(半導体製造装置)の制御システム開発／生産設計 ・電気回路の開発／生産設計 ・制御盤の設計 半導体製造装置の電気設計者として、メカ設計エンジニア、ソフト設計エンジニアと協力しながら、装置に求められる機能や性能を実現するための、制御システムを検討...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 81,
+          "job_posting_id": 21,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "circuit_design",
+          "fact_value": "回路設計",
+          "normalized_value": "回路設計",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...ニアのご経験（3年以上） 【歓迎条件】 ■FA装置のメンテナンス等で、制御盤やPLCを扱ったことがある方 ■国内／海外の安全規格設計経験（CE、SEMI）、電子回路設計経験 システム装置（半導体製造装置、工作機械、自動機など）のハード（電気）設計経験 ■ビジネス英語・中国語（初級レベル） 【休日休暇】 年間123日（＋一斉年次...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        },
+        {
+          "id": 82,
+          "job_posting_id": 21,
+          "source_id": null,
+          "fact_category": "design_specialty",
+          "fact_key": "fa",
+          "fact_value": "FA",
+          "normalized_value": "FA",
+          "extraction_method": "rule",
+          "verification_status": "verified",
+          "evidence_text": "...力としてご不安があっても、興味のある業種かつ取り組む意欲があれば、是非ご応募ください。 【必要条件】 ■電気設計エンジニアのご経験（3年以上） 【歓迎条件】 ■FA装置のメンテナンス等で、制御盤やPLCを扱ったことがある方 ■国内／海外の安全規格設計経験（CE、SEMI）、電子回路設計経験 システム装置（半導体製造装置、工...",
+          "observed_at": "2026-09-19 09:53:14",
+          "created_at": "2026-09-19 09:52:17",
+          "updated_at": "2026-09-19 09:53:14"
+        }
+      ],
+      "expected_axes": [
+        {
+          "key": "occupation",
+          "status": "unknown",
+          "reason_code": "conflicting_job_evidence"
+        },
+        {
+          "key": "region",
+          "status": "mismatch",
+          "reason_code": "different_prefecture"
+        },
+        {
+          "key": "salary",
+          "status": "mismatch",
+          "reason_code": "salary_ceiling_below"
+        },
+        {
+          "key": "tool_use:autocad",
+          "status": "unknown",
+          "reason_code": "action_unconfirmed"
+        }
+      ],
+      "expected_summary": {
+        "evaluated_axes": 4,
+        "confirmed_matches": 0,
+        "confirmed_mismatches": 2,
+        "unknowns": 2,
+        "hard_mismatch_keys": [
+          "region"
+        ]
+      }
+    }
+  ]
+}

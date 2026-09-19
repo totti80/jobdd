@@ -19,4 +19,9 @@ class Source extends Model
     {
         return $this->hasMany(AgencyFact::class);
     }
+
+    public function jobFacts(): HasMany
+    {
+        return $this->hasMany(JobFact::class);
+    }
 }

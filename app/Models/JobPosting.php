@@ -25,6 +25,8 @@ class JobPosting extends Model
         'first_seen_at',
         'last_seen_at',
         'unavailable_at',
+        'published_at',
+        'provider_updated_at',
     ];
 
     protected $casts = [
@@ -32,6 +34,8 @@ class JobPosting extends Model
         'first_seen_at' => 'datetime',
         'last_seen_at' => 'datetime',
         'unavailable_at' => 'datetime',
+        'published_at' => 'datetime',
+        'provider_updated_at' => 'datetime',
     ];
 
     public function company(): BelongsTo
@@ -42,5 +46,10 @@ class JobPosting extends Model
     public function applicationRoutes(): HasMany
     {
         return $this->hasMany(ApplicationRoute::class);
+    }
+
+    public function jobFacts(): HasMany
+    {
+        return $this->hasMany(JobFact::class);
     }
 }

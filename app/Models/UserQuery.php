@@ -18,10 +18,14 @@ class UserQuery extends Model
         'salary_min',
         'salary_max',
         'validation_domain',
+        'detailed_skills',
+        'priorities',
     ];
 
     protected $casts = [
         'public_id' => 'string',
+        'detailed_skills' => 'array',
+        'priorities' => 'array',
     ];
 
     public function scoreResults(): HasMany

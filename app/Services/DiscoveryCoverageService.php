@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\JobPosting;
+use App\Support\AnonymousCompany;
 use App\Support\JobDecisionPresenter;
 use Illuminate\Support\Facades\DB;
 
@@ -35,9 +36,15 @@ class DiscoveryCoverageService
             $agent['agencies_with_'.$layer.'_data'] = DB::table('agency_facts')->whereIn('fact_key', $keys)->distinct()->count('agency_id');
         }
 
+        $companiesTotal = (clone $jobs)->distinct()->count('company_id');
+        $anonymousCompanies = DB::table('companies')->whereIn('id', (clone $jobs)->select('company_id'))
+            ->where('name', AnonymousCompany::NAME)->count();
+
         return [
-            'definition' => 'Active stored postings in the 12 exact canonical cells; not verified market coverage. Source URL means stored nonempty value. Routes require saved available state. Agency metrics count key presence, including unverified/test data.',
-            'current_db_coverage' => ['active_jobs' => $total, 'companies' => (clone $jobs)->distinct()->count('company_id'),
+            'definition' => 'Active stored postings in the 12 exact canonical cells; not verified market coverage. Company counts include storage placeholders, not unique verified employers; named/anonymous counts separate them. Source URL means stored nonempty value. Routes require saved available state. Agency metrics count key presence, including unverified/test data.',
+            'current_db_coverage' => ['active_jobs' => $total, 'companies' => $companiesTotal,
+                'companies_total' => $companiesTotal, 'anonymous_companies' => $anonymousCompanies,
+                'named_companies' => $companiesTotal - $anonymousCompanies,
                 'sources' => DB::table('sources')->whereIn('url', (clone $jobs)->select('source_url'))->count(),
                 'application_routes' => (clone $routes)->count(), 'job_facts' => (clone $facts)->count()],
             'evidence_depth' => $depth, 'agent_fact_metrics' => $agent,
@@ -48,7 +55,8 @@ class DiscoveryCoverageService
 
     public function directCandidates(array $changes): array
     {
-        $changes = collect($changes)->whereIn('state', ['new', 'updated']);
+        $changes = collect($changes)->whereIn('state', ['new', 'updated'])
+            ->reject(fn ($row) => AnonymousCompany::isAnonymous($row['company_name']));
         $ids = $changes->pluck('company_id')->filter()->unique()->values()->all();
         $companies = DB::table('companies')->whereIn('id', $ids)->pluck('website_url', 'id');
         $direct = DB::table('application_routes')->join('job_postings', 'job_postings.id', '=', 'application_routes.job_posting_id')

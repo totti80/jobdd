@@ -17,7 +17,7 @@
 <main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:space-y-8 lg:py-8">
     <p class="leading-7 text-slate-600">他の求人と比較するには、<a href="{{ $backUrl.'#compare-selection' }}" class="jobdd-link">一覧で比較する求人を選ぶ</a>。応募方法はこのページの最後にあります。</p>
     <article data-job-id="{{ $job->id }}" class="jobdd-card">
-        <p class="font-semibold text-slate-600">{{ $item['company_name'] }}</p>
+        <p class="font-semibold text-slate-600"><x-company-name :name="$item['company_name']" /></p>
         <h2 class="mt-2 text-2xl font-bold leading-8 text-blue-950">{{ $job->title }}</h2>
         <dl class="mt-5 grid gap-4 sm:grid-cols-2">
             <div><dt class="text-sm text-slate-600">職種</dt><dd>{{ $job->occupation ?? '未確認' }}</dd></div>

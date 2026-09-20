@@ -3,6 +3,7 @@
 namespace App\Services\DirectLookup;
 
 use App\Models\Company;
+use App\Support\AnonymousCompany;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Psr7\UriResolver;
 
@@ -52,6 +53,9 @@ class OfficialPageDiscovery
         };
 
         $company = Company::find($record['company_id']);
+        if (AnonymousCompany::isAnonymous($company?->name)) {
+            throw new \InvalidArgumentException('AnonymousCompanyNotEligibleForDirectLookup');
+        }
         $seeds = [[$company?->website_url, 'companies.website_url'], [$record['official_site_url'] ?? null, 'queue.official_site_url'], [$record['official_recruit_url'] ?? null, 'queue.official_recruit_url']];
         foreach ($record['discovery_candidates'] ?? [] as $candidate) {
             $seeds[] = [$candidate['website_url'] ?? null, 'discovery_candidates.website_url'];

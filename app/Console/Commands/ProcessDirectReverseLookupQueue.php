@@ -8,6 +8,7 @@ use App\Models\DirectReverseLookupCandidate;
 use App\Models\JobPosting;
 use App\Models\Source;
 use App\Services\OccupationNormalizer;
+use App\Support\AnonymousCompany;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -20,6 +21,7 @@ class ProcessDirectReverseLookupQueue extends Command
         $records = json_decode((string) file_get_contents(base_path($this->option('input'))), true);
         if (! is_array($records)) {
             $this->error('Queue JSON is invalid.');
+
             return self::FAILURE;
         }
 
@@ -62,6 +64,9 @@ class ProcessDirectReverseLookupQueue extends Command
 
         DB::transaction(function () use ($record) {
             $company = Company::query()->where('name', $record['company_name'])->firstOrFail();
+            if (AnonymousCompany::isAnonymous($company->name)) {
+                throw new \InvalidArgumentException('AnonymousCompanyNotEligibleForDirectLookup');
+            }
             DirectReverseLookupCandidate::query()
                 ->where('company_id', $company->id)
                 ->where('region', $record['region'])
@@ -114,4 +119,3 @@ class ProcessDirectReverseLookupQueue extends Command
         });
     }
 }
-

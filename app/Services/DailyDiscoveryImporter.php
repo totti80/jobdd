@@ -8,6 +8,7 @@ use App\Models\JobFact;
 use App\Models\JobPosting;
 use App\Models\Source;
 use App\Services\DirectLookup\CompanyUrlEvidence;
+use App\Support\AnonymousCompany;
 use App\Support\JobDecisionPresenter;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -37,6 +38,12 @@ class DailyDiscoveryImporter
     {
         $string = fn ($value) => is_scalar($value) && trim((string) $value) !== '' ? trim((string) $value) : null;
         $name = $string($raw[$provider === 'careerjet' ? 'company' : 'company_name'] ?? null);
+        if (AnonymousCompany::isAnonymous($name)) {
+            throw new InvalidArgumentException('ReservedCompanyName');
+        }
+        if ($name === null && $provider === 'careerjet') {
+            $name = AnonymousCompany::name($provider);
+        }
         $title = $string($raw['title'] ?? null);
         $url = JobDecisionPresenter::safeUrl($raw[$provider === 'careerjet' ? 'url' : 'source_url'] ?? null);
         $id = $string($raw['external_id'] ?? $raw['id'] ?? null)
@@ -84,7 +91,7 @@ class DailyDiscoveryImporter
     public function run(string $provider, array $cell, array $rows, bool $dryRun): array
     {
         $result = ['fetched' => count($rows), 'normalized' => 0, 'imported' => 0, 'new' => 0, 'updated' => 0,
-            'unchanged' => 0, 'missing' => 0, 'skipped' => 0, 'errors' => [], 'changes' => [], 'missing_job_ids' => []];
+            'unchanged' => 0, 'missing' => 0, 'skipped' => 0, 'anonymous_company_jobs' => 0, 'errors' => [], 'changes' => [], 'missing_job_ids' => []];
         $seen = [];
         $processed = [];
         foreach ($rows as $row) {
@@ -101,6 +108,7 @@ class DailyDiscoveryImporter
                 }
                 $processed[$data['external_id']] = true;
                 $result['normalized']++;
+                $result['anonymous_company_jobs'] += AnonymousCompany::isAnonymous($data['company_name']) ? 1 : 0;
                 $operation = fn () => $this->upsert($data, $row, $dryRun);
                 // No transaction ever spans external I/O. Dry-run never enters a write path.
                 $change = $dryRun ? $operation() : DB::transaction($operation);
@@ -153,7 +161,9 @@ class DailyDiscoveryImporter
             $state = $state === 'new' ? 'new' : 'updated';
         }
         if (! $dryRun) {
-            $company ??= Company::create(['name' => $data['company_name'], 'region' => $data['region']]);
+            $company = AnonymousCompany::isAnonymous($data['company_name'])
+                ? AnonymousCompany::resolve($provider)
+                : ($company ?? Company::create(['name' => $data['company_name'], 'region' => $data['region']]));
             $attributes = array_diff_key($data, ['company_name' => true]);
             $job ??= new JobPosting;
             $job->fill([...$attributes, 'company_id' => $company->id,
@@ -169,7 +179,9 @@ class DailyDiscoveryImporter
                 'first_seen_at' => $route->first_seen_at ?? now(), 'last_seen_at' => now()])->save();
             Source::updateOrCreate(['url' => $data['source_url']], ['source_type' => $platformId ? 'platform_api' : 'official_site',
                 'title' => $data['title'], 'publisher' => $provider, 'fetched_at' => now()]);
-            app(CompanyUrlEvidence::class)->save($job->id, $company->id, $raw, $provider);
+            if (! AnonymousCompany::isAnonymous($data['company_name'])) {
+                app(CompanyUrlEvidence::class)->save($job->id, $company->id, $raw, $provider);
+            }
             if ($state !== 'unchanged') {
                 $extractor = app(JobFactExtractor::class);
                 // Synchronize only dictionary-owned rule Facts; human/other extraction is untouched.

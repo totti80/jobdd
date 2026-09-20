@@ -42,3 +42,11 @@ Coverage counts active saved postings in the 12 exact canonical cells, with SQL 
 ## Remaining operational checks
 
 Confirm Python runtime, API credentials, current provider terms and approved per-cell Agent URLs. Real fetch validation and first normal write run remain operator-controlled. Missing-to-unavailable policy, retry sophistication, broader deduplication, retention/pruning and multi-host locks are future work.
+
+## Careerjet anonymous employers (Batch 15.2)
+
+Missing/blank Careerjet company names use the single reserved Company name `[jobdd:anonymous:careerjet]`. This is a storage bucket, **not an employer identity**. Incoming named companies cannot claim this reserved name. Other providers do not reuse it. No company name, website or region is inferred. Daily import serializes placeholder creation using the existing Careerjet Platform row lock inside the job transaction; a locking lookup sees the latest committed placeholder. Dry-run never creates it.
+
+The UI displays `Careerjet掲載・企業名未確認` and `企業名は掲載情報から確認できていません`. Job comparison/Fit and saved platform routes remain available. Anonymous companies are excluded before Direct candidate website checks, persisted candidate building, and website/page discovery. No company URL evidence is attached to the anonymous bucket.
+
+`anonymous_company_jobs` counts accepted distinct anonymous jobs in that provider/cell run, not all Careerjet jobs. Coverage retains its existing `companies` count and adds `companies_total`, `anonymous_companies`, and `named_companies` for the same stored active 12-cell scope; these are storage identities, not verified unique employers. External ID fallback remains unchanged.

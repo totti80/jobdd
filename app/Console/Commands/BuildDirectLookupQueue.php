@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\DirectReverseLookupCandidate;
 use App\Models\JobPosting;
 use App\Services\OccupationNormalizer;
+use App\Support\AnonymousCompany;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
@@ -26,7 +27,7 @@ class BuildDirectLookupQueue extends Command
         // Count distinct available jobs, not routes or discovery-source rows.
         $directJobs = JobPosting::query()
             ->whereNull('unavailable_at')
-            ->whereHas('company', fn ($query) => $query->where('name', '!=', 'A製作所'))
+            ->whereHas('company', fn ($query) => $query->where('name', '!=', 'A製作所')->where('name', '!=', AnonymousCompany::NAME))
             ->whereHas('applicationRoutes', fn ($query) => $query
                 ->where('route_type', 'direct')
                 ->where('availability_status', 'available')
@@ -44,7 +45,7 @@ class BuildDirectLookupQueue extends Command
             ->whereNotNull('region')->where('region', '!=', '')
             ->whereIn('occupation', ['機械設計', '電気設計', '施工管理'])
             ->where('matching_job_count', '>', 0)
-            ->whereHas('company', fn ($query) => $query->where('name', '!=', 'A製作所')->where('name', '!=', ''))
+            ->whereHas('company', fn ($query) => $query->where('name', '!=', 'A製作所')->where('name', '!=', AnonymousCompany::NAME)->where('name', '!=', ''))
             // Exclude only the confirmed company/cell, regardless of discovery source.
             ->whereNotExists(fn ($query) => $query
                 ->selectRaw('1')

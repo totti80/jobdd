@@ -56,7 +56,7 @@
                 @php($job = $item['job'])
                 @php($fit = $item['fit'])
                 <article data-job-id="{{ $job->id }}" class="jobdd-card">
-                    <p class="text-sm font-semibold text-slate-600">{{ $item['company_name'] }}</p>
+                    <p class="text-sm font-semibold text-slate-600"><x-company-name :name="$item['company_name']" /></p>
                     <h2 class="mt-2 text-xl font-bold leading-7 text-blue-950">{{ $job->title }}</h2>
                     <dl class="mt-4 grid gap-3 sm:grid-cols-2">
                         <div><dt class="text-sm text-slate-600">勤務地</dt><dd>{{ $job->region ?? '未確認' }}</dd></div>
@@ -67,8 +67,8 @@
                     <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
                         <a href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $job->id, 'page' => $pagination['page'], 'tools' => $selected_tools]) }}" class="jobdd-button">詳細を見る</a>
                         <label class="jobdd-choice" for="compare-job-{{ $job->id }}">
-                            <input id="compare-job-{{ $job->id }}" form="compare-selection" aria-describedby="compare-help" type="checkbox" name="jobs[]" value="{{ $job->id }}" data-job-label="{{ $item['company_name'].'：'.$job->title }}">
-                            <span>比較に追加<span class="sr-only">：{{ $item['company_name'] }} {{ $job->title }}</span></span>
+                            <input id="compare-job-{{ $job->id }}" form="compare-selection" aria-describedby="compare-help" type="checkbox" name="jobs[]" value="{{ $job->id }}" data-job-label="{{ \App\Support\AnonymousCompany::display($item['company_name']).'：'.$job->title }}">
+                            <span>比較に追加<span class="sr-only">：{{ \App\Support\AnonymousCompany::display($item['company_name']) }} {{ $job->title }}</span></span>
                         </label>
                     </div>
                     <div class="mt-5 border-t border-slate-200 pt-4">@include('query.partials.provenance', ['source' => $fit['source']])</div>

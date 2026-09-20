@@ -2,14 +2,19 @@
 
 use App\Models\ApplicationRoute;
 use App\Models\Company;
+use App\Models\DirectReverseLookupCandidate;
 use App\Models\JobFact;
 use App\Models\JobPosting;
 use App\Services\DailyDiscoveryImporter;
 use App\Services\DailyDiscoveryService;
+use App\Services\DirectLookup\CompanyWebsiteResolver;
+use App\Services\DirectLookup\OfficialPageDiscovery;
 use App\Services\DiscoveryCoverageService;
 use App\Services\DiscoveryProviderAdapter;
 use App\Services\JobFactExtractor;
+use App\Support\AnonymousCompany;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -254,4 +259,59 @@ test('conflicting job and route identities never repoint existing routes', funct
     $route->update(['job_posting_id' => $two->id]);
     $result = $importer->run('recruit_agent', dailyCell(), [dailyRow('one')], false);
     expect($result['errors'])->toHaveCount(1)->and($route->fresh()->job_posting_id)->toBe($two->id);
+});
+
+test('anonymous careerjet jobs reuse a placeholder without facts or direct identity loss', function () {
+    $importer = app(DailyDiscoveryImporter::class);
+    $rows = [dailyRow('null', ['company' => null]), dailyRow('empty', ['company' => '  ']), dailyRow('named')];
+    $preview = $importer->run('careerjet', dailyCell(), $rows, true);
+    expect($preview['errors'])->toBe([])->and($preview['anonymous_company_jobs'])->toBe(2)
+        ->and(Company::count())->toBe(0)->and(JobPosting::count())->toBe(0);
+    $first = $importer->run('careerjet', dailyCell(), $rows, false);
+    $second = $importer->run('careerjet', dailyCell(), $rows, false);
+    expect($first['errors'])->toBe([])->and($first['new'])->toBe(3)
+        ->and($second['unchanged'])->toBe(3)->and($second['errors'])->toBe([])
+        ->and(Company::count())->toBe(2)->and(JobPosting::count())->toBe(3)
+        ->and(ApplicationRoute::count())->toBe(3)->and(JobFact::count())->toBeGreaterThanOrEqual(3);
+    $anonymous = Company::where('name', AnonymousCompany::NAME)->sole();
+    expect($anonymous->website_url)->toBeNull()->and($anonymous->region)->toBeNull()
+        ->and($anonymous->jobPostings()->count())->toBe(2);
+    $candidates = app(DiscoveryCoverageService::class)->directCandidates($first['changes']);
+    expect($candidates)->toHaveCount(1)->and($candidates[0]['company_name'])->toBe('日次検証会社');
+    $metrics = app(DiscoveryCoverageService::class)->snapshot()['current_db_coverage'];
+    expect($metrics)->toMatchArray(['companies_total' => 2, 'named_companies' => 1, 'anonymous_companies' => 1]);
+});
+
+test('anonymous identity is reserved and isolated from other providers', function () {
+    $importer = app(DailyDiscoveryImporter::class);
+    expect(fn () => AnonymousCompany::name('recruit_agent'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => $importer->normalize('careerjet', dailyRow(extra: ['company' => AnonymousCompany::NAME])))
+        ->toThrow(InvalidArgumentException::class);
+    expect(fn () => $importer->normalize('recruit_agent', dailyRow(extra: ['company_name' => null])))
+        ->toThrow(InvalidArgumentException::class);
+    expect($importer->normalize('careerjet', dailyRow())['company_name'])->toBe('日次検証会社');
+});
+
+test('anonymous company presentation explains uncertainty and escapes named companies without queries', function () {
+    DB::enableQueryLog();
+    DB::flushQueryLog();
+    $html = Blade::render('<x-company-name :name="$name" />', ['name' => AnonymousCompany::NAME]);
+    $unsafe = Blade::render('<x-company-name :name="$name" />', ['name' => '<script>alert(1)</script>']);
+    expect($html)->toContain(AnonymousCompany::LABEL, AnonymousCompany::NOTE)
+        ->not->toContain(AnonymousCompany::NAME)
+        ->and($unsafe)->toContain('&lt;script&gt;')->not->toContain('<script>')
+        ->and(DB::getQueryLog())->toBe([]);
+    DB::disableQueryLog();
+});
+
+test('anonymous employers cannot enter the persisted direct lookup pipeline', function () {
+    app(DailyDiscoveryImporter::class)->run('careerjet', dailyCell(), [dailyRow(extra: ['company' => null])], false);
+    $this->artisan('jobdd:build-direct-reverse-lookup')->assertSuccessful();
+    expect(DirectReverseLookupCandidate::count())->toBe(0);
+    $company = Company::sole();
+    $company->update(['website_url' => 'https://not-an-employer.example']);
+    expect(fn () => app(CompanyWebsiteResolver::class)->resolve(['company_id' => $company->id, 'company_name' => $company->name]))
+        ->toThrow(InvalidArgumentException::class);
+    expect(fn () => app(OfficialPageDiscovery::class)->discover(['company_id' => $company->id]))
+        ->toThrow(InvalidArgumentException::class);
 });

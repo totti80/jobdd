@@ -34,7 +34,7 @@
                 <p data-map-announcement role="status" class="text-sm leading-6 text-slate-600">表示する府県を選んでください。比較の選択とは別の操作です。</p>
                 @foreach ($map['jobs'] as $mapJob)
                     <div data-map-job="{{ $mapJob['job_id'] }}" data-point-key="{{ $mapJob['point_key'] ?? 'unknown' }}" hidden class="jobdd-card space-y-3">
-                        <p class="text-sm font-semibold text-slate-600">{{ $mapJob['company_name'] }}</p>
+                        <p class="text-sm font-semibold text-slate-600"><x-company-name :name="$mapJob['company_name']" /></p>
                         <h4 class="text-lg font-bold leading-7 text-blue-950">{{ $mapJob['job_title'] }}</h4>
                         <p>保存勤務地：{{ $mapJob['region'] ?? '未確認' }}</p>
                         <p class="text-sm text-slate-600">{{ $mapJob['location_label'] }}。実勤務地の座標ではありません。</p>

@@ -68,7 +68,7 @@ class DailyDiscoveryService
         $successful = 0;
         // Platform before Agents; each provider visits cells in the same canonical order.
         foreach ($providers as $provider) {
-            $totals = array_fill_keys(['fetched', 'normalized', 'imported', 'new', 'updated', 'unchanged', 'missing', 'skipped'], 0);
+            $totals = array_fill_keys(['fetched', 'normalized', 'imported', 'new', 'updated', 'unchanged', 'missing', 'skipped', 'anonymous_company_jobs'], 0);
             $totals['errors'] = 0;
             foreach ($cells as $cell) {
                 try {

@@ -22,7 +22,7 @@
                     <th scope="col" class="jobdd-corner">比較項目</th>
                     @foreach ($items as $item)
                         <th scope="col" data-job-id="{{ $item['job']->id }}">
-                            <p class="text-sm font-semibold text-slate-600">{{ $item['company_name'] }}</p>
+                            <p class="text-sm font-semibold text-slate-600"><x-company-name :name="$item['company_name']" /></p>
                             <h2 class="mt-2 text-xl font-bold leading-7 text-blue-950">{{ $item['job']->title }}</h2>
                             <a href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools]) }}" class="jobdd-link mt-2 inline-flex min-h-11 items-center">詳細を見る</a>
                         </th>
@@ -61,7 +61,7 @@
                         @foreach ($items as $item)
                             <td>
                                 @if (($item['fit']['axes'][$axisIndex]['key'] ?? null) === $axis['key'])
-                                    @include('query.partials.axis', ['axis' => $item['fit']['axes'][$axisIndex], 'fit' => $item['fit'], 'showHeading' => false, 'idPrefix' => 'compare-job-'.$item['job']->id, 'jobLabel' => $item['company_name'].' '.$item['job']->title])
+                                    @include('query.partials.axis', ['axis' => $item['fit']['axes'][$axisIndex], 'fit' => $item['fit'], 'showHeading' => false, 'idPrefix' => 'compare-job-'.$item['job']->id, 'jobLabel' => \App\Support\AnonymousCompany::display($item['company_name']).' '.$item['job']->title])
                                 @else
                                     <p>この項目の確認結果は未確認です。</p>
                                 @endif

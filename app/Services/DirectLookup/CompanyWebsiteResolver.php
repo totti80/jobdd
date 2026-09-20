@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\DirectReverseLookupCandidate;
 use App\Models\Platform;
 use App\Models\Source;
+use App\Support\AnonymousCompany;
 use Illuminate\Support\Facades\File;
 
 /** Stored evidence first, then search candidates only. Never verifies official identity. */
@@ -29,6 +30,9 @@ class CompanyWebsiteResolver
     public function resolve(array $record): array
     {
         $company = Company::findOrFail($record['company_id']);
+        if (AnonymousCompany::isAnonymous($company?->name)) {
+            throw new \InvalidArgumentException('AnonymousCompanyNotEligibleForDirectLookup');
+        }
         if ($company->name !== $record['company_name']) {
             throw new \InvalidArgumentException('Queue company ID/name mismatch.');
         }

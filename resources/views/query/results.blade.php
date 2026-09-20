@@ -56,7 +56,7 @@
         </div>
         @if (count($summary['representative_candidates']) > 0)<div class="mt-5 space-y-3">
           <p class="font-semibold text-blue-950">代表候補</p>@foreach ($summary['representative_candidates'] as $candidate)<div class="rounded-xl border border-slate-200 p-3 text-sm">
-            <p class="font-semibold">{{ $candidate['company_name'] ?? ($candidate['agency_name'] ?? $candidate['platform_name'] ?? '候補') }}</p>
+            <p class="font-semibold"><x-company-name :name="$candidate['company_name'] ?? ($candidate['agency_name'] ?? $candidate['platform_name'] ?? '候補')" /></p>
             <p class="mt-1 text-slate-700">{{ $candidate['title'] }}</p>
             <p class="mt-1 text-slate-500">{{ $candidate['region'] ?: '地域未確認' }}</p>@if ($candidate['application_url'])<a class="mt-2 inline-block font-semibold text-blue-600 underline" href="{{ $candidate['application_url'] }}" target="_blank" rel="noopener noreferrer">外部リンクを確認</a>@endif
           </div>@endforeach
@@ -69,7 +69,7 @@
     <section id="candidates-{{ $summary['route_type'] }}" class="mt-8 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
       <h2 class="text-xl font-bold text-blue-950">{{ $summary['label'] }}の今回条件に近い公開求人</h2>
       <p class="mt-2 text-sm text-slate-600">Evidence Level: 公開URLと確認日がある候補のみ表示</p>@if (count($summary['representative_candidates']) === 0)<p class="mt-4 text-sm text-slate-600">現在確認できるEvidenceがありません。求人が存在しないことを意味しません。</p>@else<div class="mt-4 grid gap-4 md:grid-cols-3">@foreach ($summary['representative_candidates'] as $candidate)<article class="rounded-xl border border-slate-200 p-4">
-          <p class="font-semibold text-slate-900">{{ $candidate['company_name'] ?? ($candidate['agency_name'] ?? $candidate['platform_name'] ?? '候補') }}</p>
+          <p class="font-semibold text-slate-900"><x-company-name :name="$candidate['company_name'] ?? ($candidate['agency_name'] ?? $candidate['platform_name'] ?? '候補')" /></p>
           <h3 class="mt-1 font-bold">{{ $candidate['title'] }}</h3>
           <p class="mt-2 text-sm text-slate-600">地域：{{ $candidate['region'] ?: '未確認' }}</p>
           <p class="text-sm text-slate-600">年収：{{ $candidate['salary_min'] ? $candidate['salary_min'] . '万円以上' : '未確認' }}</p>
@@ -410,7 +410,7 @@
 
               @if ($job->company)
               <div class="mt-1 text-sm text-slate-500">
-                {{ $job->company->name }}
+                <x-company-name :name="$job->company->name" />
               </div>
               @endif
 
@@ -578,7 +578,7 @@
             <div class="min-w-0">
 
               <div class="text-sm font-semibold text-blue-600">
-                {{ $jobPosting->company->name ?? '企業名未確認' }}
+                <x-company-name :name="$jobPosting->company->name ?? '企業名未確認'" />
               </div>
 
               <h3 class="mt-1 text-lg font-bold leading-7 text-slate-900">

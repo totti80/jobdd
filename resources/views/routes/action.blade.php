@@ -96,7 +96,7 @@
       </h2>
 
       <p class="mt-2 font-semibold text-slate-700">
-        {{ $jobPosting->company->name }}
+        <x-company-name :name="$jobPosting->company->name" />
       </p>
 
     </section>

@@ -5,6 +5,8 @@ use App\Models\Company;
 use App\Models\JobFact;
 use App\Models\JobPosting;
 use App\Models\UserQuery;
+use App\Services\JobFitService;
+use App\Support\AnonymousCompany;
 use Illuminate\Support\Str;
 
 function uiV5Dom($response, string $capture = ''): DOMXPath
@@ -129,4 +131,23 @@ test('v5 detail separates presence evidence and stored route availability withou
         ->assertSeeInOrder(['希望条件との確認結果', '求人本文で確認できた技術・工程', '根拠と求人元の情報', 'この求人で確認できた応募方法'])
         ->assertDontSee('href="https://apply.ui-v5.jp/unknown"', false)
         ->assertDontSee('href="https://apply.ui-v5.jp/unavailable"', false);
+});
+
+test('anonymous company remains explicit across list detail comparison and map without changing fit', function () {
+    [$query, $jobs] = uiV5Fixture();
+    $job = $jobs[0];
+    $fit = app(JobFitService::class);
+    $before = $fit->evaluate($query, $job, []);
+    Company::whereKey($job->company_id)->update(['name' => AnonymousCompany::NAME]);
+    expect($fit->evaluate($query, $job->fresh(), []))->toBe($before);
+    $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
+    foreach ([
+        route('query.jobs', ['userQuery' => $query->public_id]),
+        route('query.jobs', ['userQuery' => $query->public_id, 'view' => 'map']),
+        route('query.jobs.show', ['userQuery' => $query->public_id, 'job' => $job->id]),
+        route('query.jobs.compare', ['userQuery' => $query->public_id, 'jobs' => $jobs->take(2)->pluck('id')->all()]),
+    ] as $url) {
+        $this->get($url)->assertOk()->assertSee(AnonymousCompany::LABEL)
+            ->assertSee(AnonymousCompany::NOTE);
+    }
 });

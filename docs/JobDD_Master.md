@@ -1,6 +1,6 @@
 # JobDD Master Context
 
-**Version:** 4.2  
+**Version:** 4.3  
 **初版:** 2026-08-13  
 **更新:** 2026-09-20  
 **Project:** JobDD  
@@ -6404,3 +6404,349 @@ Outcome Evidence
 - Agent比較UIを新JobDDのどの段階へ配置するか
 
 卒業制作MVPでは、まず4層＋3状態＋EvidenceのDecision Support表示を優先し、総合Score設計は後回しとする。
+
+# 64. 2026-09-20｜Daily Discovery / Evidence Depth 運用方針
+
+## 背景
+
+新JobDDでは、求人件数そのものより、
+
+- 求人候補を広くDiscoveryできること
+- Source / Evidence付きで再確認できること
+- Tier 1 / Tier 2 Factが継続的に更新されること
+- Direct / Agent / Platformの応募経路を必要な範囲で確認できること
+- Agentについて公開求人だけでは分からないConsultation Fitを補強できること
+
+が重要である。
+
+2026-09-20時点では、Careerjet / Recruit Agent / Meitec Next等から実在求人を取得できている一方、求人ごとのTier 2 Fact、Direct Evidence、AgentのAdvisory Fit / Outcome Evidence等には薄い領域が残る。
+
+したがって、今後のデータ拡充は単に求人件数を増やすだけでなく、**Coverage（広さ）とEvidence Depth（厚さ）を分けて改善する。**
+
+---
+
+## DECISION｜卒制MVPでもデータ収集パイプラインは「毎日1回」を標準とする
+
+新JobDDの卒業制作MVPでは、求人・応募経路・主要Evidenceの収集／更新処理を、原則として**毎日1回**実行する設計を標準とする。
+
+これはユーザー検索時にリアルタイムWebクロールを行う方針ではない。
+
+基本構造は、
+
+```text
+日次バッチ
+   ↓
+Platform Discovery
+   ↓
+Agent求人 / Agent公式Fact確認
+   ↓
+Normalize / Upsert
+   ↓
+新規・更新・消滅候補の判定
+   ↓
+JobFact抽出 / 再抽出
+   ↓
+新規・更新求人を中心にDirect Reverse Lookup
+   ↓
+Application Route / Evidence更新
+   ↓
+Coverage / Evidence Depth集計
+   ↓
+更新済みDBをユーザー画面が参照
+```
+
+とする。
+
+JobDD本体は、日次処理が一部失敗しても既存DBを使って検索・比較を継続できる構造を維持する。
+
+---
+
+## DECISION｜日次対象は新JobDDの現行MVPスコープを優先する
+
+日次収集の中心Coverageは、最新方針である
+
+- 近畿6府県
+    - 兵庫県
+    - 大阪府
+    - 京都府
+    - 滋賀県
+    - 奈良県
+    - 和歌山県
+- 2職種
+    - 機械設計
+    - 電気設計
+
+の**12セル**とする。
+
+過去の18セル方針に含まれていた施工管理は、新JobDD v4系の卒制MVPにおける日次Coverageの必須対象とはしない。
+
+全国・全職種への拡張は、Pain検証・利用状況・Source条件を踏まえて段階的に判断する。
+
+---
+
+## DECISION｜Platformは日次Discoveryの入口として利用する
+
+Platformは、求職者条件に近い求人候補を広く発見するDiscovery Layerとして扱う。
+
+現時点の優先候補：
+
+1. Careerjet
+    - 実API取得・Importを確認済み
+    - 日次Discoveryの主系統候補
+2. Jooble
+    - 第2API候補
+    - 日本向け実動・利用条件の確認後に日次系統へ追加候補
+3. その他Platform
+    - API / robots.txt / 利用規約 / 商用利用 / 保存・再利用条件を確認できたものだけ段階追加
+
+単一APIへ依存せず、複数Discovery Sourceを持つ方向を維持する。
+
+Platformから得た求人件数そのものをJobDD価値とはせず、企業同定・Fact抽出・Direct逆引き・複数route確認の入口として利用する。
+
+---
+
+## DECISION｜Agentは「公開求人」と「相談価値Fact」を分けて日次確認する
+
+Agentについては、求人件数だけを増やす目的で全社の求人を一括Crawlerしない。
+
+日次処理では、取得条件が確認できたSourceについて以下を分けて更新する。
+
+### A. 公開求人Discovery
+
+- 利用条件上取得可能なAgent公式求人
+- Platform等で発見したAgent route
+- 求人Source / last_seen / unavailable状態
+
+### B. Consultation Fit用Fact
+
+- Domain Fit
+- Opportunity Access
+- Advisory Fit
+- Outcome Evidence
+
+のうち、公式・公的・検証可能なFactを確認する。
+
+特に、
+
+- 公開求人が0件
+- 公開求人が未確認
+
+をAgent価値の減点へ変換しない既存方針を維持する。
+
+また、
+
+```text
+非公開求人の取扱い：確認できた
+あなたの条件に合う現在紹介可能求人：未確認
+```
+
+のように、一般的な非公開求人取扱いと、本人向け紹介可能求人を分離して扱う。
+
+---
+
+## DECISION｜Directは日次の「新規・更新求人」からReverse Lookupする
+
+Directについて、毎日すべての企業公式採用ページを全件巡回することを標準としない。
+
+基本は、Platform / Agent等の日次Discoveryで発見された
+
+- 新規求人
+- 更新求人
+- Direct確認が未実施または古い求人
+
+を優先して企業公式採用ページ・公式ATSへReverse Lookupする。
+
+概念：
+
+```text
+日次Discoveryで求人を発見
+        ↓
+企業を同定
+        ↓
+公式採用ページ / 公式ATSを確認
+        ↓
+同一または近似求人を確認
+        ↓
+Direct応募可能ならroute追加 / 更新
+```
+
+確認できない求人をDirect confirmedへ昇格させない。
+
+---
+
+## DECISION｜日次差分は NEW / UPDATED / UNCHANGED / MISSING を基本分類とする
+
+日次収集では、各Sourceの結果を少なくとも以下の状態として扱える構造を目指す。
+
+- **NEW**：今回初めて発見
+- **UPDATED**：既存求人だが主要情報またはSource情報に変更あり
+- **UNCHANGED**：既存求人と実質同一
+- **MISSING**：今回の取得では見つからなかった
+
+ただし、**1回MISSINGになっただけで即 `unavailable` としない。**
+
+求人が消えたと判断する正式条件は別途定義する。
+
+---
+
+## OPEN｜MISSINGからunavailableへ移行する正式ルール
+
+以下は未決定とする。
+
+- 何回連続MISSINGで終了扱いとするか
+- API求人とCrawler求人で同じルールを使うか
+- `last_seen_at` からの日数基準を使うか
+- Source側の削除・404・終了表示を強いEvidenceとして使うか
+- 一時的な取得失敗と求人終了をどう区別するか
+
+MVPでは、誤って公開中求人を終了扱いするより、未確認／再確認対象として残すことを優先する。
+
+---
+
+## DECISION｜CoverageとEvidence Depthを分けて計測する
+
+日次データ品質は、単純な求人件数だけで評価しない。
+
+### Coverage（広さ）
+
+候補指標：
+
+- discovery_source_count
+- discovered_jobs
+- unique_jobs
+- new_jobs
+- updated_jobs
+- missing_jobs
+- direct_routes
+- agent_routes
+- platform_routes
+- official_confirmed_jobs
+
+### Evidence Depth（厚さ）
+
+候補指標：
+
+- Tier 1 Fact充足率
+- Tier 2 Fact充足率
+- Evidence付きFact率
+- official source確認率
+- Direct confirmed率
+- Agent Consultation Fit 4層のFact充足率
+- stale / unverified件数
+
+大量に求人を保有すること自体を成功指標にしない。
+
+**求職者が比較・判断するために必要な情報が、どの程度根拠付きで揃っているか**を重視する。
+
+---
+
+## DECISION｜日次処理後に内部Daily Discovery Reportを作る
+
+日次処理終了後、少なくとも内部確認用に以下を把握できる状態を目指す。
+
+例：
+
+```text
+JobDD Daily Discovery
+
+兵庫県 × 機械設計
+Discovery Sources      4
+Discovered Jobs      382
+Unique Jobs          291
+NEW                    14
+UPDATED                 8
+MISSING                 3
+Official Evidence     126
+Direct Routes          71
+Agent Routes          184
+Platform Routes       276
+```
+
+これはユーザー向けランキングではなく、**JobDD自身のデータ品質・鮮度を確認する運用指標**とする。
+
+ユーザーへどのCoverage指標を表示するかは別途検証する。
+
+---
+
+## DECISION｜「広く集める」と「厚くする」を並行する
+
+データ拡充は以下の3本を並行して進める。
+
+### 1. Discovery Coverage拡張
+
+- Careerjet日次取得
+- 第2API候補の追加
+- 利用条件を満たすAgent / Platform Source追加
+
+### 2. Evidence Depth拡張
+
+- 既存求人のJobFact抽出・再抽出
+- Tier 2 Fact辞書改善
+- Context Role / Evidence精度改善
+- Source対応強化
+
+### 3. Agent Fact拡張
+
+特に現在薄い、
+
+- Advisory Fit
+- Outcome Evidence
+- Opportunity Access
+
+の検証可能なFactを増やす。
+
+求人件数を増やす作業だけでAgent表示品質が上がるとは扱わない。
+
+---
+
+## DECISION｜データ収集の目的をCrawler開発そのものにしない
+
+毎日収集を標準とするが、Crawler/API実装数や取得件数を卒業制作の成功条件にはしない。
+
+優先順位は、
+
+1. 12セルで候補をDiscoveryできる
+2. 重要FactとEvidenceを継続更新できる
+3. 求人・会社・応募経路を根拠付きで比較できる
+4. Agentの相談価値を公開求人件数に依存せず表示できる
+5. JobDDが日次更新されても再現性・冪等性・安全性を維持できる
+6. その状態で求職者のDecision Support価値を検証できる
+
+とする。
+
+---
+
+## HYPOTHESIS｜毎日更新がJobDDの信頼性と再訪価値を高める
+
+求人・応募経路・Evidenceを毎日更新することで、
+
+- 古い求人の混入を減らせる
+- 新規求人を早くDiscoveryできる
+- Evidenceの鮮度を保てる
+- Direct route確認を継続できる
+- Agent / Platform / Directの変化を蓄積できる
+- 将来の更新通知・再訪動機につながる
+
+可能性がある。
+
+ただし、**毎日更新されること自体が求職者価値になるかは未検証**であり、利用行動を見て確認する。
+
+---
+
+## OPEN｜日次運用の正式仕様
+
+今後決める。
+
+- 日次実行時刻
+- Sourceごとの実行順序
+- Sourceごとのretry / timeout / rate limit
+- Jooble等第2APIの正式採用
+- Agent公式Factの再取得周期を全て毎日にするか、日次パイプライン内で期限判定するか
+- Direct Reverse Lookupの1日あたり処理上限
+- NEW / UPDATED判定に使うhash項目
+- `crawl_runs`等の実行履歴テーブルを新JobDDへどう接続するか
+- MISSING → unavailableの正式条件
+- Daily Reportの保存方式
+- 本番SakuraでのScheduler / cron設定
+
+卒制MVPでは、複雑なQueue基盤を先に作るのではなく、**1日1回、安全・冪等・再現可能に回ること**を優先する。

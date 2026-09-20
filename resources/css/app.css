@@ -102,3 +102,18 @@ select:focus[data-flux-control] {
         .jobdd-selection-enhanced .jobdd-mobile-compare { @apply fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 pt-3 shadow-sm; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
     }
 }
+
+/* Coordinate-only diagram: no copied geography or external map assets. */
+@layer components {
+    .jobdd [hidden] { display: none !important; }
+    .jobdd-view-button { @apply min-h-12 rounded-lg border border-blue-800 bg-white px-4 py-3 font-semibold text-blue-800; }
+    .jobdd-view-button[aria-pressed='true'], .jobdd-map-marker[aria-pressed='true'] { @apply bg-blue-800 text-white ring-2 ring-blue-800 ring-offset-2; }
+    .jobdd-map-active { grid-template-columns: minmax(0, 1fr) !important; }
+    .jobdd-map-active .jobdd-selection-panel { position: static !important; }
+    .jobdd-map-plot { @apply relative rounded-2xl border border-slate-200 bg-blue-50; height: clamp(240px, 45svh, 420px); }
+    .jobdd-map-marker { @apply absolute rounded-lg border-2 border-blue-800 bg-white px-1 py-1 text-center font-semibold text-blue-800; width: 76px; min-height: 48px; transform: translate(-50%, -50%); }
+    .jobdd-map-point { @apply absolute size-2 rounded-full bg-blue-800; transform: translate(-50%, -50%); }
+    .jobdd [data-map-selected='true'] { @apply ring-2 ring-blue-800; }
+    @media (width >= 1024px) { .jobdd-map-plot { height: 480px; } }
+    @media (height < 480px) and (width < 1024px) { .jobdd-map-plot { height: 200px; } }
+}

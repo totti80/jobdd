@@ -49,7 +49,7 @@ function initializeJobdd(root) {
             remove.className = 'jobdd-link min-h-11 shrink-0 px-2';
             remove.textContent = '解除';
             remove.setAttribute('aria-label', input.dataset.jobLabel + 'を比較から解除');
-            remove.addEventListener('click', () => { input.checked = false; render('比較から解除しました。'); input.focus(); });
+            remove.addEventListener('click', () => { input.checked = false; render('比較から解除しました。'); root.dispatchEvent(new Event('jobdd:show-list')); input.focus(); });
             item.append(name, remove); selectedList.append(item);
         });
         announcement.textContent = notice || message;
@@ -66,6 +66,7 @@ function initializeJobdd(root) {
             event.preventDefault();
             render();
             const target = checkboxes.find(input => !input.checked) || checkboxes[0];
+            root.dispatchEvent(new Event('jobdd:show-list'));
             target?.focus();
         }
     });

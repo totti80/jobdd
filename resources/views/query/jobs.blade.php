@@ -45,8 +45,13 @@
         <p>掲載年収は提示額の保証ではなく、保存上の掲載状態は現在の募集を保証しません。</p>
         <a href="#compare-selection" class="jobdd-link inline-flex min-h-11 items-center">比較する求人を2〜3件選ぶ</a>
     </div>
-    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_288px]">
-        <section aria-label="求人候補" class="min-w-0 space-y-6">
+    <div data-map-toggle hidden class="flex flex-wrap gap-3" role="group" aria-label="求人候補の表示方法">
+        <button type="button" data-jobdd-view="list" aria-pressed="true" aria-controls="jobdd-list-view" class="jobdd-view-button">リスト</button>
+        <button type="button" data-jobdd-view="map" aria-pressed="false" aria-controls="jobdd-map-view" class="jobdd-view-button">地図（都道府県の目安）</button>
+    </div>
+    <div data-discovery-layout class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_288px]">
+        @include('query.partials.map-view', ['map' => \App\Support\JobMapLocation::viewModel($items, $query, $pagination['page'], $selected_tools)])
+        <section id="jobdd-list-view" data-list-view aria-label="求人候補" class="min-w-0 space-y-6">
             @forelse ($items as $item)
                 @php($job = $item['job'])
                 @php($fit = $item['fit'])

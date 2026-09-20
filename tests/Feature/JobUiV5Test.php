@@ -87,7 +87,7 @@ test('v5 list keeps canonical checkboxes and every axis outside closed evidence'
             ->and($dom->query('.//*[@data-status="unknown"]', $card)->length)->toBeGreaterThan(0);
     }
     expect($dom->query('//*[@data-jobdd-root]//progress | //*[@data-jobdd-root]//*[@role="progressbar"]')->length)->toBe(0);
-    foreach (['一致率', 'TOP3', 'score', 'おすすめ', '地図'] as $forbidden) {
+    foreach (['一致率', 'TOP3', 'score', 'おすすめ'] as $forbidden) {
         $response->assertDontSee($forbidden);
     }
     $response->assertSee('最終取得日時')->assertSee('この求人の掲載元')->assertSee('合わないという意味ではありません。');

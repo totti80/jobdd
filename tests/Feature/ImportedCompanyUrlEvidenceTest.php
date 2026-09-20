@@ -32,6 +32,9 @@ afterEach(function () {
 
 function importUrlEvidence($test, string $provider, array $urls): void
 {
+    // This fixture exercises the legacy evidence importer, not live onboarding approval.
+    config(['discovery.provider_capabilities.'.$provider.'.mode' => 'persistent',
+        'discovery.provider_capabilities.'.$provider.'.supports_persistent_identity' => true]);
     $commands = ['careerjet' => 'crawler:import-careerjet-job', 'recruit_agent' => 'crawler:import-recruit-agent-jobs', 'meitec_next' => 'crawler:import-meitec-next-jobs'];
     $source = 'https://'.str_replace('_', '-', $provider).'.example.test/job/1';
     $row = [

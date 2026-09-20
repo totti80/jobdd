@@ -8,6 +8,7 @@ use App\Models\JobPosting;
 use App\Services\DailyDiscoveryImporter;
 use App\Services\DirectLookup\CompanyUrlEvidence;
 use App\Services\OccupationNormalizer;
+use App\Support\ProviderCapabilities;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -47,6 +48,12 @@ class ImportRecruitAgentJobs extends Command
     ): int {
         if ($this->option('daily-input') || $this->option('dry-run')) {
             return app(DailyDiscoveryImporter::class)->command($this, 'recruit_agent');
+        }
+
+        if (! ProviderCapabilities::persistent('recruit_agent')) {
+            $this->error('ProviderReadOnly: use jobdd:discover-daily for observations.');
+
+            return self::FAILURE;
         }
 
         $this->info('=== Recruit Agent importer start ===');

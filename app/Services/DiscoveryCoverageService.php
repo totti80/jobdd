@@ -56,7 +56,8 @@ class DiscoveryCoverageService
     public function directCandidates(array $changes): array
     {
         $changes = collect($changes)->whereIn('state', ['new', 'updated'])
-            ->reject(fn ($row) => AnonymousCompany::isAnonymous($row['company_name']));
+            ->reject(fn ($row) => AnonymousCompany::isAnonymous($row['company_name'])
+                || in_array(trim($row['company_name'] ?? ''), ['', '不明', '非公開', '企業名非公開', '企業名未確認', '会社名未確認'], true));
         $ids = $changes->pluck('company_id')->filter()->unique()->values()->all();
         $companies = DB::table('companies')->whereIn('id', $ids)->pluck('website_url', 'id');
         $direct = DB::table('application_routes')->join('job_postings', 'job_postings.id', '=', 'application_routes.job_posting_id')

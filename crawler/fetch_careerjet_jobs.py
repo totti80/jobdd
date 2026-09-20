@@ -16,7 +16,7 @@ MAX_PAGES = min(int(os.getenv("CAREERJET_MAX_PAGES", "3")), 3)
 REQUEST_INTERVAL = float(os.getenv("CAREERJET_REQUEST_INTERVAL", "1.0"))
 
 
-def fetch_cell(session: requests.Session, region: str, occupation: str) -> list[dict]:
+def fetch_cell(session: requests.Session, region: str, occupation: str, metadata=None) -> list[dict]:
     jobs: list[dict] = []
     observed_pages = set()
     for page in range(1, MAX_PAGES + 1):
@@ -40,6 +40,8 @@ def fetch_cell(session: requests.Session, region: str, occupation: str) -> list[
         data = response.json()
         if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
             raise ValueError("Invalid Careerjet jobs response")
+        if metadata is not None and isinstance(data.get("hits"), int):
+            metadata["hits"] = data["hits"]
         page_jobs = data["jobs"]
         # A content signature is a pagination guard only, never a persisted identity.
         # Tracking URLs may change even when the API repeats exactly the same page.

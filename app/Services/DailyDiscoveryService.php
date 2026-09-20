@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\ProviderCapabilities;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -69,20 +70,36 @@ class DailyDiscoveryService
         // Platform before Agents; each provider visits cells in the same canonical order.
         foreach ($providers as $provider) {
             $totals = array_fill_keys(['fetched', 'normalized', 'imported', 'new', 'updated', 'unchanged', 'missing', 'skipped', 'anonymous_company_jobs', 'not_observed_in_window'], 0);
+            $capability = ProviderCapabilities::get($provider);
+            $readOnly = ! ProviderCapabilities::persistent($provider);
+            if ($readOnly) {
+                foreach (['new', 'updated', 'unchanged', 'missing', 'not_observed_in_window'] as $key) {
+                    $totals[$key] = null;
+                }
+                $totals += ['observed_in_window' => 0, 'accepted' => 0, 'anonymous' => 0, 'window_total' => 0, 'hits' => null];
+            }
             $totals['errors'] = 0;
             foreach ($cells as $cell) {
                 try {
                     $payload = $this->adapter->fetch($provider, $cell);
                     $result = $this->adapter->import($provider, $cell, $payload, $dryRun);
                     foreach ($totals as $key => $value) {
-                        $totals[$key] += $key === 'errors' ? count($result['errors']) : $result[$key];
+                        if ($readOnly && in_array($key, ['new', 'updated', 'unchanged', 'missing', 'not_observed_in_window'], true)) {
+                            continue;
+                        }
+                        if ($key === 'hits' && ($result[$key] ?? null) === null) {
+                            continue;
+                        }
+                        $totals[$key] += $key === 'errors' ? count($result['errors']) : ($result[$key] ?? 0);
                     }
                     foreach ($result['errors'] as $error) {
                         $report['errors'][] = ['provider' => $provider, ...$cell, ...$error];
                     }
-                    $successful += $result['errors'] === [] ? 1 : 0;
-                    $changes = [...$changes, ...$result['changes']];
-                    $report['by_cell'][] = ['provider' => $provider, ...$cell, 'status' => $result['errors'] === [] ? 'success' : 'partial',
+                    $successful += $result['errors'] === [] || $result['normalized'] > 0 ? 1 : 0;
+                    if (! $readOnly && $capability['supports_direct_candidate_generation']) {
+                        $changes = [...$changes, ...$result['changes']];
+                    }
+                    $report['by_cell'][] = ['provider' => $provider, ...$cell, 'mode' => $readOnly ? 'read_only' : 'persistent', 'status' => $result['errors'] === [] ? 'success' : 'partial',
                         'scope' => $payload['scope'] ?? 'bounded_search_results', 'discovered' => $result['normalized'], ...$result];
                 } catch (Throwable $e) {
                     $type = in_array($e->getMessage(), ['ProviderNotApproved', 'SearchUrlNotConfigured', 'FetchFailed', 'IncompleteFetch'], true)
@@ -92,7 +109,7 @@ class DailyDiscoveryService
                     $report['by_cell'][] = ['provider' => $provider, ...$cell, 'status' => 'failed', 'discovered' => null, 'missing' => null];
                 }
             }
-            $report['by_provider'][$provider] = $totals;
+            $report['by_provider'][$provider] = [...$totals, 'mode' => $readOnly ? 'read_only' : 'persistent'];
         }
         $report['status'] = $report['errors'] === [] ? 'success' : ($successful > 0 || count($changes) > 0 ? 'partial' : 'failed');
         $report['coverage'] = $this->coverage->snapshot();
@@ -103,8 +120,9 @@ class DailyDiscoveryService
         $report['direct_lookup_candidates'] = $this->coverage->directCandidates($changes);
         $report['run_finished_at'] = now()->toIso8601String();
         $report['duration_seconds'] = round(microtime(true) - $started, 3);
-        $report['definitions'] = ['missing' => 'Legacy absence observation for providers without a bounded-window override; never unavailable. Failed cells yield no observation.',
-            'not_observed_in_window' => 'Absent from this bounded Careerjet result only; no disappearance or market coverage claim. Identity instability may also cause non-observation.',
+        $report['definitions'] = ['missing' => 'Persistent providers with complete-snapshot and missing-detection capabilities only; never unavailable. Failed cells yield no observation.',
+            'not_observed_in_window' => 'Persistent provider only: absent from this bounded window, not unavailable.',
+            'read_only' => 'Current observations only; history classifications are N/A, no persistent history, DB writes or Direct candidates. Hits may overlap across cells.',
             'dry_run' => 'Classification preview; imported=0, coverage is current DB, new IDs may be null.',
             'direct' => 'Company candidates only; stored company website/route presence is not same-job official confirmation.'];
         $name = now()->format('Y-m-d').'-'.$report['run_id'].($dryRun ? '-preview' : '');
@@ -113,7 +131,17 @@ class DailyDiscoveryService
         $markdown = '# JobDD Daily Discovery'."\n\n".$report['run_started_at']."\n\nStatus: ".$report['status']."\n\nProviders: ".count($providers).' / Cells: '.count($cells)."\n\n";
         $markdown .= "| Provider | Fetched | New | Updated | Unchanged | Missing | Not observed in window | Errors |\n|---|---:|---:|---:|---:|---:|---:|---:|\n";
         foreach ($report['by_provider'] as $key => $totals) {
-            $markdown .= '|'.$key.'|'.implode('|', array_map(fn ($key) => $totals[$key], ['fetched', 'new', 'updated', 'unchanged', 'missing', 'not_observed_in_window', 'errors']))."|\n";
+            $markdown .= '|'.$key.'|'.implode('|', array_map(fn ($key) => $totals[$key] ?? 'N/A', ['fetched', 'new', 'updated', 'unchanged', 'missing', 'not_observed_in_window', 'errors']))."|\n";
+        }
+        $markdown .= "\n## Read-only observations\n\n";
+        foreach ($report['by_cell'] as $cellResult) {
+            if (($cellResult['mode'] ?? null) === 'read_only' && isset($cellResult['observation_time'])) {
+                $markdown .= '- '.$cellResult['provider'].' / '.$cellResult['occupation'].' / '.$cellResult['region']
+                    .': observed='.$cellResult['observed_in_window'].', accepted='.$cellResult['accepted']
+                    .', skipped='.$cellResult['skipped'].', anonymous='.$cellResult['anonymous']
+                    .', window_total='.$cellResult['window_total'].', hits='.($cellResult['hits'] ?? 'unknown')
+                    .', observation_time='.$cellResult['observation_time']."\n";
+            }
         }
         $markdown .= "\n## Cells\n\n| Occupation | Region | Current jobs |\n|---|---|---:|\n";
         foreach ($report['cells'] as $cell) {

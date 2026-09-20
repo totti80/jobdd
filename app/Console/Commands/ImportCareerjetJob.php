@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\DailyDiscoveryImporter;
 use App\Services\DirectLookup\CompanyUrlEvidence;
 use App\Services\OccupationNormalizer;
+use App\Support\ProviderCapabilities;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,12 @@ class ImportCareerjetJob extends Command
     {
         if ($this->option('daily-input') || $this->option('dry-run')) {
             return app(DailyDiscoveryImporter::class)->command($this, 'careerjet');
+        }
+
+        if (! ProviderCapabilities::persistent('careerjet')) {
+            $this->error('ProviderReadOnly: use jobdd:discover-daily for observations.');
+
+            return self::FAILURE;
         }
 
         $runId = DB::table('crawl_runs')->insertGetId([

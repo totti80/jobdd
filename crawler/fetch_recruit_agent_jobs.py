@@ -62,9 +62,12 @@ def fetch_html(url):
         try:
             response = session.get(
                 url,
-                timeout=20
+                timeout=20,
+                allow_redirects=globals().get("ALLOW_REDIRECTS", True),
             )
 
+            if response.is_redirect:
+                return None
             response.raise_for_status()
 
             return response.text
@@ -152,6 +155,9 @@ def collect_job_urls():
             )
 
             if "/viewjob/" not in full:
+                continue
+
+            if not globals().get("ALLOW_QUERY_JOB_LINKS", True) and urlparse(full).query:
                 continue
 
             clean = normalize_job_url(

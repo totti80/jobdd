@@ -16,10 +16,11 @@ def fetch(provider, occupation, region, search_url=""):
     if provider == "careerjet":
         module.REQUEST_INTERVAL = max(1.0, module.REQUEST_INTERVAL)
         # Existing caps (20/page, 3 pages), timeout, auth, referer, interval remain intact.
+        metadata = {}
         with module.requests.Session() as session:
-            jobs = module.fetch_cell(session, region, occupation)
+            jobs = module.fetch_cell(session, region, occupation, metadata=metadata)
         time.sleep(max(1.0, module.REQUEST_INTERVAL))
-        return {"jobs": jobs, "completed": True, "scope": "bounded_search_results"}
+        return {"jobs": jobs, "completed": True, "scope": "bounded_search_results", "metadata": metadata}
 
     host = {"recruit_agent": "www.r-agent.com", "meitec_next": "www.m-next.jp"}[provider]
     parsed = urlparse(search_url)
@@ -30,6 +31,9 @@ def fetch(provider, occupation, region, search_url=""):
     module.SEARCH_URL = search_url
     if provider == "recruit_agent":
         module.TARGET_PATH = parsed.path
+        module.MAX_PAGES = 1
+        module.ALLOW_QUERY_JOB_LINKS = False
+        module.ALLOW_REDIRECTS = False
     else:
         module.is_search_result_url = lambda url: urlparse(url).netloc == host and urlparse(url).path.startswith(parsed.path)
 
@@ -39,6 +43,8 @@ def fetch(provider, occupation, region, search_url=""):
     def guarded_fetch(url):
         nonlocal fetched_pages
         target = urlparse(url)
+        if provider == "recruit_agent" and target.query:
+            raise ValueError("UnapprovedRecruitQuery")
         if target.scheme != "https" or target.netloc != host:
             raise ValueError("CrossHostUrl")
         fetched_pages += 1
@@ -55,6 +61,8 @@ def fetch(provider, occupation, region, search_url=""):
     if not urls:
         # Existing parsers cannot distinguish a true empty result from a layout/access change.
         raise RuntimeError("UnconfirmedEmptyResults")
+    if provider == "recruit_agent":
+        urls = urls[:10]
     jobs = []
     for index, url in enumerate(urls, 1):
         time.sleep(max(1.0, module.REQUEST_INTERVAL))

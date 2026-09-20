@@ -10,6 +10,7 @@ use App\Models\Source;
 use App\Services\DirectLookup\CompanyUrlEvidence;
 use App\Support\AnonymousCompany;
 use App\Support\JobDecisionPresenter;
+use App\Support\ProviderCapabilities;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -90,8 +91,11 @@ class DailyDiscoveryImporter
         return $data;
     }
 
-    public function run(string $provider, array $cell, array $rows, bool $dryRun): array
+    public function run(string $provider, array $cell, array $rows, bool $dryRun, array $metadata = []): array
     {
+        if (! ProviderCapabilities::persistent($provider)) {
+            return $this->observe($provider, $cell, $rows, $metadata);
+        }
         $result = ['fetched' => count($rows), 'normalized' => 0, 'imported' => 0, 'new' => 0, 'updated' => 0,
             'unchanged' => 0, 'missing' => 0, 'skipped' => 0, 'anonymous_company_jobs' => 0, 'not_observed_in_window' => 0, 'errors' => [], 'changes' => [], 'missing_job_ids' => [], 'not_observed_in_window_job_ids' => [], 'absence_status' => 'not_evaluated'];
         $seen = [];
@@ -123,7 +127,8 @@ class DailyDiscoveryImporter
         }
         // Failed/incomplete cells do not produce absence observations.
         if ($result['errors'] === []) {
-            $complete = config('discovery.provider_capabilities.'.$provider.'.supports_complete_snapshot', true);
+            $capability = ProviderCapabilities::get($provider);
+            $complete = $capability['supports_complete_snapshot'] && $capability['supports_missing_detection'];
             $field = $complete ? 'missing' : 'not_observed_in_window';
             $result['absence_status'] = $complete ? 'missing_observation' : 'bounded_window';
             $result[$field.'_job_ids'] = JobPosting::query()->where('provider_key', $provider)
@@ -131,6 +136,39 @@ class DailyDiscoveryImporter
                 ->whereNull('unavailable_at')->whereNotNull('external_id')->whereNotIn('external_id', $seen)
                 ->orderBy('id')->pluck('id')->all();
             $result[$field] = count($result[$field.'_job_ids']);
+        }
+
+        return $result;
+    }
+
+    private function observe(string $provider, array $cell, array $rows, array $metadata): array
+    {
+        $result = ['mode' => 'read_only', 'fetched' => count($rows), 'observed_in_window' => count($rows),
+            'window_total' => count($rows), 'hits' => is_int($metadata['hits'] ?? null) ? $metadata['hits'] : null,
+            'observation_time' => now()->toIso8601String(), 'normalized' => 0, 'accepted' => 0, 'skipped' => 0,
+            'anonymous' => 0, 'anonymous_company_jobs' => 0, 'imported' => 0,
+            'new' => null, 'updated' => null, 'unchanged' => null, 'missing' => null, 'not_observed_in_window' => null,
+            'absence_status' => 'not_applicable', 'changes' => [], 'missing_job_ids' => [],
+            'not_observed_in_window_job_ids' => [], 'current_discovery_candidates' => [], 'errors' => []];
+        foreach ($rows as $row) {
+            try {
+                $data = $this->normalize($provider, $row);
+                if ($data['occupation'] !== $cell['occupation'] || $data['region'] !== $cell['region']) {
+                    $result['skipped']++;
+
+                    continue;
+                }
+                $result['normalized']++;
+                $result['accepted']++;
+                $result['anonymous'] += AnonymousCompany::isAnonymous($data['company_name']) ? 1 : 0;
+                $result['anonymous_company_jobs'] = $result['anonymous'];
+                // Observation only: no stable ID, DB lookup, change classification or body dump.
+                $result['current_discovery_candidates'][] = array_intersect_key($data, array_flip([
+                    'company_name', 'title', 'occupation', 'region', 'salary_min', 'salary_max', 'source_url',
+                ]));
+            } catch (Throwable $e) {
+                $result['errors'][] = ['stage' => 'normalize', 'error_type' => class_basename($e)];
+            }
         }
 
         return $result;

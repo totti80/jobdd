@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\ProviderCapabilities;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -42,6 +43,9 @@ class DiscoveryProviderAdapter
 
     public function import(string $provider, array $cell, array $payload, bool $dryRun): array
     {
+        if (! ProviderCapabilities::persistent($provider)) {
+            return app(DailyDiscoveryImporter::class)->run($provider, $cell, $payload['jobs'], true, $payload['metadata'] ?? []);
+        }
         $directory = config('discovery.report_directory').'/inputs';
         File::ensureDirectoryExists($directory, 0700);
         $name = (string) Str::uuid().'.json';

@@ -20,6 +20,14 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
+    // Historical importer contract tests explicitly opt into a hypothetical validated provider.
+    foreach (['careerjet', 'recruit_agent', 'meitec_next'] as $provider) {
+        config(['discovery.provider_capabilities.'.$provider => [
+            'mode' => 'persistent', 'supports_persistent_identity' => true,
+            'supports_complete_snapshot' => $provider !== 'careerjet', 'supports_missing_detection' => true,
+            'supports_direct_candidate_generation' => true,
+        ]]);
+    }
     $this->dailyDirectory = storage_path('framework/testing/daily-'.Str::uuid());
     config(['discovery.report_directory' => $this->dailyDirectory]);
     DB::table('agencies')->insert([['id' => 7, 'name' => 'Meitec'], ['id' => 8, 'name' => 'Recruit']]);

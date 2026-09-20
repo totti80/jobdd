@@ -27,11 +27,11 @@ Reports: `storage/app/jobdd/discovery/YYYY-MM-DD-<run_uuid>[-preview].json` and 
 
 The command uses an OS `flock` for manual/scheduled overlap prevention without DB writes or lock expiry during long runs, plus Laravel `withoutOverlapping`. This assumes a single scheduler host with shared local storage; multi-host orchestration is not implemented. Scheduler's own mutex follows the existing Laravel cache configuration.
 
-Each existing importer has an opt-in `--daily-input` path used by the adapter. The legacy default path is unchanged, including its older missing/identity behavior. Do not mix legacy bulk import and daily runs concurrently; the daily lock cannot guard older commands.
+Each existing importer has an opt-in `--daily-input` path used by the adapter. Read-only providers reject the legacy default path before any database write; persistent providers retain their legacy behavior. Do not mix legacy bulk import and daily runs concurrently; the daily lock cannot guard older commands.
 
-Daily identity is the existing unique `(provider_key, external_id)` pair; missing IDs use the existing provider URL/hash fallback. A legacy route attached to a posting owned by another provider is reported for review, never stolen. No cross-provider fuzzy deduplication is introduced. `first_seen_at` survives updates; only observed accepted records refresh `last_seen_at`. Company, content, salary, occupation, region, Source URL, availability and supplied provider dates determine NEW/UPDATED/UNCHANGED; clock refresh alone does not.
+For persistent providers only, daily identity is the existing unique `(provider_key, external_id)` pair; missing IDs use the existing provider URL/hash fallback. A legacy route attached to a posting owned by another provider is reported for review, never stolen. No cross-provider fuzzy deduplication is introduced. `first_seen_at` survives updates; only observed accepted records refresh `last_seen_at`. Company, content, salary, occupation, region, Source URL, availability and supplied provider dates determine NEW/UPDATED/UNCHANGED; clock refresh alone does not.
 
-For providers retaining the legacy absence branch, MISSING means absent from that successful search result, **not unavailable** or a complete-market disappearance. Careerjet instead reports `not_observed_in_window` (see Batch 15.3 below). Failed cells/rows do not infer absence; jobs and routes are never closed for either observation.
+MISSING requires explicit complete-snapshot and missing-detection capabilities and is **not unavailable**. Bounded persistent providers report `not_observed_in_window`; read-only providers report neither absence classification. Failed cells/rows do not infer absence; jobs and routes are never closed for either observation.
 
 NEW/UPDATED invoke the existing dictionary and Fact extractor inside the per-job import transaction. Rule Facts belonging to the current dictionary but no longer found in the new text are removed; manual/other Facts remain. There is no dictionary, context classification, Fit or UI change. UNCHANGED skips extraction. A Fact failure rolls back that job import.
 
@@ -60,3 +60,33 @@ Careerjet has `supports_complete_snapshot=false`: successful bounded fetches rep
 A repeated whole page is rejected even when its tracking URLs differ, using a content signature solely as a pagination guard. It is **not** a job identity or fuzzy merge rule. Distinct pages with partial overlap are not treated as a repeated whole page.
 
 The Batch 15.3 live audit observed 1,436 hits, of which only the first 60 were requested. Two fetches returned the same 60 title/company/location tuples in the same order, but **zero full URL overlap**. No `id`, `job_id`, `external_id` or `ref` was present. Therefore full tracking-URL SHA256 is not safe as a daily identity in this observed response. The existing fallback and saved identities are left unchanged; normal Careerjet writes must remain stopped pending a verified stable provider identity and reconciliation of existing rows. Do not substitute title/company hashes or strip opaque URL segments by guesswork. Scheduler remains disabled.
+
+## Provider Onboarding Check (Batch 15.5 — current operating standard)
+
+Use **five checks**, one provider × one canonical cell. Investigate further only when a check fails; do not broaden collection to compensate for an unresolved identity or access problem.
+
+| Check | Record | Gate |
+|---|---|---|
+| 1. Identity | Native ID, stable detail/canonical URL, repeat overlap and collisions, anonymous cases, namespace/reposting meaning | Persistent mode requires a verified deterministic identity. Similar titles are not proof. |
+| 2. Snapshot | Result total, requested window, pagination/next page, completeness | MISSING requires both complete snapshot and explicit missing support. Bounded persistent providers use not_observed_in_window only. |
+| 3. Fields | At least 10 title/company/location/salary/source_url/description samples | Compare provider facts against normalization. Query conditions are not job facts; preserve unknown. |
+| 4. Access / terms | Exact search/detail URLs, robots including queries, storage/reuse terms, interval, timeout, UA/auth | No bypass, blocked pagination or storage without established permission. Read access and persistence approval are separate. |
+| 5. Validation | One-cell dry-run; 15-table hashes/write0; absence/duplicates; optional write; repeat idempotency; Facts/Direct | Write only after all preceding gates pass. Otherwise report the blocker and do not expand. |
+
+Internal operations labels: **GREEN** = persistent approved after validation; **YELLOW** = read-only observations; **RED** = collection stopped by access/failure conditions. These are provider operation states, not user-facing Agent quality scores. Record actual evidence, date, URL, and untested conditions. Never turn a mock test into a real-network PASS.
+
+### Capability contract
+
+`config/discovery.php` explicitly defines `mode`, `supports_persistent_identity`, `supports_complete_snapshot`, `supports_missing_detection`, and `supports_direct_candidate_generation`. Unknown providers default to read-only/false. Persistent operation requires **both** persistent mode and persistent identity; missing requires **both** snapshot completeness and missing support. Direct candidates require persistent identity/mode plus Direct support, with anonymous/unknown names excluded. Source approval remains a separate access gate.
+
+Careerjet is **YELLOW / read_only**. Both normal and dry-run daily commands fetch and normalize observations but never classify NEW/UPDATED/UNCHANGED/MISSING, query saved identities, upsert jobs/companies, save Sources/Facts/Routes, or generate Direct candidates. Historical fields are JSON null and Markdown N/A. Report fields are observed_in_window, accepted, skipped, anonymous, window_total, hits (unknown if not supplied), observation_time and current_discovery_candidates. The candidates have no stable identity and no full description dump. Existing saved UI/DB rows remain unchanged. The legacy Careerjet bulk command also rejects writes before creating crawl_runs. `--dry-run` is not required to obtain this protection.
+
+Recruit Agent starts **read_only pending onboarding**; changing mode alone does not authorize persistence. Its daily window is the first search page and at most 10 details: the reviewed robots disallows cursor query pagination. The adapter rejects query-bearing Recruit requests, does not strip queries to bypass restrictions, disables automatic redirects, and does not request the forbidden next page. This is a bounded observation, never a complete snapshot. Storage/reuse conditions must be resolved before persistent approval. A one-off audit configuration does not grant ongoing collection approval.
+
+Meitec's existing persistent importer capability is retained without new access approval or a new GREEN assessment; completeness/missing support remain false. It is not audited or executed in Batch 15.5.
+
+### Standard result record
+
+For each provider record: five check results (PASS / FAIL / UNKNOWN), observation scope and counts, effective mode, access approval scope, missing policy, write gate, idempotency, report paths, hashes, remaining blocker and next bounded action. Do not repeat broad investigations when the first five checks identify a decisive blocker.
+
+The Batch 15.3/15.4 sections above are audit history. Their hypothetical Careerjet persistence/absence previews are superseded by this enforced read-only policy. Scheduler remains false; no OS cron or live UI integration is introduced.

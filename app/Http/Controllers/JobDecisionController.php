@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agency;
 use App\Models\UserQuery;
 use App\Services\JobDecisionUseCaseService;
 use App\Services\JobDetailUseCaseService;
 use App\Services\JobSelectionUseCaseService;
+use App\Support\AgencyDecisionPresenter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -52,6 +54,22 @@ class JobDecisionController extends Controller
 
         return response()->view('query.job-compare', [...$data, 'page' => (int) ($input['page'] ?? 1)])
             ->header('Cache-Control', 'private, no-store');
+    }
+
+    public function agencies(Request $request, UserQuery $userQuery, AgencyDecisionPresenter $presenter)
+    {
+        [$input, $requirements] = $this->input($request, $userQuery);
+        $items = Agency::query()->orderBy('id')
+            ->with(['facts' => fn ($facts) => $facts->orderBy('id'), 'facts.source'])->get()
+            ->filter(fn ($agency) => $presenter->candidate($agency))
+            ->map(fn ($agency) => $presenter->present($agency, $userQuery))->values();
+
+        return response()->view('query.agencies', [
+            'query' => $userQuery->only(['public_id', 'occupation', 'region', 'salary_min', 'salary_max']),
+            'selected_tools' => array_column($requirements['desired'], 'fact_key'),
+            'page' => (int) ($input['page'] ?? 1),
+            'items' => $items,
+        ])->header('Cache-Control', 'private, no-store');
     }
 
     private function input(Request $request, UserQuery $userQuery, bool $compare = false): array

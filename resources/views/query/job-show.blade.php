@@ -106,6 +106,11 @@
             <p class="mt-4">保存済み情報では応募方法を確認できていません</p>
         @endforelse
     </section>
+    <section aria-labelledby="agency-option-title" class="jobdd-card">
+        <h2 id="agency-option-title" class="text-xl font-bold text-blue-950">人材紹介会社へ相談する選択肢</h2>
+        <p class="mt-3 leading-7 text-slate-600">公開求人だけでは分からない求人や、キャリア相談を確認したい場合の相談先候補です。この求人の紹介可否を示すものではありません。</p>
+        <a href="{{ route('query.agencies', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]) }}" class="jobdd-link mt-3 inline-flex min-h-12 items-center">相談先候補を見る</a>
+    </section>
     <a href="{{ $backUrl }}" class="jobdd-link inline-flex min-h-12 items-center">求人一覧へ戻る</a>
 </main>
 </body>

@@ -5,10 +5,12 @@ namespace App\Console\Commands;
 use App\Models\ApplicationRoute;
 use App\Models\Company;
 use App\Models\JobPosting;
+use App\Services\DailyDiscoveryImporter;
+use App\Services\DirectLookup\CompanyUrlEvidence;
+use App\Services\OccupationNormalizer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
-use App\Services\OccupationNormalizer;
 
 class ImportRecruitAgentJobs extends Command
 {
@@ -27,7 +29,7 @@ class ImportRecruitAgentJobs extends Command
      *
      * @var string
      */
-    protected $signature = 'crawler:import-recruit-agent-jobs {--path= : JSON filename under storage/app/private/crawler}';
+    protected $signature = 'crawler:import-recruit-agent-jobs {--path= : JSON filename under storage/app/private/crawler} {--daily-input= : Internal daily payload filename} {--dry-run : Daily import preview only}';
 
     /**
      * The console command description.
@@ -35,7 +37,7 @@ class ImportRecruitAgentJobs extends Command
      * @var string
      */
     protected $description =
-    'Import Recruit Agent crawled jobs into companies, job_postings and application_routes';
+        'Import Recruit Agent crawled jobs into companies, job_postings and application_routes';
 
     /**
      * Execute the console command.
@@ -43,6 +45,10 @@ class ImportRecruitAgentJobs extends Command
     public function handle(
         OccupationNormalizer $occupationNormalizer
     ): int {
+        if ($this->option('daily-input') || $this->option('dry-run')) {
+            return app(DailyDiscoveryImporter::class)->command($this, 'recruit_agent');
+        }
+
         $this->info('=== Recruit Agent importer start ===');
         $this->newLine();
 
@@ -65,28 +71,28 @@ class ImportRecruitAgentJobs extends Command
             }
 
             $path = storage_path(
-                'app/private/crawler/' . $customPath
+                'app/private/crawler/'.$customPath
             );
         } else {
             $path = storage_path(
-                'app/private/' . self::JSON_PATH
+                'app/private/'.self::JSON_PATH
             );
         }
 
         if (! file_exists($path)) {
             $this->error(
-                'JSON file not found: ' . $path
+                'JSON file not found: '.$path
             );
 
             return self::FAILURE;
         }
 
         $this->line(
-            'import file: ' . basename($path)
+            'import file: '.basename($path)
         );
 
         $this->line(
-            'import mode: ' . ($isPartialImport ? 'partial' : 'full')
+            'import mode: '.($isPartialImport ? 'partial' : 'full')
         );
 
         $this->newLine();
@@ -138,22 +144,22 @@ class ImportRecruitAgentJobs extends Command
 
         $this->line(
             'source: '
-                . ($data['source_provider'] ?? 'unknown')
+                .($data['source_provider'] ?? 'unknown')
         );
 
         $this->line(
             'discovered: '
-                . ($data['discovered_job_count'] ?? count($jobs))
+                .($data['discovered_job_count'] ?? count($jobs))
         );
 
         $this->line(
             'jobs in JSON: '
-                . count($jobs)
+                .count($jobs)
         );
 
         $this->line(
             'completed: '
-                . (($data['completed'] ?? false) ? 'true' : 'false')
+                .(($data['completed'] ?? false) ? 'true' : 'false')
         );
 
         $this->newLine();
@@ -355,19 +361,19 @@ class ImportRecruitAgentJobs extends Command
                         ->where('external_id', $externalId)
                         ->first()
                         ?? JobPosting::query()
-                        ->where(
-                            'company_id',
-                            $company->id
-                        )
-                        ->where(
-                            'title',
-                            $title
-                        )
-                        ->where(
-                            'region',
-                            $region
-                        )
-                        ->first();
+                            ->where(
+                                'company_id',
+                                $company->id
+                            )
+                            ->where(
+                                'title',
+                                $title
+                            )
+                            ->where(
+                                'region',
+                                $region
+                            )
+                            ->first();
 
                     if (! $jobPosting) {
 
@@ -493,7 +499,7 @@ class ImportRecruitAgentJobs extends Command
                     |
                     */
 
-                    app(\App\Services\DirectLookup\CompanyUrlEvidence::class)->save($jobPosting->id, $company->id, $row, 'recruit_agent');
+                    app(CompanyUrlEvidence::class)->save($jobPosting->id, $company->id, $row, 'recruit_agent');
 
                     $route = ApplicationRoute::query()
                         ->where(
@@ -503,34 +509,27 @@ class ImportRecruitAgentJobs extends Command
                         ->where('external_id', $externalId)
                         ->first()
                         ?? ApplicationRoute::query()
-                        ->where('job_posting_id', $jobPosting->id)
-                        ->where('route_type', 'agent')
-                        ->where('agency_id', self::AGENCY_ID)
-                        ->first();
+                            ->where('job_posting_id', $jobPosting->id)
+                            ->where('route_type', 'agent')
+                            ->where('agency_id', self::AGENCY_ID)
+                            ->first();
 
                     if (! $route) {
 
                         ApplicationRoute::create([
-                            'job_posting_id' =>
-                            $jobPosting->id,
+                            'job_posting_id' => $jobPosting->id,
 
-                            'route_type' =>
-                            'agent',
+                            'route_type' => 'agent',
 
-                            'agency_id' =>
-                            self::AGENCY_ID,
+                            'agency_id' => self::AGENCY_ID,
 
-                            'platform_id' =>
-                            null,
+                            'platform_id' => null,
 
-                            'application_url' =>
-                            $sourceUrl,
+                            'application_url' => $sourceUrl,
 
-                            'availability_status' =>
-                            'available',
+                            'availability_status' => 'available',
 
-                            'notes' =>
-                            'Recruit Agent public job',
+                            'notes' => 'Recruit Agent public job',
                             'provider_key' => 'recruit_agent',
                             'external_id' => $externalId,
                             'first_seen_at' => now(),
@@ -546,14 +545,11 @@ class ImportRecruitAgentJobs extends Command
                             'route_type' => 'agent',
                             'agency_id' => self::AGENCY_ID,
                             'platform_id' => null,
-                            'application_url' =>
-                            $sourceUrl,
+                            'application_url' => $sourceUrl,
 
-                            'availability_status' =>
-                            'available',
+                            'availability_status' => 'available',
 
-                            'notes' =>
-                            'Recruit Agent public job',
+                            'notes' => 'Recruit Agent public job',
                             'last_seen_at' => now(),
                             'unavailable_at' => null,
                             'provider_key' => 'recruit_agent',
@@ -604,8 +600,7 @@ class ImportRecruitAgentJobs extends Command
         ) {
             $seenIds = collect($jobs)
                 ->map(
-                    fn(array $row) =>
-                    $this->cleanString(
+                    fn (array $row) => $this->cleanString(
                         $row['external_id']
                             ?? $row['id']
                             ?? $row['source_url']
@@ -620,8 +615,7 @@ class ImportRecruitAgentJobs extends Command
                 ->where('availability_status', 'available')
                 ->when(
                     $seenIds->isNotEmpty(),
-                    fn($query) =>
-                    $query->whereNotIn('external_id', $seenIds)
+                    fn ($query) => $query->whereNotIn('external_id', $seenIds)
                 )
                 ->update([
                     'availability_status' => 'unavailable',
@@ -647,37 +641,37 @@ class ImportRecruitAgentJobs extends Command
 
         $this->line(
             'companies created: '
-                . $companiesCreated
+                .$companiesCreated
         );
 
         $this->line(
             'jobs created: '
-                . $jobsCreated
+                .$jobsCreated
         );
 
         $this->line(
             'jobs updated/existing: '
-                . $jobsUpdated
+                .$jobsUpdated
         );
 
         $this->line(
             'routes created: '
-                . $routesCreated
+                .$routesCreated
         );
 
         $this->line(
             'routes updated: '
-                . $routesUpdated
+                .$routesUpdated
         );
 
         $this->line(
             'skipped: '
-                . $skipped
+                .$skipped
         );
 
         $this->line(
             'errors: '
-                . $errors
+                .$errors
         );
 
         $this->info(
@@ -696,7 +690,6 @@ class ImportRecruitAgentJobs extends Command
 
         return self::SUCCESS;
     }
-
 
     /**
      * 文字列の軽い正規化
@@ -723,7 +716,6 @@ class ImportRecruitAgentJobs extends Command
 
         return $value;
     }
-
 
     /**
      * JobDDでは万円単位の整数で保持。

@@ -37,7 +37,9 @@ def fetch_cell(session: requests.Session, region: str, occupation: str) -> list[
         )
         response.raise_for_status()
         data = response.json()
-        page_jobs = data.get("jobs", [])
+        if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
+            raise ValueError("Invalid Careerjet jobs response")
+        page_jobs = data["jobs"]
         for job in page_jobs:
             job["company_url_evidence"] = extract_company_url_evidence(
                 job, job.get("company"), job.get("url"), "careerjet"

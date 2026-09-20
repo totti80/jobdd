@@ -2,19 +2,25 @@
 
 namespace App\Console\Commands;
 
+use App\Services\DailyDiscoveryImporter;
+use App\Services\DirectLookup\CompanyUrlEvidence;
+use App\Services\OccupationNormalizer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Services\OccupationNormalizer;
 
 class ImportCareerjetJob extends Command
 {
-    protected $signature = 'crawler:import-careerjet-job';
+    protected $signature = 'crawler:import-careerjet-job {--daily-input= : Internal daily payload filename} {--dry-run : Daily import preview only}';
 
     protected $description = 'Import Careerjet job JSON into JobDD';
 
     public function handle(OccupationNormalizer $occupationNormalizer): int
     {
+        if ($this->option('daily-input') || $this->option('dry-run')) {
+            return app(DailyDiscoveryImporter::class)->command($this, 'careerjet');
+        }
+
         $runId = DB::table('crawl_runs')->insertGetId([
             'crawler_name' => 'careerjet_job_import',
             'status' => 'running',
@@ -30,7 +36,7 @@ class ImportCareerjetJob extends Command
         try {
             $path = 'crawler/careerjet_jobs.json';
 
-            if (!Storage::disk('local')->exists($path)) {
+            if (! Storage::disk('local')->exists($path)) {
                 throw new \RuntimeException('Careerjet JSON not found.');
             }
 
@@ -42,7 +48,7 @@ class ImportCareerjetJob extends Command
                 ? ($payload['jobs'] ?? [])
                 : $payload;
 
-            if (!is_array($jobs)) {
+            if (! is_array($jobs)) {
                 throw new \RuntimeException('Invalid JSON.');
             }
 
@@ -67,14 +73,16 @@ class ImportCareerjetJob extends Command
                     $salaryMaxRaw = $job['salary_max'] ?? null;
                     $salaryType = $job['salary_type'] ?? null;
 
-                    if (!$companyName) {
+                    if (! $companyName) {
                         $this->warn('Skipped Careerjet job: company_name is missing.');
                         $skippedCount++;
+
                         continue;
                     }
 
-                    if (!$title || !$sourceUrl) {
+                    if (! $title || ! $sourceUrl) {
                         $failedCount++;
+
                         continue;
                     }
 
@@ -109,7 +117,7 @@ class ImportCareerjetJob extends Command
                             ->where('name', $companyName)
                             ->first();
 
-                        if (!$company) {
+                        if (! $company) {
                             $companyId = DB::table('companies')->insertGetId([
                                 'name' => $companyName,
                                 'website_url' => null,
@@ -157,7 +165,7 @@ class ImportCareerjetJob extends Command
                             $description
                         );
 
-                        if (!$jobPosting) {
+                        if (! $jobPosting) {
                             $jobPostingData['created_at'] = now();
 
                             $jobPostingId = DB::table('job_postings')
@@ -176,7 +184,7 @@ class ImportCareerjetJob extends Command
                             $updatedCount++;
                         }
 
-                        app(\App\Services\DirectLookup\CompanyUrlEvidence::class)->save($jobPostingId, $companyId, $job, 'careerjet');
+                        app(CompanyUrlEvidence::class)->save($jobPostingId, $companyId, $job, 'careerjet');
 
                         /*
                          * 3. Source
@@ -194,7 +202,7 @@ class ImportCareerjetJob extends Command
                             'updated_at' => now(),
                         ];
 
-                        if (!$source) {
+                        if (! $source) {
                             $sourceData['created_at'] = now();
 
                             DB::table('sources')->insert($sourceData);
@@ -215,7 +223,7 @@ class ImportCareerjetJob extends Command
                             ->where('name', 'Careerjet')
                             ->first();
 
-                        if (!$platform) {
+                        if (! $platform) {
                             throw new \RuntimeException(
                                 'Careerjet platform is not registered.'
                             );
@@ -226,10 +234,10 @@ class ImportCareerjetJob extends Command
                             ->where('external_id', $externalId)
                             ->first()
                             ?? DB::table('application_routes')
-                            ->where('job_posting_id', $jobPostingId)
-                            ->where('route_type', 'platform')
-                            ->where('platform_id', $platform->id)
-                            ->first();
+                                ->where('job_posting_id', $jobPostingId)
+                                ->where('route_type', 'platform')
+                                ->where('platform_id', $platform->id)
+                                ->first();
 
                         $routeData = [
                             'job_posting_id' => $jobPostingId,
@@ -247,7 +255,7 @@ class ImportCareerjetJob extends Command
                             'updated_at' => now(),
                         ];
 
-                        if (!$route) {
+                        if (! $route) {
                             $routeData['created_at'] = now();
 
                             DB::table('application_routes')->insert($routeData);
@@ -268,9 +276,9 @@ class ImportCareerjetJob extends Command
 
                     $this->warn(
                         'Skipped failed job: '
-                            . ($job['title'] ?? 'unknown')
-                            . ' / '
-                            . $e->getMessage()
+                            .($job['title'] ?? 'unknown')
+                            .' / '
+                            .$e->getMessage()
                     );
                 }
             }
@@ -301,7 +309,7 @@ class ImportCareerjetJob extends Command
                 DB::table('application_routes')
                     ->where('provider_key', 'careerjet')
                     ->where('availability_status', 'available')
-                    ->when($seenIds->isNotEmpty(), fn($query) => $query->whereNotIn('external_id', $seenIds))
+                    ->when($seenIds->isNotEmpty(), fn ($query) => $query->whereNotIn('external_id', $seenIds))
                     ->update([
                         'availability_status' => 'unavailable',
                         'unavailable_at' => now(),
@@ -345,7 +353,7 @@ class ImportCareerjetJob extends Command
         mixed $salary,
         ?string $salaryType
     ): ?int {
-        if (!is_numeric($salary)) {
+        if (! is_numeric($salary)) {
             return null;
         }
 

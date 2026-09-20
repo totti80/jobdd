@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\ApplicationRoute;
 use App\Models\Company;
 use App\Models\JobPosting;
+use App\Services\DailyDiscoveryImporter;
+use App\Services\DirectLookup\CompanyUrlEvidence;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -17,7 +19,7 @@ class ImportMeitecNextJobs extends Command
      *
      * @var string
      */
-    protected $signature = 'crawler:import-meitec-next-jobs';
+    protected $signature = 'crawler:import-meitec-next-jobs {--daily-input= : Internal daily payload filename} {--dry-run : Daily import preview only}';
 
     /**
      * The console command description.
@@ -36,6 +38,10 @@ class ImportMeitecNextJobs extends Command
      */
     public function handle(): int
     {
+        if ($this->option('daily-input') || $this->option('dry-run')) {
+            return app(DailyDiscoveryImporter::class)->command($this, 'meitec_next');
+        }
+
         $path = storage_path(
             'app/private/crawler/meitec_next_jobs.json'
         );
@@ -78,7 +84,7 @@ class ImportMeitecNextJobs extends Command
         );
 
         $this->info(
-            'JSON jobs: ' . count($jobs)
+            'JSON jobs: '.count($jobs)
         );
 
         $createdCompanies = 0;
@@ -238,17 +244,17 @@ class ImportMeitecNextJobs extends Command
                         // ApplicationRoute
                         // ----------------------------------------
 
-                        app(\App\Services\DirectLookup\CompanyUrlEvidence::class)->save($jobPosting->id, $company->id, $jobData, 'meitec_next');
+                        app(CompanyUrlEvidence::class)->save($jobPosting->id, $company->id, $jobData, 'meitec_next');
 
                         $route = ApplicationRoute::query()
                             ->where('provider_key', 'meitec_next')
                             ->where('external_id', $externalId)
                             ->first()
                             ?? ApplicationRoute::query()
-                            ->where('job_posting_id', $jobPosting->id)
-                            ->where('route_type', 'agent')
-                            ->where('agency_id', self::MEITEC_NEXT_AGENCY_ID)
-                            ->first();
+                                ->where('job_posting_id', $jobPosting->id)
+                                ->where('route_type', 'agent')
+                                ->where('agency_id', self::MEITEC_NEXT_AGENCY_ID)
+                                ->first();
 
                         $routeData = [
                             'job_posting_id' => $jobPosting->id,
@@ -287,9 +293,9 @@ class ImportMeitecNextJobs extends Command
 
                 $this->error(
                     "[{$number}] import error: "
-                        . $companyName
-                        . ' | '
-                        . $title
+                        .$companyName
+                        .' | '
+                        .$title
                 );
 
                 $this->error(
@@ -300,14 +306,14 @@ class ImportMeitecNextJobs extends Command
 
         if (($data['completed'] ?? false) === true) {
             $seenIds = collect($jobs)
-                ->map(fn(array $row) => trim((string) ($row['external_id'] ?? $row['id'] ?? $row['source_url'] ?? '')))
+                ->map(fn (array $row) => trim((string) ($row['external_id'] ?? $row['id'] ?? $row['source_url'] ?? '')))
                 ->filter()
                 ->values();
 
             ApplicationRoute::query()
                 ->where('provider_key', 'meitec_next')
                 ->where('availability_status', 'available')
-                ->when($seenIds->isNotEmpty(), fn($query) => $query->whereNotIn('external_id', $seenIds))
+                ->when($seenIds->isNotEmpty(), fn ($query) => $query->whereNotIn('external_id', $seenIds))
                 ->update([
                     'availability_status' => 'unavailable',
                     'unavailable_at' => now(),
@@ -356,10 +362,9 @@ class ImportMeitecNextJobs extends Command
             '=============================='
         );
 
-        return (
+        return
             $errors === 0
             ? self::SUCCESS
-            : self::FAILURE
-        );
+            : self::FAILURE;
     }
 }

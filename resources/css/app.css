@@ -64,3 +64,41 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* JobDD v5: scoped to the new decision screens. */
+@layer components {
+    .jobdd { @apply bg-slate-50 font-sans text-base text-slate-900; overflow-wrap: anywhere; }
+    .jobdd-page-title { @apply text-2xl font-bold leading-8 text-blue-950 sm:text-[32px] sm:leading-10; }
+    .jobdd-card { @apply min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6; }
+    .jobdd-button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-800 px-4 py-3 text-center text-base font-semibold leading-6 text-white hover:bg-blue-900; }
+    .jobdd-link { @apply font-semibold text-blue-800 underline underline-offset-4 hover:text-blue-900; }
+    .jobdd-choice { @apply flex min-h-12 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-slate-500 bg-white p-3; }
+    .jobdd-choice:has(input:checked) { @apply border-blue-800 bg-blue-50 ring-1 ring-blue-800; }
+    .jobdd-choice input { @apply size-5 shrink-0 accent-blue-800; }
+    .jobdd-details { @apply min-w-0 rounded-lg border border-slate-200 bg-slate-50; }
+    .jobdd-details > summary { @apply min-h-12 cursor-pointer px-4 py-3 font-semibold leading-6 text-blue-800; }
+    .jobdd :where(a, button, input, select, summary, [tabindex]):focus-visible { outline: 2px solid var(--color-blue-700); outline-offset: 2px; }
+    .jobdd [data-job-id][data-selected='true'] { @apply ring-2 ring-blue-800; }
+    .jobdd :where(input, select)[aria-invalid='true'] { @apply border-red-700; }
+    .jobdd [aria-disabled='true'] { @apply bg-slate-100 text-slate-700 ring-1 ring-slate-500; }
+    .jobdd-provenance { overflow-wrap: anywhere; }
+    .jobdd-mobile-compare { display: none; }
+    .jobdd-comparison { --axis-width: 104px; overflow-x: auto; scroll-padding-inline-start: calc(var(--axis-width) + 8px); }
+    .jobdd-comparison table { width: 100%; min-width: calc(104px + var(--job-count) * 240px); table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+    .jobdd-comparison .jobdd-axis-column { width: var(--axis-width); }
+    .jobdd-comparison :where(th, td) { @apply border-b border-r border-slate-200 p-4 text-left align-top; overflow-wrap: anywhere; }
+    .jobdd-comparison thead th { @apply bg-blue-50; }
+    .jobdd-comparison th[scope='row'] { @apply sticky left-0 z-10 bg-white; }
+    .jobdd-comparison .jobdd-corner { @apply sticky left-0 z-20; }
+    .jobdd-comparison .jobdd-group { @apply bg-slate-100 text-slate-700; }
+    @media (width >= 1024px) {
+        .jobdd-comparison { --axis-width: 160px; overflow: auto; max-height: 70svh; scroll-padding-top: calc(var(--jobdd-header-height, 0px) + 8px); }
+        .jobdd-comparison table { min-width: calc(160px + var(--job-count) * 280px); }
+        .jobdd-comparison thead th { @apply sticky top-0 z-20; }
+        .jobdd-comparison thead .jobdd-corner { @apply z-30; }
+    }
+    @media (width < 1024px) {
+        .jobdd-selection-enhanced { padding-bottom: calc(var(--jobdd-bar-height, 0px) + 16px); }
+        .jobdd-selection-enhanced .jobdd-mobile-compare { @apply fixed inset-x-0 bottom-0 z-40 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 pt-3 shadow-sm; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+    }
+}

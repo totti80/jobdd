@@ -45,7 +45,13 @@ class JobSearchController extends Controller
                 ? array_values(array_intersect(array_keys(JobDecisionUseCaseService::TOOLS), array_filter($request->input('tools'), 'is_string')))
                 : [];
 
-            return $this->form($values, $validator->errors()->all(), 422);
+            $fieldErrors = [];
+            foreach ($validator->errors()->messages() as $field => $messages) {
+                $key = explode('.', $field)[0];
+                $fieldErrors[$key] = array_merge($fieldErrors[$key] ?? [], $messages);
+            }
+
+            return $this->form($values, $validator->errors()->all(), 422, $fieldErrors);
         }
 
         $input = $validator->validated();
@@ -63,11 +69,12 @@ class JobSearchController extends Controller
             ->header('Cache-Control', 'private, no-store');
     }
 
-    private function form(array $values = [], array $inputErrors = [], int $status = 200)
+    private function form(array $values = [], array $inputErrors = [], int $status = 200, array $fieldErrors = [])
     {
         return response()->view('query.start', [
             'occupations' => self::OCCUPATIONS, 'regions' => self::REGIONS,
             'tools' => JobDecisionUseCaseService::TOOLS, 'values' => $values, 'inputErrors' => $inputErrors,
+            'fieldErrors' => $fieldErrors,
         ], $status)->header('Cache-Control', 'private, no-store');
     }
 }

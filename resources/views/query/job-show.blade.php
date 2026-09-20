@@ -2,6 +2,7 @@
     $item = $items[0]; $job = $item['job']; $fit = $item['fit'];
     $roles = \App\Support\JobDecisionPresenter::ROLES;
     $routeLabels = ['direct' => 'Direct（企業への直接応募）', 'agent' => 'Agent（人材紹介会社経由）', 'platform' => 'Platform（求人媒体経由）'];
+    $backUrl = route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]);
 @endphp
 <!DOCTYPE html>
 <html lang="ja">
@@ -11,83 +12,101 @@
     <title>求人詳細 | JobDD</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900">
-@include('query.partials.selection-header', ['heading' => '求人詳細と根拠'])
-<main class="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6">
-    <p class="text-sm leading-6 text-slate-600">他の求人と比較するには、<a href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]).'#compare-selection' }}" class="font-semibold text-blue-800 underline">一覧で比較する求人を選ぶ</a>。応募方法はこのページの最後にあります。</p>
-    <article data-job-id="{{ $job->id }}" class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-        <p class="break-words font-semibold text-slate-600">{{ $item['company_name'] }}</p>
-        <h2 class="mt-2 break-words text-2xl font-bold text-blue-950">{{ $job->title }}</h2>
-        <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-            <div><dt class="text-slate-500">職種</dt><dd>{{ $job->occupation ?? '未確認' }}</dd></div>
-            <div><dt class="text-slate-500">勤務地</dt><dd>{{ $job->region ?? '未確認' }}</dd></div>
-            <div><dt class="text-slate-500">掲載年収</dt><dd>{{ $job->salary_min !== null ? $job->salary_min.'万円' : '下限未確認' }} 〜 {{ $job->salary_max !== null ? $job->salary_max.'万円' : '上限未確認' }}</dd></div>
-            <div><dt class="text-slate-500">情報提供元</dt><dd>{{ $job->provider_key ?? '未確認' }}</dd></div>
-            @foreach (['last_seen_at' => '最終取得日時', 'published_at' => '掲載日時', 'provider_updated_at' => '提供元更新日時'] as $field => $label)
-                <div><dt class="text-slate-500">{{ $label }}</dt><dd>{{ $fit['source'][$field] ?? '未確認' }}</dd></div>
-            @endforeach
+<body class="jobdd min-h-screen" data-jobdd-root>
+@include('query.partials.selection-header', ['heading' => '求人詳細と根拠', 'containerClass' => 'max-w-6xl'])
+<main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:space-y-8 lg:py-8">
+    <p class="leading-7 text-slate-600">他の求人と比較するには、<a href="{{ $backUrl.'#compare-selection' }}" class="jobdd-link">一覧で比較する求人を選ぶ</a>。応募方法はこのページの最後にあります。</p>
+    <article data-job-id="{{ $job->id }}" class="jobdd-card">
+        <p class="font-semibold text-slate-600">{{ $item['company_name'] }}</p>
+        <h2 class="mt-2 text-2xl font-bold leading-8 text-blue-950">{{ $job->title }}</h2>
+        <dl class="mt-5 grid gap-4 sm:grid-cols-2">
+            <div><dt class="text-sm text-slate-600">職種</dt><dd>{{ $job->occupation ?? '未確認' }}</dd></div>
+            <div><dt class="text-sm text-slate-600">勤務地</dt><dd>{{ $job->region ?? '未確認' }}</dd></div>
+            <div><dt class="text-sm text-slate-600">掲載年収</dt><dd>{{ $job->salary_min !== null ? $job->salary_min.'万円' : '下限未確認' }} 〜 {{ $job->salary_max !== null ? $job->salary_max.'万円' : '上限未確認' }}</dd></div>
+            @if ($job->employment_type)<div><dt class="text-sm text-slate-600">雇用形態</dt><dd>{{ $job->employment_type }}</dd></div>@endif
         </dl>
-        @if (\App\Support\JobDecisionPresenter::safeUrl($job->source_url))
-            <a href="{{ $job->source_url }}" target="_blank" rel="noopener noreferrer" class="mt-5 inline-block text-sm font-semibold text-blue-800 underline">求人元を見る（新しいタブ）</a>
-        @endif
-        <p class="mt-3 text-xs leading-6 text-slate-500">掲載年収・保存上の掲載状態は、提示年収や現在の募集を保証しません。</p>
-        <h3 class="mt-6 text-lg font-bold">希望条件との比較</h3>
-        @include('query.partials.fit', ['fit' => $fit])
-        <details class="mt-5 rounded-xl bg-slate-50 p-4">
-            <summary class="cursor-pointer font-semibold">保存された求人本文を見る</summary>
-            <p class="mt-3 whitespace-pre-wrap break-words text-sm leading-7">{{ $job->description ?? '求人本文は未確認です。' }}</p>
-        </details>
+        <p class="mt-4 text-sm leading-6 text-slate-600">掲載年収・保存上の掲載状態は、提示年収や現在の募集を保証しません。</p>
     </article>
-    <section aria-labelledby="presence-title" class="rounded-2xl bg-white p-5 ring-1 ring-slate-200 sm:p-6">
-        <h2 id="presence-title" class="text-xl font-bold">求人本文で確認できた技術・工程</h2>
-        <p class="mt-2 text-sm leading-6 text-slate-600">保存された記載とその文脈です。技術名の記載だけでは、本人の担当業務や使用を意味しません。</p>
+    <section aria-labelledby="fit-title" class="jobdd-card">
+        <h2 id="fit-title" class="text-xl font-bold text-blue-950">希望条件との確認結果</h2>
+        <p class="mt-3 leading-7 text-slate-600">未確認：求人本文から確認できない情報です。合わないという意味ではありません。</p>
+        <p class="mt-2 text-sm leading-6 text-slate-600">保存された掲載値や記載の文脈が曖昧な場合も、未確認として表示します。</p>
+        @include('query.partials.fit', ['fit' => $fit, 'idPrefix' => 'detail-job-'.$job->id, 'summaryOnly' => false])
+    </section>
+    <section aria-labelledby="presence-title" class="jobdd-card">
+        <h2 id="presence-title" class="text-xl font-bold text-blue-950">求人本文で確認できた技術・工程</h2>
+        <p class="mt-3 leading-7 text-slate-600">保存された記載とその文脈です。技術名の記載だけでは、本人の担当業務や使用を意味しません。</p>
         <div class="mt-4 divide-y divide-slate-200">
             @forelse ($presence_facts as $presence)
                 @php
                     $fact = $presence['fact'];
+                    $factLabel = $fact->normalized_value ?: ($fact->fact_value ?: '記載内容未確認');
+                    $factEvidence = ['kind' => 'job_fact', 'evidence_text' => $fact->evidence_text, 'context' => $presence['context'], 'observed_at' => $fact->getRawOriginal('observed_at')];
                 @endphp
-                <section class="py-4">
-                    <h3 class="break-words font-semibold">{{ $fact->normalized_value ?: $fact->fact_value }}</h3>
-                    <p class="mt-1 text-sm text-slate-600">分類：{{ $fact->fact_category }} / {{ $roles[$presence['context']['role']] ?? '文脈未確認' }}</p>
-                    <p class="mt-2 break-words text-sm leading-6">{{ $presence['context']['reason'] }}</p>
-                    <details class="mt-3 rounded-lg bg-slate-50 p-3 text-sm">
-                        <summary class="cursor-pointer font-semibold text-blue-800">根拠を見る</summary>
-                        <p class="mt-3 whitespace-pre-wrap break-words leading-6">{{ $fact->evidence_text ?? '根拠本文未確認' }}</p>
-                        <p class="mt-3 text-xs text-slate-500">確認日時：{{ $fact->getRawOriginal('observed_at') ?? '未確認' }}</p>
+                <section class="min-w-0 py-5">
+                    <h3 class="font-semibold">{{ $factLabel }}</h3>
+                    <p class="mt-2 text-sm leading-6">記載の文脈：{{ $roles[$presence['context']['role']] ?? '文脈未確認' }}</p>
+                    <p class="mt-2 leading-7">{{ $presence['context']['reason'] }}</p>
+                    <p class="mt-2 text-sm text-slate-600">記録上の検証状態：{{ $fact->verification_status === 'verified' ? '確認済みとして記録' : '未確認' }}</p>
+                    <details class="jobdd-details mt-3">
+                        <summary>{{ $factLabel }}の根拠を見る</summary>
+                        <div class="p-4 pt-2">@include('query.partials.evidence-block', ['evidence' => $factEvidence, 'source' => $fit['source'], 'evidenceLabel' => $factLabel])</div>
                     </details>
                 </section>
             @empty
-                <p class="py-4 text-sm">保存済み情報では技術・工程の記載を確認できていません。</p>
+                <p class="py-4">保存済み情報では技術・工程の記載を確認できていません。</p>
             @endforelse
         </div>
     </section>
-    <section aria-labelledby="application-title" class="rounded-2xl bg-white p-5 ring-1 ring-slate-200 sm:p-6">
-        <h2 id="application-title" class="text-xl font-bold">この求人への応募方法</h2>
-        <p class="mt-2 text-sm leading-6 text-slate-600">保存済みの応募経路を種類別に表示しています。利用条件と現在の募集状況はリンク先で確認してください。</p>
-        <div class="mt-4 space-y-4">
-            @forelse ($application_routes as $route)
-                @php
-                    $link = \App\Support\JobDecisionPresenter::safeUrl($route->application_url);
-                    $available = $route->availability_status === 'available' && $route->unavailable_at === null;
-                @endphp
-                <section data-application-route="{{ $route->id }}" class="rounded-xl border border-slate-200 p-4">
-                    <h3 class="font-semibold">{{ $routeLabels[$route->route_type] }}</h3>
-                    <p class="mt-2 text-sm">提供元：{{ $route->provider_key ?? '未確認' }}</p>
-                    <p class="mt-1 text-sm">保存上の状態：{{ $available ? '利用可能として記録' : '利用状況を確認する必要があります' }}</p>
-                    <p class="mt-1 text-xs text-slate-500">最終取得日時：{{ $route->getRawOriginal('last_seen_at') ?? '未確認' }}</p>
-                    <p class="mt-3 whitespace-pre-wrap break-words text-sm leading-6">根拠・補足：{{ $route->notes ?: '記載は未確認です。' }}</p>
-                    @if ($available && $link)
-                        <a href="{{ $link }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-block text-sm font-semibold text-blue-800 underline">応募先の情報を確認する（新しいタブ）</a>
-                    @else
-                        <p class="mt-3 text-sm text-slate-600">現在利用できる応募先リンクを確認できていません。</p>
-                    @endif
-                </section>
-            @empty
-                <p class="text-sm">保存済み情報では応募方法を確認できていません</p>
-            @endforelse
-        </div>
+    <section aria-labelledby="source-title" class="jobdd-card">
+        <h2 id="source-title" class="text-xl font-bold text-blue-950">根拠と求人元の情報</h2>
+        <p class="mt-3 text-sm leading-6 text-slate-600">各項目の原文は、それぞれの「根拠を見る」から確認できます。ここには、この求人の掲載元を表示しています。</p>
+        <details class="jobdd-details mt-4">
+            <summary>保存された求人本文を見る</summary>
+            <p class="max-w-[760px] whitespace-pre-wrap break-words p-4 pt-2 leading-7">{{ $job->description ?? '求人本文は未確認です。' }}</p>
+        </details>
+        <div class="mt-5">@include('query.partials.provenance', ['source' => $fit['source']])</div>
     </section>
-    <a href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]) }}" class="inline-block py-3 font-semibold text-blue-800 underline">求人一覧へ戻る</a>
+    <section aria-labelledby="application-title" class="jobdd-card">
+        <h2 id="application-title" class="text-xl font-bold text-blue-950">この求人で確認できた応募方法</h2>
+        <p class="mt-3 leading-7 text-slate-600">保存済みの応募経路を種類別に表示しています。利用条件と現在の募集状況はリンク先で確認してください。</p>
+        @forelse ($application_routes->groupBy('route_type') as $type => $routes)
+            <section class="mt-6" aria-labelledby="route-type-{{ $type }}">
+                <h3 id="route-type-{{ $type }}" class="font-bold text-blue-950">{{ $routeLabels[$type] }}</h3>
+                <div class="mt-3 space-y-4">
+                    @foreach ($routes as $route)
+                        @php
+                            $link = \App\Support\JobDecisionPresenter::safeUrl($route->application_url);
+                            $available = $route->availability_status === 'available' && $route->unavailable_at === null;
+                            $unavailable = $route->unavailable_at !== null || $route->availability_status === 'unavailable';
+                            $notes = $route->notes ?: '記載は未確認です。';
+                        @endphp
+                        <section data-application-route="{{ $route->id }}" class="min-w-0 rounded-xl border border-slate-200 p-4">
+                            <h4 class="font-semibold">提供元：{{ $route->provider_key ?? '未確認' }}</h4>
+                            <dl class="mt-3 grid gap-3 text-sm leading-6 sm:grid-cols-2">
+                                <div><dt>保存上の状態</dt><dd>{{ $unavailable ? '利用不可として記録' : ($available ? '利用可能として記録' : '利用状況未確認') }}</dd></div>
+                                <div><dt>最終取得日時</dt><dd>{{ $route->getRawOriginal('last_seen_at') ?? '未確認' }}</dd></div>
+                                <div class="sm:col-span-2"><dt>応募情報のURL</dt><dd class="break-words">{{ $link ?? '保存済みURLでは応募先リンクを表示できません' }}</dd></div>
+                            </dl>
+                            @if (mb_strlen($notes) > 400)
+                                <details class="jobdd-details mt-4"><summary>根拠・補足を見る</summary><p class="whitespace-pre-wrap p-4 pt-2 leading-7">{{ $notes }}</p></details>
+                            @else
+                                <p class="mt-4 whitespace-pre-wrap leading-7">根拠・補足：{{ $notes }}</p>
+                            @endif
+                            @if ($available && $link)
+                                <a href="{{ $link }}" target="_blank" rel="noopener noreferrer" class="jobdd-button mt-4">提供元の応募情報を見る（新しいタブ）<span class="sr-only">：{{ $route->provider_key ?? '提供元未確認' }}</span></a>
+                            @else
+                                <p class="mt-4 text-sm leading-6 text-slate-600">現在利用できる応募先リンクを確認できていません。</p>
+                            @endif
+                        </section>
+                    @endforeach
+                </div>
+            </section>
+        @empty
+            <p class="mt-4">保存済み情報では応募方法を確認できていません</p>
+        @endforelse
+    </section>
+    <a href="{{ $backUrl }}" class="jobdd-link inline-flex min-h-12 items-center">求人一覧へ戻る</a>
 </main>
 </body>
 </html>

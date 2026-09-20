@@ -65,7 +65,7 @@ test('new query writes only one UserQuery and never persists tools or extra requ
         ->assertDontSee($query->session_token);
     expect($response->headers->get('Location'))->not->toContain($query->session_token);
     $this->get($response->headers->get('Location'))->assertOk()->assertDontSee($query->session_token)
-        ->assertSee('SolidWorks')->assertSee('あなたの条件');
+        ->assertSee('SolidWorks')->assertSee('希望条件');
     $this->flushSession();
     $this->get($response->headers->get('Location'))->assertNotFound();
 });
@@ -194,7 +194,7 @@ test('new entry connects list detail comparison and application routes with tool
         ->assertSee('一覧で比較する求人を選ぶ')->assertSee(route('jobs.start'));
     $compareUrl = $xpath->query('//form[@id="compare-selection"]')->item(0)->getAttribute('action');
     $compare = $this->get($compareUrl.'?'.http_build_query(['jobs' => $jobs->take(2)->pluck('id')->all(), 'tools' => ['solidworks', 'autocad'], 'page' => 1]))
-        ->assertOk()->assertSee('どれが一番かをJobDDが決めるのではなく')->assertSee('詳細・応募方法を見る');
+        ->assertOk()->assertSee('どれが一番かをJobDDが決めるのではなく')->assertSee('詳細を見る');
     foreach ([$list, $detail, $compare] as $response) {
         $response->assertSee('SolidWorks')->assertSee('AutoCAD')->assertSee(route('jobs.start'))->assertDontSee(UserQuery::sole()->session_token);
     }

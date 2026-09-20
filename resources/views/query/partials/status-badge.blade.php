@@ -1,0 +1,7 @@
+@php
+    $statusKey = array_key_exists($status, \App\Support\JobDecisionPresenter::STATUSES) ? $status : 'unknown';
+@endphp
+<span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold leading-5 ring-1 {{ \App\Support\JobDecisionPresenter::BADGECLASSES[$statusKey] }}">
+    <span aria-hidden="true">{{ ['match' => '✓', 'mismatch' => '−', 'unknown' => '?'][$statusKey] }}</span>
+    {{ \App\Support\JobDecisionPresenter::STATUSES[$statusKey] }}
+</span>

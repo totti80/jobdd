@@ -6,12 +6,12 @@
     <title>入力内容の確認 | JobDD</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-slate-50 p-6 text-slate-900">
-<main class="mx-auto max-w-2xl rounded-2xl bg-white p-6 ring-1 ring-slate-200">
+<body class="jobdd min-h-screen p-4 sm:p-6" data-jobdd-root>
+<main class="jobdd-card mx-auto max-w-2xl">
     <p class="font-bold text-blue-950">JobDD</p>
     <h1 class="mt-4 text-2xl font-bold">入力内容を確認してください</h1>
     <p role="alert" class="mt-4 leading-7">{{ $message }}</p>
-    <a href="{{ route('query.jobs', ['userQuery' => $public_id]) }}" class="mt-5 inline-block py-2 font-semibold text-blue-800 underline">求人一覧へ戻る</a>
+    <a href="{{ route('query.jobs', ['userQuery' => $public_id]) }}" class="jobdd-link mt-5 inline-flex min-h-12 items-center">求人一覧へ戻る</a>
 </main>
 </body>
 </html>

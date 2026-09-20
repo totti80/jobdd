@@ -61,7 +61,7 @@ test('job detail exposes escaped Facts context and stored application routes wit
             ->get(detailCompareUrl($query, $jobs[0]->id, ['tools' => ['autocad'], 'page' => 2]));
         $response->assertOk()->assertSee('求人詳細と根拠')->assertSee('確認できた')->assertSee('未確認')
             ->assertSee('求人本文で確認できた技術・工程')->assertSee('応募条件に記載')->assertSee('根拠を見る')
-            ->assertSee('この求人への応募方法')->assertSeeInOrder(['Direct（', 'Agent（', 'Platform（'])
+            ->assertSee('この求人で確認できた応募方法')->assertSeeInOrder(['Direct（', 'Agent（', 'Platform（'])
             ->assertSee('https://apply.sample-company.jp/direct', false)->assertSee('rel="noopener noreferrer"', false)
             ->assertSee('page=2', false)->assertSee('tools%5B0%5D=autocad', false)
             ->assertSee('&lt;script&gt;evidence()&lt;/script&gt;', false)->assertSee('&lt;script&gt;route()&lt;/script&gt;', false)
@@ -79,7 +79,7 @@ test('detail keeps missing routes and invalid or unavailable application links u
     ApplicationRoute::create(['job_posting_id' => $jobs[0]->id, 'route_type' => 'agent',
         'application_url' => $url, 'availability_status' => $status, 'unavailable_at' => $unavailable]);
     $response = $this->get(detailCompareUrl($query, $jobs[0]->id));
-    $response->assertOk()->assertSee('現在利用できる応募先リンクを確認できていません')->assertDontSee('応募先の情報を確認する');
+    $response->assertOk()->assertSee('現在利用できる応募先リンクを確認できていません')->assertDontSee('提供元の応募情報を見る');
     if ($url !== null) {
         $response->assertDontSee('href="'.$url.'"', false);
     }
@@ -131,7 +131,7 @@ test('compare renders two or three jobs in input order with four reads and no wr
         $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
             ->get(detailCompareUrl($query, null, ['jobs' => $ids, 'tools' => ['autocad'], 'page' => 2]));
         $response->assertOk()->assertSee('選んだ求人を比較する')->assertSee('根拠を見る')
-            ->assertSee('条件と異なる')->assertSee('未確認')->assertSee('詳細・応募方法を見る')
+            ->assertSee('条件と異なる')->assertSee('未確認')->assertSee('詳細を見る')
             ->assertSee('tools%5B0%5D=autocad', false)->assertSee('page=2', false)
             ->assertDontSee('TOP3')->assertDontSee('おすすめ')->assertDontSee('最も一致')->assertDontSee('score')
             ->assertDontSee('PRIVATE-TOKEN')->assertDontSee('<script>', false);

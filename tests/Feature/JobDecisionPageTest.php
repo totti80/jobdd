@@ -50,8 +50,8 @@ test('decision page renders the authorized pipeline with five reads and no write
     try {
         $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
             ->get(decisionPageUrl($query, ['tools' => ['autocad']]));
-        $response->assertOk()->assertSee('求人を比較する')->assertSee('確認できた条件')
-            ->assertSee('条件と異なる点')->assertSee('未確認')->assertSee('根拠を見る')
+        $response->assertOk()->assertSee('求人候補を確認・比較する')->assertSee('確認できた')
+            ->assertSee('条件と異なる')->assertSee('未確認')->assertSee('根拠を見る')
             ->assertSee('記載の文脈')->assertSee('求人元を見る')->assertSee('次へ')
             ->assertSee('担当業務での使用は確認できません。');
     } finally {
@@ -99,7 +99,7 @@ test('decision page never infers tools from saved skills and shows empty pages s
     $response->assertOk();
     expect($response->viewData('selected_tools'))->toBe([])
         ->and(array_column($response->viewData('items')[0]['fit']['axes'], 'key'))->toBe(['occupation', 'region', 'salary']);
-    $this->get(decisionPageUrl($query, ['page' => 2]))->assertOk()->assertSee('条件に該当する求人候補がありません');
+    $this->get(decisionPageUrl($query, ['page' => 2]))->assertOk()->assertSee('このページに表示できる求人候補はありません。');
 });
 
 test('decision page rejects malformed GET inputs', function ($input) {

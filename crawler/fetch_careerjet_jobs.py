@@ -18,6 +18,7 @@ REQUEST_INTERVAL = float(os.getenv("CAREERJET_REQUEST_INTERVAL", "1.0"))
 
 def fetch_cell(session: requests.Session, region: str, occupation: str) -> list[dict]:
     jobs: list[dict] = []
+    observed_pages = set()
     for page in range(1, MAX_PAGES + 1):
         response = session.get(
             API_URL,
@@ -40,11 +41,21 @@ def fetch_cell(session: requests.Session, region: str, occupation: str) -> list[
         if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
             raise ValueError("Invalid Careerjet jobs response")
         page_jobs = data["jobs"]
+        # A content signature is a pagination guard only, never a persisted identity.
+        # Tracking URLs may change even when the API repeats exactly the same page.
+        page_signature = tuple(sorted(json.dumps(
+            {key: job.get(key) for key in ("id", "external_id", "title", "company", "locations", "description", "salary_min", "salary_max", "salary_type", "site")},
+            sort_keys=True, ensure_ascii=False,
+        ) for job in page_jobs))
+        if page_signature and page_signature in observed_pages:
+            raise ValueError("RepeatedCareerjetPage")
+        observed_pages.add(page_signature)
         for job in page_jobs:
             job["company_url_evidence"] = extract_company_url_evidence(
                 job, job.get("company"), job.get("url"), "careerjet"
             )
-            job["region"] = region
+            job["region"] = job.get("locations")
+            job["search_region"] = region
             job["search_occupation"] = occupation
             jobs.append(job)
 

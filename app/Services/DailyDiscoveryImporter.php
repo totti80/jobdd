@@ -63,7 +63,9 @@ class DailyDiscoveryImporter
                 default => null,
             } : (int) $value;
         };
-        $region = $string($raw['region'] ?? $raw['locations'] ?? null);
+        $region = $provider === 'careerjet'
+            ? $this->careerjetRegion($string($raw['locations'] ?? null))
+            : $string($raw['region'] ?? $raw['locations'] ?? null);
         // Do not collapse ambiguous multiple locations into a single prefecture.
         if ($region && ! str_contains($region, '/') && ! str_contains($region, '、')) {
             foreach (DailyDiscoveryService::REGIONS as $prefecture) {
@@ -91,7 +93,7 @@ class DailyDiscoveryImporter
     public function run(string $provider, array $cell, array $rows, bool $dryRun): array
     {
         $result = ['fetched' => count($rows), 'normalized' => 0, 'imported' => 0, 'new' => 0, 'updated' => 0,
-            'unchanged' => 0, 'missing' => 0, 'skipped' => 0, 'anonymous_company_jobs' => 0, 'errors' => [], 'changes' => [], 'missing_job_ids' => []];
+            'unchanged' => 0, 'missing' => 0, 'skipped' => 0, 'anonymous_company_jobs' => 0, 'not_observed_in_window' => 0, 'errors' => [], 'changes' => [], 'missing_job_ids' => [], 'not_observed_in_window_job_ids' => [], 'absence_status' => 'not_evaluated'];
         $seen = [];
         $processed = [];
         foreach ($rows as $row) {
@@ -121,14 +123,47 @@ class DailyDiscoveryImporter
         }
         // Failed/incomplete cells do not produce absence observations.
         if ($result['errors'] === []) {
-            $result['missing_job_ids'] = JobPosting::query()->where('provider_key', $provider)
+            $complete = config('discovery.provider_capabilities.'.$provider.'.supports_complete_snapshot', true);
+            $field = $complete ? 'missing' : 'not_observed_in_window';
+            $result['absence_status'] = $complete ? 'missing_observation' : 'bounded_window';
+            $result[$field.'_job_ids'] = JobPosting::query()->where('provider_key', $provider)
                 ->where('occupation', $cell['occupation'])->where('region', $cell['region'])
                 ->whereNull('unavailable_at')->whereNotNull('external_id')->whereNotIn('external_id', $seen)
                 ->orderBy('id')->pluck('id')->all();
-            $result['missing'] = count($result['missing_job_ids']);
+            $result[$field] = count($result[$field.'_job_ids']);
         }
 
         return $result;
+    }
+
+    /** Only explicit prefectures in the provider location field are facts. No city inference. */
+    private function careerjetRegion(?string $location): ?string
+    {
+        if ($location === null) {
+            return null;
+        }
+        preg_match_all('/北海道|東京都|京都府|大阪府|[一-龠]{2,3}県/u', $location, $prefectures);
+        if (count(array_unique($prefectures[0])) !== 1) {
+            return null;
+        }
+        // Separate destinations must each explicitly confirm the same supported prefecture.
+        $parts = preg_split('/\s*[-－–—\/／、,;；・]\s*/u', $location);
+        $regions = [];
+        foreach ($parts as $part) {
+            $matched = null;
+            foreach (DailyDiscoveryService::REGIONS as $prefecture) {
+                if (str_starts_with(trim($part), $prefecture)) {
+                    $matched = $prefecture;
+                    break;
+                }
+            }
+            if ($matched === null) {
+                return null;
+            }
+            $regions[] = $matched;
+        }
+
+        return count(array_unique($regions)) === 1 ? $regions[0] : null;
     }
 
     private function upsert(array $data, array $raw, bool $dryRun): array

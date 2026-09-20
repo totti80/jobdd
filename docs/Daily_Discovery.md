@@ -31,7 +31,7 @@ Each existing importer has an opt-in `--daily-input` path used by the adapter. T
 
 Daily identity is the existing unique `(provider_key, external_id)` pair; missing IDs use the existing provider URL/hash fallback. A legacy route attached to a posting owned by another provider is reported for review, never stolen. No cross-provider fuzzy deduplication is introduced. `first_seen_at` survives updates; only observed accepted records refresh `last_seen_at`. Company, content, salary, occupation, region, Source URL, availability and supplied provider dates determine NEW/UPDATED/UNCHANGED; clock refresh alone does not.
 
-MISSING means absent from that successful bounded search result, **not unavailable** or a complete-market disappearance. Failed cells/rows do not infer absence; jobs and routes are never closed for MISSING.
+For providers retaining the legacy absence branch, MISSING means absent from that successful search result, **not unavailable** or a complete-market disappearance. Careerjet instead reports `not_observed_in_window` (see Batch 15.3 below). Failed cells/rows do not infer absence; jobs and routes are never closed for either observation.
 
 NEW/UPDATED invoke the existing dictionary and Fact extractor inside the per-job import transaction. Rule Facts belonging to the current dictionary but no longer found in the new text are removed; manual/other Facts remain. There is no dictionary, context classification, Fit or UI change. UNCHANGED skips extraction. A Fact failure rolls back that job import.
 
@@ -50,3 +50,13 @@ Missing/blank Careerjet company names use the single reserved Company name `[job
 The UI displays `Careerjet掲載・企業名未確認` and `企業名は掲載情報から確認できていません`. Job comparison/Fit and saved platform routes remain available. Anonymous companies are excluded before Direct candidate website checks, persisted candidate building, and website/page discovery. No company URL evidence is attached to the anonymous bucket.
 
 `anonymous_company_jobs` counts accepted distinct anonymous jobs in that provider/cell run, not all Careerjet jobs. Coverage retains its existing `companies` count and adds `companies_total`, `anonymous_companies`, and `named_companies` for the same stored active 12-cell scope; these are storage identities, not verified unique employers. External ID fallback remains unchanged.
+
+## Careerjet location and bounded absence (Batch 15.3)
+
+Daily Careerjet normalization uses the provider's `locations` field only. `search_region` is collection context, never a job Fact. A supported prefecture must be explicit; city-only, missing and ambiguous/mixed-prefecture locations remain unknown. Multiple destinations are collapsed only when every destination explicitly names the same supported prefecture. Unknown/out-of-cell jobs are counted as skipped for the exact-cell import; they are not silently assigned the query prefecture. No city dictionary or description inference is used.
+
+Careerjet has `supports_complete_snapshot=false`: successful bounded fetches report `not_observed_in_window` and the corresponding job IDs, with `missing=0`. This is not disappearance, closure or proof that a job lies outside the top window: an unstable identity can also cause non-observation. Failed rows/fetches produce no absence inference. Other providers retain their previous report behavior; this does not certify those providers as complete snapshots.
+
+A repeated whole page is rejected even when its tracking URLs differ, using a content signature solely as a pagination guard. It is **not** a job identity or fuzzy merge rule. Distinct pages with partial overlap are not treated as a repeated whole page.
+
+The Batch 15.3 live audit observed 1,436 hits, of which only the first 60 were requested. Two fetches returned the same 60 title/company/location tuples in the same order, but **zero full URL overlap**. No `id`, `job_id`, `external_id` or `ref` was present. Therefore full tracking-URL SHA256 is not safe as a daily identity in this observed response. The existing fallback and saved identities are left unchanged; normal Careerjet writes must remain stopped pending a verified stable provider identity and reconciliation of existing rows. Do not substitute title/company hashes or strip opaque URL segments by guesswork. Scheduler remains disabled.

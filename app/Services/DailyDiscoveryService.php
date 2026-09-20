@@ -68,7 +68,7 @@ class DailyDiscoveryService
         $successful = 0;
         // Platform before Agents; each provider visits cells in the same canonical order.
         foreach ($providers as $provider) {
-            $totals = array_fill_keys(['fetched', 'normalized', 'imported', 'new', 'updated', 'unchanged', 'missing', 'skipped', 'anonymous_company_jobs'], 0);
+            $totals = array_fill_keys(['fetched', 'normalized', 'imported', 'new', 'updated', 'unchanged', 'missing', 'skipped', 'anonymous_company_jobs', 'not_observed_in_window'], 0);
             $totals['errors'] = 0;
             foreach ($cells as $cell) {
                 try {
@@ -103,16 +103,17 @@ class DailyDiscoveryService
         $report['direct_lookup_candidates'] = $this->coverage->directCandidates($changes);
         $report['run_finished_at'] = now()->toIso8601String();
         $report['duration_seconds'] = round(microtime(true) - $started, 3);
-        $report['definitions'] = ['missing' => 'Absent from this successful bounded provider/cell result, not unavailable; failed cells yield no observation.',
+        $report['definitions'] = ['missing' => 'Legacy absence observation for providers without a bounded-window override; never unavailable. Failed cells yield no observation.',
+            'not_observed_in_window' => 'Absent from this bounded Careerjet result only; no disappearance or market coverage claim. Identity instability may also cause non-observation.',
             'dry_run' => 'Classification preview; imported=0, coverage is current DB, new IDs may be null.',
             'direct' => 'Company candidates only; stored company website/route presence is not same-job official confirmation.'];
         $name = now()->format('Y-m-d').'-'.$report['run_id'].($dryRun ? '-preview' : '');
         $json = json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         File::put($directory.'/'.$name.'.json', $json);
         $markdown = '# JobDD Daily Discovery'."\n\n".$report['run_started_at']."\n\nStatus: ".$report['status']."\n\nProviders: ".count($providers).' / Cells: '.count($cells)."\n\n";
-        $markdown .= "| Provider | Fetched | New | Updated | Unchanged | Missing | Errors |\n|---|---:|---:|---:|---:|---:|---:|\n";
+        $markdown .= "| Provider | Fetched | New | Updated | Unchanged | Missing | Not observed in window | Errors |\n|---|---:|---:|---:|---:|---:|---:|---:|\n";
         foreach ($report['by_provider'] as $key => $totals) {
-            $markdown .= '|'.$key.'|'.implode('|', array_intersect_key($totals, array_flip(['fetched', 'new', 'updated', 'unchanged', 'missing', 'errors'])))."|\n";
+            $markdown .= '|'.$key.'|'.implode('|', array_map(fn ($key) => $totals[$key], ['fetched', 'new', 'updated', 'unchanged', 'missing', 'not_observed_in_window', 'errors']))."|\n";
         }
         $markdown .= "\n## Cells\n\n| Occupation | Region | Current jobs |\n|---|---|---:|\n";
         foreach ($report['cells'] as $cell) {

@@ -33,7 +33,7 @@ afterEach(function () {
 function dailyRow(string $id = 'one', array $extra = []): array
 {
     return [...['company' => '日次検証会社', 'company_name' => '日次検証会社', 'title' => '機械設計',
-        'region' => '兵庫県', 'url' => 'https://jobs.sample-company.jp/'.$id, 'source_url' => 'https://jobs.sample-company.jp/'.$id,
+        'region' => '兵庫県', 'locations' => '兵庫県', 'url' => 'https://jobs.sample-company.jp/'.$id, 'source_url' => 'https://jobs.sample-company.jp/'.$id,
         'external_id' => $id, 'description' => 'AutoCADを使用する機械設計業務',
         'salary_min' => 500, 'salary_max' => 800, 'salary_type' => 'Y'], ...$extra];
 }
@@ -314,4 +314,47 @@ test('anonymous employers cannot enter the persisted direct lookup pipeline', fu
         ->toThrow(InvalidArgumentException::class);
     expect(fn () => app(OfficialPageDiscovery::class)->discover(['company_id' => $company->id]))
         ->toThrow(InvalidArgumentException::class);
+});
+
+test('careerjet location facts never inherit the search cell', function ($location, $expected) {
+    $data = app(DailyDiscoveryImporter::class)->normalize('careerjet', dailyRow(extra: [
+        'locations' => $location, 'region' => '兵庫県', 'search_region' => '兵庫県',
+        'description' => '兵庫県の機械設計求人',
+    ]));
+    expect($data['region'])->toBe($expected);
+})->with([
+    ['大阪府大阪市', '大阪府'], ['神戸市', null], [null, null], ['', null],
+    ['徳島県 - 兵庫県', null], ['兵庫県宝塚市 - 大阪市淀川区', null],
+    ['兵庫県西宮市 - 兵庫県神戸市', '兵庫県'], ['兵庫県 大阪府', null],
+]);
+
+test('bounded careerjet absence is not missing and never closes existing jobs', function () {
+    $importer = app(DailyDiscoveryImporter::class);
+    $importer->run('careerjet', dailyCell(), [dailyRow()], false);
+    $before = JobPosting::sole()->toArray();
+    $bounded = $importer->run('careerjet', dailyCell(), [], true);
+    expect($bounded['missing'])->toBe(0)->and($bounded['missing_job_ids'])->toBe([])
+        ->and($bounded['not_observed_in_window'])->toBe(1)
+        ->and($bounded['absence_status'])->toBe('bounded_window')
+        ->and(JobPosting::sole()->toArray())->toBe($before);
+    $failed = $importer->run('careerjet', dailyCell(), [['company' => null]], true);
+    expect($failed['errors'])->toHaveCount(1)->and($failed['absence_status'])->toBe('not_evaluated')
+        ->and($failed['missing'])->toBe(0)->and($failed['not_observed_in_window'])->toBe(0);
+    // A test-only complete-snapshot capability preserves the shared absence branch.
+    config(['discovery.provider_capabilities.careerjet.supports_complete_snapshot' => true]);
+    $complete = $importer->run('careerjet', dailyCell(), [], true);
+    expect($complete['missing'])->toBe(1)->and($complete['not_observed_in_window'])->toBe(0);
+});
+
+test('explicit provider id survives tracking URL changes but fallback URLs are not falsely merged', function () {
+    $importer = app(DailyDiscoveryImporter::class);
+    $row = dailyRow(extra: ['external_id' => null, 'id' => 'native-one']);
+    $first = $importer->run('careerjet', dailyCell(), [$row], false);
+    $second = $importer->run('careerjet', dailyCell(), [[...$row, 'url' => 'https://tracking.sample.jp/changed']], false);
+    expect($first['new'])->toBe(1)->and($second['updated'])->toBe(1)
+        ->and(JobPosting::count())->toBe(1)->and(JobPosting::sole()->external_id)->toBe('native-one');
+    $withoutId = dailyRow(extra: ['external_id' => null]);
+    $a = $importer->normalize('careerjet', $withoutId);
+    $b = $importer->normalize('careerjet', [...$withoutId, 'url' => 'https://tracking.sample.jp/another']);
+    expect($a['external_id'])->not->toBe($b['external_id']);
 });

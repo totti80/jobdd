@@ -34,10 +34,26 @@ class FakeSession:
 
 
 class CareerjetFetchTest(unittest.TestCase):
-    def test_fetch_cell_paginates_and_keeps_requested_cell(self):
+    def test_fetch_cell_paginates_without_copying_search_region(self):
         with patch.object(MODULE, "PAGE_SIZE", 1), patch.object(MODULE, "MAX_PAGES", 2), patch.object(MODULE, "REQUEST_INTERVAL", 0), patch.dict("os.environ", {"CAREERJET_API_KEY": "test-key"}):
             jobs = MODULE.fetch_cell(FakeSession(), "兵庫県", "機械設計")
 
         self.assertEqual(len(jobs), 2)
-        self.assertTrue(all(job["region"] == "兵庫県" for job in jobs))
+        self.assertTrue(all(job["region"] is None for job in jobs))
+        self.assertTrue(all(job["search_region"] == "兵庫県" for job in jobs))
         self.assertTrue(all(job["search_occupation"] == "機械設計" for job in jobs))
+
+    def test_repeated_page_with_changed_tracking_urls_is_rejected(self):
+        session = FakeSession()
+        session.pages = [FakeResponse([{"title": "same", "url": "https://track.test/a"}]),
+                         FakeResponse([{"title": "same", "url": "https://track.test/b"}])]
+        with patch.object(MODULE, "PAGE_SIZE", 1), patch.object(MODULE, "MAX_PAGES", 2), patch.object(MODULE, "REQUEST_INTERVAL", 0), patch.dict("os.environ", {"CAREERJET_API_KEY": "test-key"}), self.assertRaisesRegex(ValueError, "RepeatedCareerjetPage"):
+            MODULE.fetch_cell(session, "兵庫県", "機械設計")
+
+    def test_provider_locations_are_preserved_separately_from_query_context(self):
+        session = FakeSession()
+        session.pages = [FakeResponse([{"title": "design", "locations": "大阪府大阪市"}])]
+        with patch.dict("os.environ", {"CAREERJET_API_KEY": "test-key"}):
+            jobs = MODULE.fetch_cell(session, "兵庫県", "機械設計")
+        self.assertEqual(jobs[0]["region"], "大阪府大阪市")
+        self.assertEqual(jobs[0]["search_region"], "兵庫県")

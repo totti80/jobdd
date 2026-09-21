@@ -47,6 +47,23 @@ function uiV5Fixture(): array
     return [$query, $jobs];
 }
 
+test('graduation entry integrates scope hero responsive form and explanation with one main heading', function () {
+    $response = $this->get(route('jobs.start'));
+    $dom = uiV5Dom($response, 'graduation-start');
+    expect($dom->query('//header')->length)->toBe(1)
+        ->and($dom->query('//h1')->length)->toBe(1)
+        ->and($dom->query('//*[@data-entry-layout]/form')->length)->toBe(1)
+        ->and($dom->query('//*[@data-entry-layout]/aside')->length)->toBe(1)
+        ->and($dom->query('//textarea[@id="custom_tools" and @name="custom_tools" and @maxlength="500"]')->length)->toBe(1)
+        ->and($dom->query('//label[@for="custom_tools"]')->length)->toBe(1);
+    $response->assertSee('求人を探すだけでは、わからない。')->assertSee('仕事の中身まで比べて、選ぶ。')
+        ->assertSee('近畿6府県 × 機械設計・電気設計 専門')->assertSee('卒業制作版')
+        ->assertSee('JobDDで分かること')->assertSee('根拠を確認')->assertSee('2〜3求人')
+        ->assertSee('grid-cols-1')->assertSee('lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]', false)
+        ->assertSeeInOrder(['<header', 'id="entry-title"', '近畿6府県 ×', '<form', '<aside'])
+        ->assertDontSee('TOP3')->assertDontSee('おすすめ')->assertDontSee('全国対応');
+});
+
 test('v5 form has native labelled choices and field errors preserve safe values', function () {
     $dom = uiV5Dom($this->get(route('jobs.start')), 'start');
     expect($dom->query('//input[@type="radio" and @name="occupation"]')->length)->toBe(2)

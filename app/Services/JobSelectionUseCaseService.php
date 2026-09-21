@@ -46,6 +46,7 @@ class JobSelectionUseCaseService
         }
 
         return ['query' => $query->only(['public_id', 'occupation', 'region', 'salary_min', 'salary_max']),
+            'custom_tools' => $query->detailed_skills['custom_tools'] ?? null,
             'selected_tools' => array_column($requirements['desired'] ?? [], 'fact_key'), 'items' => $items];
     }
 

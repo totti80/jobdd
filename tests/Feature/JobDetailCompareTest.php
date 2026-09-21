@@ -42,6 +42,29 @@ function detailCompareUrl(UserQuery $query, ?int $id = null, array $extra = []):
     ]);
 }
 
+test('saved custom tools survive pagination tool changes detail comparison and map without adding Fit axes', function () {
+    [$query, $jobs] = detailCompareFixture(25);
+    $custom = 'AutoCAD、iCAD SX <script>alert(1)</script>';
+    $before = app(JobSelectionUseCaseService::class)->run($query, [$jobs[0]->id]);
+    $query->update(['detailed_skills' => ['custom_tools' => $custom]]);
+    $after = app(JobSelectionUseCaseService::class)->run($query->fresh(), [$jobs[0]->id]);
+    expect($after['items'][0]['fit']['axes'])->toBe($before['items'][0]['fit']['axes'])
+        ->and($after['items'][0]['fit']['summary'])->toBe($before['items'][0]['fit']['summary']);
+    $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
+    $urls = [
+        route('query.jobs', ['userQuery' => $query->public_id, 'page' => 2, 'tools' => ['solidworks']]),
+        route('query.jobs', ['userQuery' => $query->public_id, 'tools' => ['nx']]),
+        route('query.jobs', ['userQuery' => $query->public_id, 'view' => 'map']),
+        detailCompareUrl($query, $jobs[0]->id, ['page' => 2]),
+        detailCompareUrl($query, null, ['jobs' => [$jobs[0]->id, $jobs[1]->id], 'page' => 2]),
+    ];
+    foreach ($urls as $url) {
+        $this->get($url)->assertOk()->assertSee('その他の希望ツール')->assertSee($custom)
+            ->assertSee('判定未対応')->assertDontSee('<script>alert(1)</script>', false);
+    }
+    expect($query->fresh()->detailed_skills)->toBe(['custom_tools' => $custom]);
+});
+
 test('job detail exposes escaped Facts context and stored application routes with constant reads', function () {
     [$query, $jobs] = detailCompareFixture();
     foreach (['platform', 'agent', 'direct'] as $type) {

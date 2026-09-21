@@ -22,23 +22,25 @@ class JobSearchController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->only(['occupation', 'region', 'salary_min', 'tools']), [
+        $validator = Validator::make($request->only(['occupation', 'region', 'salary_min', 'tools', 'custom_tools']), [
             'occupation' => ['required', 'string', Rule::in(self::OCCUPATIONS)],
             'region' => ['required', 'string', Rule::in(self::REGIONS)],
             'salary_min' => ['nullable', 'integer', 'between:1,10000'],
             'tools' => ['sometimes', 'array', 'list', 'max:7'],
             'tools.*' => ['required', 'string', 'distinct', Rule::in(array_keys(JobDecisionUseCaseService::TOOLS))],
+            'custom_tools' => ['nullable', 'string', 'max:500'],
         ], [
             'occupation.*' => '職種は機械設計・電気設計から選んでください。',
             'region.*' => '希望地域は近畿6府県から選んでください。',
             'salary_min.*' => '希望年収は1〜10,000万円の整数で入力するか、空欄にしてください。',
             'tools.*' => 'ツールは表示されている7種類から重複なく選んでください。',
             'tools.*.*' => 'ツールは表示されている7種類から重複なく選んでください。',
+            'custom_tools.*' => 'その他のCAD・ツールは500文字以内の文字列で入力してください。',
         ]);
         if ($validator->fails()) {
             // Render directly: no old input or error payload needs to be flashed to the session.
             $values = [];
-            foreach (['occupation', 'region', 'salary_min'] as $field) {
+            foreach (['occupation', 'region', 'salary_min', 'custom_tools'] as $field) {
                 $values[$field] = is_scalar($request->input($field)) ? (string) $request->input($field) : '';
             }
             $values['tools'] = is_array($request->input('tools'))
@@ -62,6 +64,8 @@ class JobSearchController extends Controller
             'occupation' => $input['occupation'],
             'region' => $input['region'],
             'salary_min' => $input['salary_min'] ?? null,
+            // Keep free-form intent separate from the seven confirmed tool requirements.
+            'detailed_skills' => isset($input['custom_tools']) ? ['custom_tools' => $input['custom_tools']] : null,
         ]);
         $request->session()->put('jobdd_query_token_'.$query->public_id, $query->session_token);
 

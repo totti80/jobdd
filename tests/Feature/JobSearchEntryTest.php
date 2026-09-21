@@ -76,6 +76,39 @@ test('new entry accepts both occupations all regions and optional empty fields',
     expect($query->salary_min)->toBeNull()->and($query->occupation)->toBe($occupation)->and($query->region)->toBe($region);
 })->with(['機械設計', '電気設計'])->with(['兵庫県', '大阪府', '京都府', '滋賀県', '奈良県', '和歌山県']);
 
+test('custom tools persist only validated intent and never enter the URL or selected tools', function ($custom) {
+    $response = $this->post(route('jobs.store'), entryInput(['custom_tools' => $custom,
+        'detailed_skills' => ['custom_tools' => 'injected'], 'priorities' => ['injected']]));
+    $query = UserQuery::sole();
+    $expected = trim($custom ?? '');
+    expect($query->detailed_skills)->toBe($expected === '' ? null : ['custom_tools' => $expected])
+        ->and($query->priorities)->toBeNull();
+    $response->assertRedirect(route('query.jobs', ['userQuery' => $query->public_id, 'tools' => ['solidworks', 'autocad']]));
+    $list = $this->get($response->headers->get('Location'))->assertOk();
+    if ($expected !== '') {
+        $list->assertSee('その他の希望ツール')->assertSee($expected)->assertSee('判定未対応');
+    } else {
+        $list->assertDontSee('その他の希望ツール');
+    }
+    $list->assertDontSee('<script>alert(1)</script>', false);
+})->with([null, '', '   ', 'iCAD SX、EPLAN、ANSYS', str_repeat('設', 500), '<script>alert(1)</script>']);
+
+test('invalid custom tools return accessible errors without writes', function ($custom) {
+    $this->post(route('jobs.store'), entryInput(['custom_tools' => $custom]))
+        ->assertStatus(422)->assertSee('500文字以内の文字列')
+        ->assertSee('href="#custom_tools"', false)->assertSee('id="custom-tools-error"', false)
+        ->assertSee('aria-invalid="true"', false);
+    $this->assertDatabaseCount('user_queries', 0);
+})->with([str_repeat('設', 501), [['iCAD SX']], 123]);
+
+test('validation redisplay escapes custom tools and preserves the entered value', function () {
+    $custom = '</textarea><script>alert(1)</script>';
+    $this->post(route('jobs.store'), entryInput(['region' => '', 'custom_tools' => $custom]))
+        ->assertStatus(422)->assertSee($custom)->assertDontSee($custom, false)
+        ->assertSee('value="solidworks" checked', false);
+    $this->assertDatabaseCount('user_queries', 0);
+});
+
 test('new entry rejects invalid inputs in Japanese without creating a query', function ($changes, $message) {
     $this->post(route('jobs.store'), entryInput($changes))->assertStatus(422)->assertSee($message)
         ->assertDontSee('<script>alert(1)</script>', false);

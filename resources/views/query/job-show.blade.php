@@ -59,7 +59,7 @@
         </div>
     </section>
     <section aria-labelledby="source-title" class="jobdd-card">
-        <h2 id="source-title" class="text-xl font-bold text-blue-950">根拠と求人元の情報</h2>
+        <h2 id="source-title" class="flex items-center gap-3 text-xl font-bold text-blue-950"><x-jobdd-icon name="evidence" />根拠と求人元の情報</h2>
         <p class="mt-3 text-sm leading-6 text-slate-600">各項目の原文は、それぞれの「根拠を見る」から確認できます。ここには、この求人の掲載元を表示しています。</p>
         <details class="jobdd-details mt-4">
             <summary>保存された求人本文を見る</summary>
@@ -107,7 +107,7 @@
         @endforelse
     </section>
     <section aria-labelledby="agency-option-title" class="jobdd-card">
-        <h2 id="agency-option-title" class="text-xl font-bold text-blue-950">人材紹介会社へ相談する選択肢</h2>
+        <h2 id="agency-option-title" class="flex items-center gap-3 text-xl font-bold text-blue-950"><x-jobdd-icon name="agent" />人材紹介会社へ相談する選択肢</h2>
         <p class="mt-3 leading-7 text-slate-600">公開求人だけでは分からない求人や、キャリア相談を確認したい場合の相談先候補です。この求人の紹介可否を示すものではありません。</p>
         <a href="{{ route('query.agencies', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]) }}" class="jobdd-link mt-3 inline-flex min-h-12 items-center">相談先候補を見る</a>
     </section>

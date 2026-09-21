@@ -70,6 +70,23 @@ select:focus[data-flux-control] {
     .jobdd { @apply bg-slate-50 font-sans text-base text-slate-900; overflow-wrap: anywhere; }
     .jobdd-page-title { @apply text-2xl font-bold leading-8 text-blue-950 sm:text-[32px] sm:leading-10; }
     .jobdd-card { @apply min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6; }
+    .jobdd-icon { @apply inline-block size-5 shrink-0 align-middle; }
+    .jobdd-brand { @apply flex flex-wrap items-center gap-x-5 gap-y-1; }
+    .jobdd-wordmark { @apply text-[28px] font-bold leading-9 tracking-tight text-blue-950; }
+    .jobdd-wordmark span { @apply text-blue-700; }
+    .jobdd-brand-caption { @apply text-sm leading-6 text-slate-600; }
+    .jobdd-entry-hero { @apply mb-8 min-w-0 border-b border-slate-200 pb-7 sm:pb-8 lg:mb-10; }
+    .jobdd-hero-copy { @apply min-w-0; }
+    .jobdd-hero-title { @apply mt-5 tracking-tight sm:text-[36px] sm:leading-[1.45]; text-wrap: balance; }
+    .jobdd-scope-badge { @apply inline-flex max-w-full items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold leading-6 text-blue-900; }
+    .jobdd-entry-form { @apply scroll-mt-6 border-t-4 border-t-blue-700; }
+    .jobdd-tool-group { @apply min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5; }
+    .jobdd-icon-tile { @apply inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-800; }
+    .jobdd-feature-row { @apply mt-5 flex min-w-0 items-start gap-3 border-t border-slate-100 pt-5; }
+    .jobdd-feature-row > div { @apply min-w-0; }
+    .jobdd-decision-note { @apply rounded-xl border-l-4 border-teal-700 bg-teal-50 p-5; }
+    .jobdd-entry-form .jobdd-choice:hover { @apply border-blue-700; }
+    .jobdd-entry-form :where(select, input[type='number'], textarea) { @apply bg-white; }
     .jobdd-button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-800 px-4 py-3 text-center text-base font-semibold leading-6 text-white hover:bg-blue-900; }
     .jobdd-link { @apply font-semibold text-blue-800 underline underline-offset-4 hover:text-blue-900; }
     .jobdd-choice { @apply flex min-h-12 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-slate-500 bg-white p-3; }
@@ -77,7 +94,7 @@ select:focus[data-flux-control] {
     .jobdd-choice input { @apply size-5 shrink-0 accent-blue-800; }
     .jobdd-details { @apply min-w-0 rounded-lg border border-slate-200 bg-slate-50; }
     .jobdd-details > summary { @apply min-h-12 cursor-pointer px-4 py-3 font-semibold leading-6 text-blue-800; }
-    .jobdd :where(a, button, input, select, summary, [tabindex]):focus-visible { outline: 2px solid var(--color-blue-700); outline-offset: 2px; }
+    .jobdd :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--color-blue-700); outline-offset: 2px; }
     .jobdd [data-job-id][data-selected='true'] { @apply ring-2 ring-blue-800; }
     .jobdd :where(input, select)[aria-invalid='true'] { @apply border-red-700; }
     .jobdd [aria-disabled='true'] { @apply bg-slate-100 text-slate-700 ring-1 ring-slate-500; }
@@ -106,7 +123,7 @@ select:focus[data-flux-control] {
 /* Coordinate-only diagram: no copied geography or external map assets. */
 @layer components {
     .jobdd [hidden] { display: none !important; }
-    .jobdd-view-button { @apply min-h-12 rounded-lg border border-blue-800 bg-white px-4 py-3 font-semibold text-blue-800; }
+    .jobdd-view-button { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-blue-800 bg-white px-4 py-3 font-semibold text-blue-800; }
     .jobdd-view-button[aria-pressed='true'], .jobdd-map-marker[aria-pressed='true'] { @apply bg-blue-800 text-white ring-2 ring-blue-800 ring-offset-2; }
     .jobdd-map-active { grid-template-columns: minmax(0, 1fr) !important; }
     .jobdd-map-active .jobdd-selection-panel { position: static !important; }

@@ -13,7 +13,7 @@
 <body class="jobdd min-h-screen" data-jobdd-root>
 <header class="border-b border-slate-200 bg-white">
     <div class="mx-auto max-w-6xl space-y-4 px-4 py-6 sm:px-6 lg:py-8">
-        <p class="text-xl font-bold text-blue-950">JobDD <span class="ml-2 text-sm font-normal text-slate-600">根拠とともに、求人を比較</span></p>
+        @include('query.partials.brand')
         <h1 class="jobdd-page-title">求人候補を確認・比較する</h1>
         <p class="leading-7 text-slate-600">確認できたこと・条件と異なること・未確認の情報を、根拠とともに比べられます。最終判断はあなた自身が行います。</p>
         <a href="{{ route('jobs.start') }}" class="jobdd-link inline-flex min-h-11 items-center">新しい条件を入力する</a>
@@ -46,8 +46,8 @@
         <a href="#compare-selection" class="jobdd-link inline-flex min-h-11 items-center">比較する求人を2〜3件選ぶ</a>
     </div>
     <div data-map-toggle hidden class="flex flex-wrap gap-3" role="group" aria-label="求人候補の表示方法">
-        <button type="button" data-jobdd-view="list" aria-pressed="true" aria-controls="jobdd-list-view" class="jobdd-view-button">リスト</button>
-        <button type="button" data-jobdd-view="map" aria-pressed="false" aria-controls="jobdd-map-view" class="jobdd-view-button">地図（都道府県の目安）</button>
+        <button type="button" data-jobdd-view="list" aria-pressed="true" aria-controls="jobdd-list-view" class="jobdd-view-button"><x-jobdd-icon name="evidence" />リスト</button>
+        <button type="button" data-jobdd-view="map" aria-pressed="false" aria-controls="jobdd-map-view" class="jobdd-view-button"><x-jobdd-icon name="map" />地図（都道府県の目安）</button>
     </div>
     <div data-discovery-layout class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_288px]">
         @include('query.partials.map-view', ['map' => \App\Support\JobMapLocation::viewModel($items, $query, $pagination['page'], $selected_tools)])

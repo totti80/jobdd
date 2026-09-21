@@ -60,8 +60,24 @@ test('graduation entry integrates scope hero responsive form and explanation wit
         ->assertSee('近畿6府県 × 機械設計・電気設計 専門')->assertSee('卒業制作版')
         ->assertSee('JobDDで分かること')->assertSee('根拠を確認')->assertSee('2〜3求人')
         ->assertSee('grid-cols-1')->assertSee('lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]', false)
-        ->assertSeeInOrder(['<header', 'id="entry-title"', '近畿6府県 ×', '<form', '<aside'])
+        ->assertSeeInOrder(['<header', '近畿6府県 ×', 'id="entry-title"', '<form', '<aside'])
         ->assertDontSee('TOP3')->assertDontSee('おすすめ')->assertDontSee('全国対応');
+});
+
+test('visual polish groups tools keeps a direct form link and makes icons decorative', function () {
+    $response = $this->get(route('jobs.start'));
+    $dom = uiV5Dom($response, 'visual-start');
+    expect($dom->query('//header//*[@data-jobdd-brand]')->length)->toBe(1)
+        ->and(trim($dom->query('//*[contains(@class,"jobdd-wordmark")]')->item(0)->textContent))->toBe('JobDD')
+        ->and($dom->query('//a[@href="#entry-form"]')->length)->toBe(1)
+        ->and($dom->query('//form[@id="entry-form" and @method="POST"]')->length)->toBe(1)
+        ->and($dom->query('//*[@data-tool-group]//input[@name="tools[]"]')->length)->toBe(7)
+        ->and($dom->query('//*[@data-tool-group]//textarea[@name="custom_tools"]')->length)->toBe(1)
+        ->and($dom->query('//svg[not(@aria-hidden="true") or not(@focusable="false")]')->length)->toBe(0)
+        ->and($dom->query('//img')->length)->toBe(0); // Brand assets are explicitly deferred, not replaced.
+    $response->assertSee('地図で見る')->assertSee('実際の勤務地を示すものではありません。')
+        ->assertSee('確認できた')->assertSee('条件と異なる')->assertSee('未確認')
+        ->assertSee('判定未対応')->assertSee('最終判断は、あなた自身で');
 });
 
 test('v5 form has native labelled choices and field errors preserve safe values', function () {

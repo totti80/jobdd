@@ -19,6 +19,12 @@
         @case('map')
             <path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15" />
             @break
+        @case('map-pin')
+            <path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0Z" /><circle cx="12" cy="10" r="2.5" />
+            @break
+        @case('difference')
+            <path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4-4-4 4 4 4" />
+            @break
         @case('tools')
             <path d="m4 20 7-7M14 4a6 6 0 0 0-7 7l6 6a6 6 0 0 0 7-7l-4 4-6-6z" />
             @break

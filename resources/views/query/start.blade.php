@@ -21,9 +21,11 @@
         <p class="mt-3 text-sm leading-6 text-slate-600">現在のJobDDは、近畿地方の機械設計・電気設計職に対象を絞った卒業制作版です。</p>
         <a href="#entry-form" class="jobdd-link mt-4 inline-flex min-h-11 items-center gap-2">希望条件を入力する<x-jobdd-icon name="arrow" /></a>
         </div>
+        <div class="jobdd-hero-frame">
         <img src="{{ asset('images/jobdd/jobdd-hero-kinki.png') }}" width="1672" height="941" class="jobdd-hero-image"
             alt="神戸の港、大阪城、京都の寺社、奈良の鹿、琵琶湖や和歌山の風景を背景に、機械・電気設計の求人を比較して考える人たち"
             fetchpriority="high" decoding="async">
+        </div>
     </section>
     @if ($inputErrors)
         <section role="alert" aria-labelledby="input-errors" tabindex="-1" data-input-errors class="mb-6 rounded-xl border border-red-700 bg-red-50 p-4 text-red-800">
@@ -99,17 +101,17 @@
         <section class="jobdd-card">
             <h2 id="entry-guide-title" class="text-xl font-bold text-blue-950">JobDDで分かること</h2>
             <p class="mt-3 text-sm leading-6 text-slate-600">希望条件と求人の記載を照らし合わせ、3つの状態に整理します。</p>
-            <ul class="mt-5 space-y-4">
-                <li>@include('query.partials.status-badge', ['status' => 'match'])<p class="mt-2 text-sm leading-6">希望条件との一致を、求人の記載から確認できた情報です。</p></li>
-                <li>@include('query.partials.status-badge', ['status' => 'mismatch'])<p class="mt-2 text-sm leading-6">希望条件と掲載情報に違いがある項目です。</p></li>
-                <li>@include('query.partials.status-badge', ['status' => 'unknown'])<p class="mt-2 text-sm leading-6">求人本文から確認できない情報です。合わないという意味ではありません。</p></li>
+            <ul class="jobdd-guide-list">
+                <li class="jobdd-guide-item" data-explanation="confirmed"><span class="jobdd-guide-icon jobdd-guide-confirmed"><x-jobdd-icon name="match" /></span><div><h3 class="font-bold text-blue-950">確認できた</h3><p class="mt-1 text-sm leading-6 text-slate-600">希望条件との一致を、求人の記載から確認できた情報です。</p></div></li>
+                <li class="jobdd-guide-item" data-explanation="different"><span class="jobdd-guide-icon jobdd-guide-different"><x-jobdd-icon name="difference" /></span><div><h3 class="font-bold text-blue-950">条件と異なる</h3><p class="mt-1 text-sm leading-6 text-slate-600">希望条件と掲載情報に違いがある項目です。</p></div></li>
+                <li class="jobdd-guide-item" data-explanation="unknown"><span class="jobdd-guide-icon jobdd-guide-unknown"><x-jobdd-icon name="unknown" /></span><div><h3 class="font-bold text-blue-950">未確認</h3><p class="mt-1 text-sm leading-6 text-slate-600">求人本文から確認できない情報です。合わないという意味ではありません。</p></div></li>
             </ul>
         </section>
         <section class="jobdd-card" aria-labelledby="entry-evidence-title">
             <h2 id="entry-evidence-title" class="text-lg font-bold text-blue-950">選ぶための、3つの見方</h2>
-            <div class="jobdd-feature-row"><span class="jobdd-icon-tile"><x-jobdd-icon name="evidence" /></span><div><h3 class="font-bold text-blue-950">根拠を確認</h3><p class="mt-1 text-sm leading-6 text-slate-600">求人票や公式情報など、出典とEvidenceを確認できます。</p></div></div>
-            <div class="jobdd-feature-row"><span class="jobdd-icon-tile"><x-jobdd-icon name="compare" /></span><div><h3 class="font-bold text-blue-950">同じ軸で比較</h3><p class="mt-1 text-sm leading-6 text-slate-600">2〜3求人を、勤務地・年収・ツールなど同じ項目で比較できます。</p></div></div>
-            <div class="jobdd-feature-row"><span class="jobdd-icon-tile"><x-jobdd-icon name="map" /></span><div><h3 class="font-bold text-blue-950">地図で見る</h3><p class="mt-1 text-sm leading-6 text-slate-600">近畿の求人を都道府県の代表点で確認。実際の勤務地を示すものではありません。</p></div></div>
+            <div class="jobdd-feature-row" data-explanation="evidence"><span class="jobdd-icon-tile"><x-jobdd-icon name="evidence" /></span><div><h3 class="font-bold text-blue-950">根拠を確認</h3><p class="mt-1 text-sm leading-6 text-slate-600">求人票や公式情報など、出典とEvidenceを確認できます。</p></div></div>
+            <div class="jobdd-feature-row" data-explanation="compare"><span class="jobdd-icon-tile"><x-jobdd-icon name="compare" /></span><div><h3 class="font-bold text-blue-950">同じ軸で比較</h3><p class="mt-1 text-sm leading-6 text-slate-600">2〜3求人を、勤務地・年収・ツールなど同じ項目で比較できます。</p></div></div>
+            <div class="jobdd-feature-row" data-explanation="map"><span class="jobdd-icon-tile"><x-jobdd-icon name="map-pin" /></span><div><h3 class="font-bold text-blue-950">地図で見る</h3><p class="mt-1 text-sm leading-6 text-slate-600">近畿の求人を都道府県の代表点で確認。実際の勤務地を示すものではありません。</p></div></div>
         </section>
         <div class="jobdd-decision-note"><h2 class="font-bold text-blue-950">最終判断は、あなた自身で</h2><p class="mt-2 text-sm leading-6 text-slate-600">JobDDは情報の整理と比較を支援します。応募先や応募方法は、あなた自身が選びます。</p></div>
         <p class="px-1 text-sm leading-7 text-slate-600">条件入力 → 求人一覧 → 詳細・根拠 → 比較 → 応募方法</p>

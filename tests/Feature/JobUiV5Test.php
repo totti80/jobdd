@@ -83,6 +83,14 @@ test('visual polish groups tools keeps a direct form link and makes icons decora
     $response->assertSee('地図で見る')->assertSee('実際の勤務地を示すものではありません。')
         ->assertSee('確認できた')->assertSee('条件と異なる')->assertSee('未確認')
         ->assertSee('判定未対応')->assertSee('最終判断は、あなた自身で');
+    $response->assertSee('根拠とともに、仕事を選ぶ。')->assertSee('近畿の機械・電気設計')
+        ->assertDontSee('根拠とともに、求人を比較');
+    expect($dom->query('//*[contains(@class,"jobdd-hero-frame")]/img')->length)->toBe(1)
+        ->and($dom->query('//aside//*[@data-explanation]')->length)->toBe(6);
+    foreach (['confirmed', 'different', 'unknown', 'evidence', 'compare', 'map'] as $item) {
+        expect($dom->query('//aside//*[@data-explanation="'.$item.'"]//h3')->length)->toBe(1)
+            ->and($dom->query('//aside//*[@data-explanation="'.$item.'"]//svg[@aria-hidden="true"]')->length)->toBe(1);
+    }
 });
 
 test('v5 form has native labelled choices and field errors preserve safe values', function () {

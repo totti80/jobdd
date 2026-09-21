@@ -13,7 +13,7 @@
     </div>
 </header>
 <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
-    <section aria-labelledby="entry-title" class="jobdd-entry-hero">
+    <section aria-labelledby="entry-title" class="jobdd-entry-hero jobdd-entry-hero-illustrated">
         <div class="jobdd-hero-copy">
         <p class="jobdd-scope-badge"><x-jobdd-icon name="map" /><span>近畿6府県 × 機械設計・電気設計 専門</span></p>
         <h1 id="entry-title" class="jobdd-page-title jobdd-hero-title">求人を探すだけでは、わからない。<br>仕事の中身まで比べて、選ぶ。</h1>
@@ -21,6 +21,9 @@
         <p class="mt-3 text-sm leading-6 text-slate-600">現在のJobDDは、近畿地方の機械設計・電気設計職に対象を絞った卒業制作版です。</p>
         <a href="#entry-form" class="jobdd-link mt-4 inline-flex min-h-11 items-center gap-2">希望条件を入力する<x-jobdd-icon name="arrow" /></a>
         </div>
+        <img src="{{ asset('images/jobdd/jobdd-hero-kinki.png') }}" width="1672" height="941" class="jobdd-hero-image"
+            alt="神戸の港、大阪城、京都の寺社、奈良の鹿、琵琶湖や和歌山の風景を背景に、機械・電気設計の求人を比較して考える人たち"
+            fetchpriority="high" decoding="async">
     </section>
     @if ($inputErrors)
         <section role="alert" aria-labelledby="input-errors" tabindex="-1" data-input-errors class="mb-6 rounded-xl border border-red-700 bg-red-50 p-4 text-red-800">

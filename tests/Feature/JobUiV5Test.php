@@ -68,13 +68,18 @@ test('visual polish groups tools keeps a direct form link and makes icons decora
     $response = $this->get(route('jobs.start'));
     $dom = uiV5Dom($response, 'visual-start');
     expect($dom->query('//header//*[@data-jobdd-brand]')->length)->toBe(1)
-        ->and(trim($dom->query('//*[contains(@class,"jobdd-wordmark")]')->item(0)->textContent))->toBe('JobDD')
+        ->and($dom->query('//header//*[@data-jobdd-brand]//img[@alt="JobDD" and @width="1448" and @height="1086"]')->length)->toBe(1)
         ->and($dom->query('//a[@href="#entry-form"]')->length)->toBe(1)
         ->and($dom->query('//form[@id="entry-form" and @method="POST"]')->length)->toBe(1)
         ->and($dom->query('//*[@data-tool-group]//input[@name="tools[]"]')->length)->toBe(7)
         ->and($dom->query('//*[@data-tool-group]//textarea[@name="custom_tools"]')->length)->toBe(1)
         ->and($dom->query('//svg[not(@aria-hidden="true") or not(@focusable="false")]')->length)->toBe(0)
-        ->and($dom->query('//img')->length)->toBe(0); // Brand assets are explicitly deferred, not replaced.
+        ->and($dom->query('//img')->length)->toBe(2)
+        ->and($dom->query('//img[contains(@src,"jobdd-hero-kinki.png") and @width="1672" and @height="941" and @fetchpriority="high" and not(@loading="lazy")]')->length)->toBe(1);
+    foreach ($dom->query('//img') as $image) {
+        expect(trim($image->getAttribute('alt')))->not->toBe('');
+        expect(is_file(public_path('images/jobdd/'.basename($image->getAttribute('src')))))->toBeTrue();
+    }
     $response->assertSee('地図で見る')->assertSee('実際の勤務地を示すものではありません。')
         ->assertSee('確認できた')->assertSee('条件と異なる')->assertSee('未確認')
         ->assertSee('判定未対応')->assertSee('最終判断は、あなた自身で');

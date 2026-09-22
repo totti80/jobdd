@@ -1,24 +1,39 @@
 <?php
 
 use App\Http\Controllers\AgencyFactReviewController;
+use App\Http\Controllers\CompanyRegistrationController;
 use App\Http\Controllers\IconController;
 use App\Http\Controllers\JobDecisionController;
 use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\RouteComparisonController;
 use App\Http\Controllers\UserQueryController;
+use App\Http\Middleware\EnsureCompanyMember;
+use App\Http\Middleware\EnsurePlatformOwner;
 use App\Models\InteractionLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::patch('/admin/agency-facts/{agencyFact}/verify', [AgencyFactReviewController::class, 'verify'])
-        ->name('admin.agency-facts.verify');
+Route::prefix('admin')->name('admin.')->middleware(['auth', EnsurePlatformOwner::class, 'verified'])->group(function () {
+    Route::patch('/agency-facts/{agencyFact}/verify', [AgencyFactReviewController::class, 'verify'])
+        ->name('agency-facts.verify');
 
-    Route::patch('/admin/agency-facts/{agencyFact}/reject', [AgencyFactReviewController::class, 'reject'])
-        ->name('admin.agency-facts.reject');
+    Route::patch('/agency-facts/{agencyFact}/reject', [AgencyFactReviewController::class, 'reject'])
+        ->name('agency-facts.reject');
 
-    Route::get('/admin/agency-facts', [AgencyFactReviewController::class, 'index'])
-        ->name('admin.agency-facts.index');
+    Route::get('/agency-facts', [AgencyFactReviewController::class, 'index'])
+        ->name('agency-facts.index');
+});
+
+Route::prefix('company')->name('company.')->group(function () {
+    Route::middleware('guest')->group(function () {
+        Route::get('/register', [CompanyRegistrationController::class, 'create'])->name('register');
+        Route::post('/register', [CompanyRegistrationController::class, 'store'])
+            ->middleware('throttle:6,1')->name('register.store');
+    });
+
+    Route::middleware(['auth', EnsureCompanyMember::class])->group(function () {
+        Route::view('/dashboard', 'company.dashboard')->name('dashboard');
+    });
 });
 
 Route::post('/interaction/contact-clicked', function (Request $request) {

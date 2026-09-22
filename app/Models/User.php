@@ -73,4 +73,15 @@ public function icons()
             ->withPivot('role')
             ->withTimestamps();
     }
+
+    public function isPlatformOwner(): bool
+    {
+        return $this->system_role === 'platform_owner';
+    }
+
+    public function managesCompany(int $companyId): bool
+    {
+        return $this->companies()->whereKey($companyId)
+            ->wherePivotIn('role', ['company_owner', 'company_editor'])->exists();
+    }
 }

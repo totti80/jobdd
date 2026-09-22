@@ -1,7 +1,7 @@
 # JobDD Decision Log
 
-**Version:** 3.1  
-**更新:** 2026-09-19  
+**Version:** 4.1  
+**更新:** 2026-09-23  
 
 **目的：**  
 JobDDにおける重要な意思決定と、その理由を記録する。
@@ -3192,3 +3192,852 @@ Discovery CoverageとOfficial Evidence Coverageを可視化することで、
 - Coverage表示をユーザーへ出すか
 - Sourceごとの重複率
 - 市場全体に対するCoverage推定方法
+
+---
+
+# D-071｜第三者クローリング依存を主要データ供給モデルから外す
+
+**日付：** 2026-09-20〜2026-09-22  
+**Status：** 現在採用中  
+**関連：** D-067を更新・具体化
+
+## それまでの状態
+
+D-067では、外部データ取得方針をCrawler-firstからDiscovery-first / Evidence-firstへ変更した。
+
+その後も、Careerjet API、Agent公式サイト、求人媒体、企業公式採用ページ等を用いて、実在求人を広くDiscoveryし、Evidence付きで比較可能にする方向を検証した。
+
+## 新しく得られた情報
+
+実装・規約確認・Provider Onboarding Checkを進める中で、以下が明確になった。
+
+- 求人媒体や紹介会社ごとに利用規約・robots.txt・再利用条件が異なる
+- 取得できても永続保存・再配布・商用利用が許可されるとは限らない
+- URLや求人IDが安定しないProviderがある
+- 非公開求人は外部から正確に取得できない
+- 技術的に取得可能であることと、事業上安全に継続利用できることは別である
+
+## 意思決定
+
+JobDDは、
+
+**無許諾の第三者クローリングや外部求人収集を、主要なデータ供給モデルにしない。**
+
+外部データ取得は、
+
+- 開発
+- 検証
+- Discovery
+- Evidence確認
+- 正式API
+- 正式許諾
+
+等、利用条件が明確な範囲で利用する。
+
+Crawler自体は廃止せず、
+
+**企業自身が明示的に許諾した自社採用ページの同期**
+
+等へ将来的に利用する。
+
+## 判断理由
+
+JobDDの競争力はCrawler技術ではなく、
+
+**仕事の中身を比較可能な情報へ構造化し、求職者の意思決定を支援すること**
+
+にあるため。
+
+## 影響範囲
+
+- Data Supply Model
+- Provider Onboarding
+- Crawler
+- API利用
+- 公開求人データ
+- 本番運用
+- 企業側機能
+
+---
+
+# D-072｜企業・紹介会社からのSelf-service Supply Sideを追加する
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## それまでの状態
+
+JobDDでは主に、外部の求人情報・企業公式情報・Agent情報をJobDD側で取得し、Decision Support Coreへ供給していた。
+
+## 意思決定
+
+JobDD v5.0では、
+
+**企業・人材紹介会社自身がJobDDへ情報を登録・更新できるSupply Sideを追加する。**
+
+企業側の基本フローは以下とする。
+
+```text
+企業ログイン
+↓
+企業Dashboard
+↓
+求人新規作成
+↓
+Level 1 Basic
+↓
+Level 2 Structured Job Profile
+↓
+Preview
+↓
+Publish
+↓
+Decision Support Core
+↓
+求職者向け求人詳細・比較
+```
+
+## 判断理由
+
+- 第三者データ取得依存を減らせる
+- 情報の正確性・更新責任を明確にできる
+- 通常求人票では不足するJobDD独自情報を直接取得できる
+- Evidence / Provenanceを明示しやすい
+- 既存のDecision Support資産をそのまま活用できる
+
+## 注意
+
+これはJobDDの目的を変えるPivotではない。
+
+**Data Supply Strategyの変更・拡張**である。
+
+---
+
+# D-073｜求人情報の厚さをLevel 1 / 2 / 3へ分ける
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## 意思決定
+
+JobDDにおける求人情報の厚さを、以下の3段階へ整理する。
+
+### Level 1｜Basic
+
+一般的な求人に必要な基本情報。
+
+- 求人タイトル
+- 職種
+- 勤務地
+- 年収
+- 雇用形態
+- 仕事内容
+- 応募URL
+- その他最低限の採用条件
+
+### Level 2｜Structured Job Profile
+
+JobDDの差別化となる構造化情報。
+
+- 設計対象
+- 担当工程
+- 入社直後の担当
+- 将来的な担当可能性
+- CAD / Tool
+- 各ToolのContext
+- 必須経験
+- 歓迎経験
+- チーム
+- 顧客との関係
+- 製造・現場との関係
+- 仕事の進め方
+- 難しい点
+- 向いている人
+- 合いにくい可能性がある人
+- Typical Day
+- Representative Project
+- 通常求人票では伝わりにくいこと
+
+### Level 3｜Editorial
+
+JobDDによる独自取材・写真・インタビュー等の高解像度情報。
+
+## 判断理由
+
+情報の取得方法と情報の厚さを分離し、
+
+**求人掲載量ではなく、求職者が理解できる情報の深さ**
+
+をJobDDの価値として設計するため。
+
+---
+
+# D-074｜Level 2入力とSeeker Decision View v2を同じVertical Sliceとして開発する
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## 背景
+
+企業側にStructured Job Profile入力機能だけを追加した場合、単なる求人投稿CMSになる可能性がある。
+
+## 意思決定
+
+企業が入力したLevel 2情報は、
+
+**必ず求職者向けDecision Supportへ還元する。**
+
+企業入力と求職者表示を別機能として切り離さず、以下を1本のVertical Sliceとして開発する。
+
+```text
+Company Level 2 Input
+↓
+Structured Job Data
+↓
+Job Fact / Context Role / Evidence / Provenance
+↓
+Seeker Decision View v2
+↓
+Comparison
+```
+
+## 求職者側の主な表示候補
+
+- この求人の要点
+- MATCH / MISMATCH / UNKNOWN
+- 何を設計する仕事か
+- 担当工程
+- 入社直後
+- 将来的な担当
+- CAD / Tool
+- 必須経験 / 歓迎経験
+- チーム / 顧客 / 製造との関係
+- 仕事の進め方
+- Typical Day
+- 難しい点
+- 向いている人
+- 合いにくい可能性がある人
+- Representative Project
+- Evidence / Source
+- Application Route
+
+## 判断理由
+
+JobDDの価値は企業入力機能ではなく、
+
+**入力情報を求職者の意思決定へ変換すること**
+
+だから。
+
+---
+
+# D-075｜卒業制作MVP v5を「企業登録Level 2 → 求職者比較」までとする
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中  
+**Supersedes：** D-010の卒制完成条件、D-066の旧MVP完成条件を更新
+
+## 意思決定
+
+卒業制作の次の必達ラインを、
+
+> **最低1社が求人をLevel 2まで登録し、Preview / Publishでき、その情報が求職者側Decision Supportへ反映され、Evidence付きで比較できること**
+
+とする。
+
+## Phase A｜必達
+
+最低限、以下を完成させる。
+
+1. 企業Userログイン
+2. Company Ownership
+3. 求人新規作成
+4. Level 1入力
+5. Level 2入力
+6. Preview
+7. Publish
+8. 求職者側求人一覧へ表示
+9. Seeker Decision View v2
+10. MATCH / MISMATCH / UNKNOWNへの反映
+11. Evidence / Provenance
+12. 他求人との比較
+13. Application Route
+
+Phase A完成後に一度本番デプロイし、
+
+**第2のSubmit Ready Point**
+
+としてtagを作成する。
+
+## Phase B｜余力がある場合
+
+Phase Aが早期に完成した場合は、開発を止めずフルサービス版へ進む。
+
+候補：
+
+- 求人編集・複製
+- Pause / Close
+- Company Claim
+- 企業プロフィール
+- CSV
+- API / ATS
+- Authorized Crawl Sync
+- Editorial Request
+- Agentセルフ登録
+- Admin Review
+- Analytics
+- Entitlement
+- Paid Plan
+
+## 判断理由
+
+卒業制作の安全ラインを確保しつつ、
+
+**どうせ作るなら将来サービスへそのまま伸ばせる構造**
+
+にするため。
+
+---
+
+# D-076｜既存JobDDコードベース・実装資産・既存データを継続利用する
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## それまでの状態
+
+企業登録型への変更に伴い、新しいLaravelプロジェクトとして作り直す選択肢もあった。
+
+## 意思決定
+
+新しいLaravelプロジェクトは作成せず、
+
+**現在の `~/jobdd-v4` コードベースを継続利用する。**
+
+また、既存の、
+
+- companies
+- job_postings
+- sources
+- job_facts
+- application_routes
+- agencies
+- agency_facts
+- user_queries
+- Job Discovery
+- Context Role
+- Job Fit
+- Evidence
+- 求人一覧
+- 求人詳細
+- 求人比較
+- Map View
+- Agent Decision View
+
+等を再利用する。
+
+既存求人・企業データも捨てず、開発・検証・デモ等で継続利用する。
+
+## Git方針
+
+提出保険版は、
+
+`graduation-submit-ready-v1`
+
+として固定済み。
+
+v5開発は既存Repository上で新branchを作成する。
+
+候補：
+
+`company-structured-jobs-v5`
+
+## 判断理由
+
+企業登録型は別プロダクトではなく、
+
+**既存JobDDの上流へSupply Sideを追加する進化**
+
+だから。
+
+---
+
+# D-077｜ProvenanceをJobDDの重要情報として扱う
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## 意思決定
+
+JobDDでは、
+
+**何が書かれているかだけでなく、その情報がどこから来たか**
+
+を重要なDecision Support情報として扱う。
+
+Source Type候補：
+
+- `company_self_reported`
+- `company_official_job`
+- `api_sync`
+- `crawl_sync`
+- `jobdd_interview`
+- `agency_self_reported`
+- `public_registry`
+- `external_import`
+
+求職者画面では必要に応じて、
+
+- 企業本人が登録
+- 企業公式情報
+- JobDD取材
+- 外部情報
+
+等を区別して表示する。
+
+## 判断理由
+
+情報の信頼性・更新主体・Evidenceの強さを求職者自身が判断できるようにするため。
+
+---
+
+# D-078｜Paid Information DepthとDecision Resultを分離する
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## 背景
+
+企業側の将来マネタイズとして、
+
+- Structured
+- Sync
+- Editorial
+
+等の有料化を検討している。
+
+## 意思決定
+
+課金によって、
+
+- MATCH / MISMATCH
+- Fit結果
+- Comparison結果
+- 求職者向け表示順位
+- 求職者向けランキング
+
+を有利にしない。
+
+原則：
+
+> **Paid Information Depth ≠ Paid Ranking**
+
+企業は、
+
+**より深い情報を伝える機能・運用支援**
+
+に対して課金する方向を検討する。
+
+## 判断理由
+
+Decision Supportの公平性を維持するため。
+
+---
+
+# D-079｜Company OwnershipとJob Lifecycleをv5基盤へ入れる
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## 意思決定
+
+企業登録型JobDDでは、
+
+```text
+User
+↓
+Company
+↓
+JobPosting
+```
+
+のOwnershipを明確にする。
+
+最低限、
+
+**どのUserがどのCompanyを管理できるか**
+
+を判定でき、他社求人を編集できない構造を持つ。
+
+求人Lifecycleは以下を基本候補とする。
+
+- `draft`
+- `preview`
+- `published`
+- `paused`
+- `closed`
+
+卒業制作Phase Aでは、
+
+```text
+draft
+↓
+preview
+↓
+published
+```
+
+を優先する。
+
+## 判断理由
+
+企業Self-serviceを安全に実運用可能な構造へするため。
+
+---
+
+# D-080｜Typical DayをLevel 2の主要情報として採用する
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中
+
+## 背景
+
+技術職の仕事内容は一般的な求人票の文章だけでは具体的な日常業務を想像しにくい。
+
+求職者が実際に知りたい情報として、
+
+**「1日の仕事の流れ」**
+
+が重要候補となった。
+
+## 意思決定
+
+Level 2 Structured Job Profileへ、
+
+**代表的な1日の仕事の流れ（Typical Day）**
+
+を含める。
+
+企業側では、
+
+- 時刻
+- 活動内容
+
+を入力できる構造とする。
+
+求職者側ではTimeline形式を基本候補とする。
+
+## 注意
+
+Typical Dayは代表例であり、
+
+**毎日同じ勤務内容を保証する情報として扱わない。**
+
+---
+
+# D-081｜提出保険版を本番公開し、復帰点として固定する
+
+**日付：** 2026-09-21  
+**Status：** 確定
+
+## FACT
+
+JobDD提出保険版を `jobdd.jp` へ本番デプロイした。
+
+本番環境で、
+
+```text
+希望条件入力
+↓
+求人一覧
+↓
+求人詳細
+↓
+Evidence
+↓
+求人比較
+↓
+応募方法
+↓
+企業公式HP
+```
+
+までの主要導線が動作することを実機確認した。
+
+## 意思決定
+
+この時点のコードを、
+
+`graduation-submit-ready-v1`
+
+としてtag固定する。
+
+対象commit：
+
+`0a852d3`
+
+今後v5開発に問題が発生した場合でも、この版へ復帰可能な状態を維持する。
+
+## 判断理由
+
+卒業制作提出の安全網を確保した上で、企業登録型v5開発へ進むため。
+
+---
+
+# D-082｜JobDD Masterをv5.0へ更新し、企業登録型を正式な現行方針とする
+
+**日付：** 2026-09-22  
+**Status：** 確定
+
+## 意思決定
+
+`JobDD_Master.md` をv5.0へ更新する。
+
+v5.0では以下を現行方針として正式化する。
+
+- Supply Side / Decision Support Core / Demand Sideの3層
+- 企業Self-service登録
+- Level 1 / 2 / 3
+- Level 2 → Seeker Decision View v2
+- Provenance
+- Authorized Crawl Sync
+- Phase A / Phase Bの2段ロケット
+- 既存コードベース継続利用
+- 第三者Crawler依存の縮小
+
+## 判断理由
+
+今回の変更は小さな機能追加ではなく、
+
+**JobDDのデータ供給戦略・卒制MVP・企業側UX・求職者側UXをまとめて更新する重要な方針変更**
+
+であるため。
+
+---
+
+# D-083｜v5.0の最重要検証テーマを企業・求職者双方の価値へ更新する
+
+**日付：** 2026-09-22  
+**Status：** 現在採用中／HYPOTHESIS検証待ち
+
+## HYPOTHESIS
+
+企業側：
+
+> 機械設計・電気設計人材を採用する企業は、通常の求人票では仕事内容を十分に伝えにくいというPainを持っているか。
+
+求職者側：
+
+> 機械設計・電気設計の求職者は、通常の求人票だけでは分からない仕事の中身を、応募前に理解・比較したいというPainを持っているか。
+
+Structured Job Profile：
+
+> JobDDのガイド付きLevel 2入力によって、企業側の仕事内容の言語化と、求職者側の求人理解の両方を改善できるか。
+
+## 意思決定
+
+卒業制作v5では、
+
+**企業がLevel 2まで登録する → 求職者画面へ反映する → 実際に比較できる**
+
+状態まで実装し、上記仮説を検証可能な状態を作る。
+
+## 注意
+
+これらは現時点ではFACTではない。
+
+実装完了をPain検証完了と混同しない。
+
+# D-084｜Phase A DB v0.2を固定し、Published Snapshotを追加する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 得られた情報
+
+既存schema調査により、`published_at` と `sources.source_type` は既存、Company Ownershipと求人Lifecycle statusは未実装、Context RoleはDB保存されず都度推定、`job_facts`には業務uniqueがないことを確認した。
+
+また、公開済み求人を企業が編集している途中でも、求職者側には最後にPublishした内容を維持する必要がある。
+
+## 意思決定
+
+Phase A DBは以下を基本とする。
+
+### 新規
+
+- `company_user`
+- `job_structured_profiles`
+- `job_tool_usages`
+- `job_typical_day_items`
+- `job_published_profiles`
+
+### 既存変更
+
+- `users.system_role`
+- `job_postings.status`
+- `job_facts.context_role`
+
+`companies`、`sources`、`application_routes`は原則schema変更しない。
+
+`job_published_profiles` は最後にPublishしたStructured Profileの求職者表示用Snapshotとする。
+
+## 判断理由
+
+Authoring中の未完成情報を求職者へ漏らさず、再Publish時だけ公開状態を更新するため。
+
+---
+
+# D-085｜企業登録をSelf-service方式とし、Platform権限とCompany権限を分離する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+企業登録はOwner承認・Company Claim申請を前提としない。
+
+登録時の基本入力は、
+
+- 会社名またはユーザーID
+- メールアドレス
+- パスワード
+
+とする。
+
+登録成功時にUser / Company / company_userを生成し、登録者を `company_owner` として企業Dashboardへ進める。
+
+権限は、
+
+- System Role：Platform Owner / Admin、通常User
+- Company Role：company_owner / company_editor
+
+に分離する。
+
+Platform Owner / Adminは全企業・全求人・全Structured Profile・Evidence / Provenance・Application Route・管理画面を閲覧・操作可能とする。企業Userは自社配下のみCRUD可能とする。
+
+## Phase B
+
+Company Claim、法人本人確認、複数担当者招待、role管理UIはPhase B候補とする。
+
+---
+
+# D-086｜Level 2 Authoring Model v0.2を固定する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+企業が編集するLevel 2情報は、`job_structured_profiles`、`job_tool_usages`、`job_typical_day_items`へ保存する。
+
+複数選択は安定した内部keyのJSON、Toolは使用文脈と応募時経験要件を別軸、顧客・製造・現場との関係はfrequency＋noteで保存する。Typical Dayは時刻ラベル＋活動内容＋表示順を保持する。
+
+Draft途中ではnullableを広く許容し、Level 2 Coreの必須判定はDB NOT NULLではなくPublish Validatorで行う。
+
+Completion %はDBへ保存せず動的計算する。
+
+---
+
+# D-087｜PreviewをActionとし、Publish時に公開SnapshotとDecision Supportを更新する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+Previewは求人Lifecycle statusではなく、DraftのAuthoring内容をSeeker Decision Viewとして確認するread-only Actionとする。
+
+Phase Aで実使用するstatusは `draft / published` を基本とし、`paused / closed` は将来拡張とする。
+
+PublishはTransactionで実施し、Ownership確認、Validator、company_self_reported Source、企業入力由来Factの置換、Context Role保存、Direct Route upsert、Published Snapshot更新、status更新を一体で行う。
+
+企業入力由来Factは `extraction_method=company_self_reported`、`verification_status=self_reported` を基本とし、Crawler / API / rule由来Factを削除しない。
+
+---
+
+# D-088｜Job Fact Dictionary v5.1を正式採用する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+Job Factを、category=意味の大分類、key=比較可能な最小概念、value=具体状態・内容、normalized_value=正規化値、context_role=求人内での役割として分離する。
+
+初期category：
+
+- job_content
+- design_phase
+- assignment
+- tool_usage
+- tool_expectation
+- experience
+- collaboration
+- work_style
+- work_reality
+- project_example
+
+英語snake_caseを使用し、フォームSTEP名をcategoryにしない。Typical Dayは順序集合としてAuthoring / Published Snapshot側で扱い、原則1行1Factにしない。
+
+DictionaryはLaravelコード上の単一正本とし、Publish Transformer / JobFitService / Presenter / Validatorから共通参照する。
+
+---
+
+# D-089｜求職者入力をProgressive Disclosure方式とする
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+求職者入力を簡易版と詳細版の別サービスへ分断せず、簡易入力から必要な人だけ詳細入力へ進む方式とする。
+
+簡易入力候補：
+
+- 希望職種
+- 希望勤務地
+- 希望年収
+- CAD / Tool
+
+詳細入力候補：
+
+- 担当工程
+- 顧客との関わり
+- 製造との関わり
+- 現場との関わり
+- 仕事の進め方
+
+## HYPOTHESIS
+
+詳細条件をFitへ利用する価値は未検証である。Phase Aではまず比較材料として使用し、直ちにMATCH / MISMATCHへ昇格させない。
+
+## 判断理由
+
+入力負荷を下げつつ、本気で比較したい求職者にはJobDDの詳細情報を活用できるようにするため。
+
+---
+
+# D-090｜Phase AをBatch 0〜9へ分割して実装する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+Phase Aを以下の順で実装する。
+
+0. 設計凍結
+1. DB Foundation
+2. Company Account / Ownership
+3. Company Dashboard + Level 1
+4. Level 2 Authoring
+5. Preview / Publish Core
+6. Seeker Decision View v2
+7. Seeker Progressive Input
+8. Compare / Evidence / Application Route
+9. Hardening / Production / 第2Submit Ready Point
+
+Batch 5はAuthoring / Published Snapshot / Job Fact / Existing Fitの境界に関わるため重点レビューとし、Transaction、rollback、既存Fact保護を厚くテストする。
+
+各Batch完了時にGit checkpointを作り、Phase A完了後に第2Submit Ready Tagを作成する。
+

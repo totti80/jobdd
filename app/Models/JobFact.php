@@ -10,6 +10,7 @@ class JobFact extends Model
   protected $fillable = [
     'job_posting_id',
     'source_id',
+    'context_role',
     'fact_category',
     'fact_key',
     'fact_value',

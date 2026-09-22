@@ -5,11 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class JobPosting extends Model
 {
     protected $fillable = [
         'company_id',
+        'status',
         'company_url_evidence',
         'title',
         'occupation',
@@ -51,5 +53,25 @@ class JobPosting extends Model
     public function jobFacts(): HasMany
     {
         return $this->hasMany(JobFact::class);
+    }
+
+    public function structuredProfile(): HasOne
+    {
+        return $this->hasOne(JobStructuredProfile::class);
+    }
+
+    public function toolUsages(): HasMany
+    {
+        return $this->hasMany(JobToolUsage::class);
+    }
+
+    public function typicalDayItems(): HasMany
+    {
+        return $this->hasMany(JobTypicalDayItem::class);
+    }
+
+    public function publishedProfile(): HasOne
+    {
+        return $this->hasOne(JobPublishedProfile::class);
     }
 }

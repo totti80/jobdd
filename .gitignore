@@ -33,3 +33,5 @@ crawler/data/
 !crawler/data/direct_reverse_lookup_slice.json
 
 crawler/data/
+
+*:Zone.Identifier

@@ -4041,3 +4041,199 @@ Batch 5はAuthoring / Published Snapshot / Job Fact / Existing Fitの境界に�
 
 各Batch完了時にGit checkpointを作り、Phase A完了後に第2Submit Ready Tagを作成する。
 
+# D-091｜Phase AをSelf-service Registration + Controlled Publishへ変更する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## それまでの状態
+
+企業登録・求人入力・Preview・Publishを企業Self-serviceで一気通貫させる方向で設計していた。
+
+一方、JobDDでは企業入力情報がEvidence / Provenance付きで求職者のDecision Supportへ流れるため、アカウント登録の自由度と求職者向け公開情報の信頼性を分けて考える必要がある。
+
+## 意思決定
+
+Phase Aでは、企業アカウント登録自体は承認待ちにしない。
+
+企業はSelf-serviceで、
+
+- アカウント登録
+- Company Dashboard利用
+- 求人Draft作成
+- Level 1 / Level 2入力
+- Preview
+
+まで行える。
+
+一方、求職者向け公開はPlatform Owner / Adminの承認を必須とする。
+
+基本フロー：
+
+```text
+企業Self-service登録
+↓
+求人Draft作成 / 編集
+↓
+Preview
+↓
+公開申請
+↓
+Platform Owner / Admin確認
+↓
+承認 または 差戻し
+↓
+承認時のみPublish
+```
+
+## 判断理由
+
+- 登録開始時の摩擦を低く保つため
+- 求職者へ出る情報だけは公開前に確認できるため
+- JobDDのEvidence / Provenance思想と整合するため
+- なりすまし・不適切情報・未完成求人が即公開されるリスクを下げるため
+- 卒業制作Phase Aでも実装可能な最小運用にできるため
+
+## 注意
+
+Platform Ownerの承認は企業申告内容の真偽保証ではない。
+
+確認対象は、公開可能な体裁、必須入力、明らかな矛盾、不適切内容等とする。
+
+---
+
+# D-092｜求人の公開状態と公開審査状態を分離する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 背景
+
+公開済み求人を企業が編集し再申請する場合、求人自体の公開状態と、編集中内容の審査状態を同じstatusで表すと、審査中に既存公開求人が求職者画面から消える可能性がある。
+
+## 意思決定
+
+`job_postings.status` と公開審査状態を分離する。
+
+### 公開状態
+
+- `draft`
+- `published`
+
+将来候補：
+
+- `paused`
+- `closed`
+
+### 公開審査状態
+
+`review_status`：
+
+- `not_submitted`
+- `pending_review`
+- `changes_requested`
+- `approved`
+
+補助情報：
+
+- `review_requested_at`
+- `reviewed_at`
+- `reviewed_by_user_id`
+- `review_note`
+
+公開済み求人の再申請中は、
+
+```text
+status = published
+review_status = pending_review
+```
+
+を許容する。
+
+求職者側には最後に承認・PublishされたPublished Snapshotを維持する。
+
+## 判断理由
+
+Authoring中の未完成変更を公開せず、審査中も現在公開中の求人を維持するため。
+
+---
+
+# D-093｜公開申請時にpostmaster@jobdd.jpへ通知し、承認操作はWeb管理画面で行う
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+企業が求人の公開申請を行った場合、JobDD運営通知先として、
+
+`postmaster@jobdd.jp`
+
+へ公開申請メールを送る。
+
+メールは通知手段としてのみ利用し、メール本文から直接承認処理を完結させない。
+
+通知メールからJobDD管理画面へ遷移し、認証済みPlatform Owner / Adminが、
+
+- Preview確認
+- 承認してPublish
+- 差戻し
+
+を行う。
+
+差戻し時は理由を `review_note` に保持し、企業Dashboardで確認できる構造を目指す。
+
+## 判断理由
+
+- 公開申請への気付きやすさを確保するため
+- メールだけで権限操作を完結させず、安全な認可境界を維持するため
+- Phase Aでは複雑な通知設定UIを作らず、運営通知先を固定できるため
+
+## Phase A
+
+通知先はconfig / environment等の運用設定として扱い、通知先管理画面は作らない。
+
+---
+
+# D-094｜Level 1に最低限の応募条件を独立項目として追加する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中／Batch 3実装済み
+
+## 背景
+
+Level 1画面設計では「最低限の応募条件」を入力するが、既存 `job_postings` に意味の一致する独立保存先がなかった。
+
+Level 2の `required_experience` はStructured Job Profileの詳細経験情報であり、Level 1の一般的な応募条件と同一概念ではない。
+
+## 意思決定
+
+`job_postings.application_requirements` をnullable TEXTとして追加する。
+
+Level 1 Basicでは、
+
+- 求人タイトル
+- 職種
+- 勤務地
+- 想定年収
+- 雇用形態
+- 仕事内容
+- 応募URL
+- 最低限の応募条件
+
+を保存できる構造とする。
+
+## 判断理由
+
+Level 1とLevel 2の責務を混同せず、一般的な求人票として必要な応募条件を独立して保持するため。
+
+## FACT｜Batch 3
+
+Batch 3で `application_requirements` と公開審査状態のschemaを追加し、Company Dashboard / Level 1 Draft CRUDを実装した。
+
+- 680 tests PASS / 4,183 assertions
+- 既存 `job_postings` 1,591件を維持
+- 主要既存データ件数・ハッシュ不変
+- 企業求人作成時に `status=draft`、`review_status=not_submitted` を明示
+- Draftは求職者側の一覧・詳細・比較・応募経路から非表示
+

@@ -1,6 +1,6 @@
 # JobDD Master Context
 
-**Version:** 5.2  
+**Version:** 5.3  
 **初版:** 2026-08-13  
 **更新:** 2026-09-23  
 **Project:** JobDD  
@@ -121,6 +121,48 @@ v5.2では、Phase A実装前の設計を以下まで具体化した。
 - 求職者入力は簡易入力から必要な人だけ詳細入力へ進むProgressive Disclosure方式とする
 - 詳細希望条件は当初は比較材料として利用し、直ちにMATCH / MISMATCH判定へ昇格させない
 - Phase AをBatch 0〜9へ分割し、Batch 5のPublish Coreを重点レビュー箇所とする
+
+---
+
+# 2.3 v5.3で確定した追加仕様
+
+## DECISION
+
+v5.3では、企業Self-service登録は維持しつつ、求職者へ公開される求人情報の品質とProvenanceを守るため、**Controlled Publish** をPhase Aへ追加する。
+
+基本フロー：
+
+```text
+企業Self-service登録
+↓
+Company Dashboard
+↓
+求人Draft作成 / Level 1 / Level 2入力
+↓
+Preview
+↓
+公開申請
+↓
+postmaster@jobdd.jp へ通知
+↓
+Platform Owner / AdminがJobDD管理画面で確認
+↓
+承認 または 差戻し
+↓
+承認時のみPublish
+```
+
+主な追加決定：
+
+- 企業アカウント登録自体は承認待ちにしない
+- 企業はDraft作成・編集・PreviewまでSelf-serviceで行える
+- 求職者向け公開だけPlatform Owner / Adminの承認を必須とする
+- 公開状態 `status` と審査状態 `review_status` を分離する
+- 公開済み求人を再編集・再申請している間も、求職者には最後に承認・PublishされたSnapshotを維持する
+- 公開申請時は `postmaster@jobdd.jp` へ通知メールを送る
+- メールは通知のみとし、承認 / 差戻し操作は必ずJobDD管理画面上で行う
+- 求人のLevel 1に `application_requirements`（最低限の応募条件）を正式追加する
+- Platform Ownerの公開確認は企業申告内容の真偽保証ではなく、公開可否・必須入力・明らかな矛盾等を確認する運用とする
 
 ---
 
@@ -319,6 +361,40 @@ Evidence確認
 `0a852d3`
 
 この版は、今後の開発に問題が発生した場合でも卒業制作提出版へ戻れる復帰点とする。
+
+## FACT｜2026-09-23 Phase A Batch 1〜3
+
+ローカル `~/jobdd-v4` でPhase A実装を開始し、Batch 1〜3まで検証済み。
+
+### Batch 1｜DB Foundation
+
+- 新規5テーブル：`company_user`、`job_structured_profiles`、`job_tool_usages`、`job_typical_day_items`、`job_published_profiles`
+- 既存変更：`users.system_role`、`job_postings.status`、`job_facts.context_role`
+- 622 tests PASS / 3,628 assertions
+- 既存 `job_postings` 1,591件を `published` のまま維持
+- 主要既存データ件数・ハッシュ不変を確認
+- Git checkpoint：`a626345 Add Phase A company supply DB foundation`
+
+### Batch 2｜Company Account / Ownership
+
+- Company Self-service Registration実装
+- User / Company / `company_user(company_owner)` をTransactionで自動生成
+- CompanyPolicy / JobPostingPolicy実装
+- Platform Owner / Company Owner / Company Editor / Guestの認可境界を実装
+- `/admin/*` をPlatform Owner専用に保護
+- 650 tests PASS / 3,870 assertions
+- 主要既存データ不変を確認
+
+### Batch 3｜Company Dashboard + Level 1
+
+- Company Dashboard実装
+- 企業求人Draft作成・Level 1 CRUD実装
+- `job_postings.review_status`、`review_requested_at`、`reviewed_at`、`reviewed_by_user_id`、`review_note` を追加
+- `job_postings.application_requirements` を追加
+- 企業求人作成時に `status=draft`、`review_status=not_submitted` を明示
+- Draftを求職者側の一覧・詳細・比較・応募経路から除外
+- 680 tests PASS / 4,183 assertions
+- 既存1,591求人・主要既存データ件数・ハッシュ不変を確認
 
 ---
 
@@ -902,6 +978,12 @@ Phase Aでは、企業が編集するAuthoring Modelと、求職者へ公開す�
 
 - `users.system_role`
 - `job_postings.status`
+- `job_postings.review_status`
+- `job_postings.review_requested_at`
+- `job_postings.reviewed_at`
+- `job_postings.reviewed_by_user_id`
+- `job_postings.review_note`
+- `job_postings.application_requirements`
 - `job_facts.context_role`
 
 ### 原則schema変更しない
@@ -1267,11 +1349,11 @@ Direct / Agent / Platformを総合Scoreで順位付けし、JobDDが最適経路
 8. 仕事の進め方
 9. 代表的な1日
 10. この仕事の難しいところ
-11. 合いやすい働き方
-12. 合いにくい可能性がある働き方
-13. Representative Project
-14. Evidence / Source / Provenance
-15. Application Route
+13. 合いやすい働き方
+14. 合いにくい可能性がある働き方
+15. Representative Project
+16. Evidence / Source / Provenance
+17. Application Route
 
 ## DECISION
 
@@ -1366,9 +1448,9 @@ Phase AではCompany切替UI、複数担当者招待、role変更UI、Company Cl
 
 ---
 
-# 23. 求人Lifecycle
+# 23. 求人Lifecycle / Review Lifecycle
 
-## DECISION
+## DECISION｜公開状態
 
 Previewは永続statusではなく表示Actionとする。
 
@@ -1384,21 +1466,36 @@ Phase Aで実使用する求人statusは、
 - `paused`
 - `closed`
 
-概念：
+既存求人はstatus導入時にpublished扱いとし、既存データを一括draft化しない。企業Self-service求人は作成時に明示的に `draft` を設定する。
+
+## DECISION｜審査状態
+
+公開状態と公開審査状態を分離する。Phase Aの `review_status` は以下を基本とする。
+
+- `not_submitted`
+- `pending_review`
+- `changes_requested`
+- `approved`
+
+補助情報：
+
+- `review_requested_at`
+- `reviewed_at`
+- `reviewed_by_user_id`
+- `review_note`
+
+公開済み求人のAuthoring内容を編集して再申請する場合、
 
 ```text
-draft
-  ↓ Publish
-published
-  ↓
-paused / closed（将来）
+status = published
+review_status = pending_review
 ```
 
-既存求人はstatus導入時にpublished扱いとし、既存データを一括draft化しない。
+を許容する。審査中も求職者には最後にPublishされたSnapshotを維持する。
 
 ---
 
-# 23.1 Preview / Publish
+# 23.1 Preview / Publish Request
 
 ## DECISION
 
@@ -1406,10 +1503,24 @@ Previewは単なる入力確認ではなく、**求職者から実際にどう�
 
 PreviewはDraftのAuthoring Modelを表示用Presenterへ渡すread-only Actionであり、Preview自体でstatusを書き換えない。
 
-Publish条件：
+公開申請条件：
 
 - Level 1必須項目 COMPLETE
 - Level 2 Core COMPLETE
+- 応募URL等の公開必須情報が有効
+
+企業側の最終CTAは原則 **「公開する」ではなく「公開申請する」** とする。
+
+公開申請時：
+
+```text
+review_status = pending_review
+review_requested_at = now()
+↓
+postmaster@jobdd.jp へ通知メール
+```
+
+メールは通知専用とし、承認 / 差戻し操作はJobDD管理画面でPlatform Owner / Adminが行う。
 
 Completion %はDB保存せず、現在の入力値から動的計算する。求職者向けScoreやランキングには使用しない。
 
@@ -1419,21 +1530,52 @@ Completion %はDB保存せず、現在の入力値から動的計算する。求
 
 ```text
 Authoring Model = 最新編集中
-Published Snapshot / Job Facts = 最後にPublishした公開内容
+Published Snapshot / Job Facts = 最後に承認・Publishした公開内容
 ```
 
-再Publish成功時にのみ公開Snapshot・企業入力由来Job Fact・Provenanceを更新する。
+再公開申請が承認された時にのみ公開Snapshot・企業入力由来Job Fact・Provenanceを更新する。
 
 ---
 
-# 23.2 Publish変換
+# 23.2 Platform Owner Review / Controlled Publish
 
 ## DECISION
 
-PublishはTransactionで行う。
+Platform Owner / Adminは管理画面で公開申請を確認し、以下を行う。
+
+- Preview確認
+- 承認してPublish
+- 差戻し
+
+差戻し時：
 
 ```text
-Ownership確認
+review_status = changes_requested
+review_note = 差戻し理由
+reviewed_at = now()
+reviewed_by_user_id = reviewer
+```
+
+承認時にのみPublish処理を実行する。
+
+公開確認は企業申告内容の事実保証を意味しない。JobDDが確認するのは、公開可能な体裁、必須入力、明らかな矛盾・不適切内容等である。
+
+求職者向けProvenanceでは、必要に応じて、
+
+> 企業提供情報 / JobDD公開確認済み
+
+等の表現を候補とし、「内容の真偽をJobDDが保証した」と誤解される表現は避ける。
+
+---
+
+# 23.3 Publish変換
+
+## DECISION
+
+承認後のPublishはTransactionで行う。
+
+```text
+Platform Owner権限確認
 ↓
 Publish Validator
 ↓
@@ -1450,6 +1592,8 @@ Direct Application Routeを冪等upsert
 Published Snapshot生成
 ↓
 status = published
+review_status = approved
+reviewed_at / reviewed_by_user_id 更新
 ↓
 COMMIT
 ```
@@ -1465,13 +1609,13 @@ COMMIT
 
 ---
 
-# 24. 卒業制作MVP v5.2
+# 24. 卒業制作MVP v5.3
 
 ## DECISION
 
 卒業制作の次の必達ラインは、
 
-**企業がSelf-service登録し、Level 2 Structured Job Profileを作成・Preview・Publishし、その公開情報を求職者が段階的入力で理解・比較して応募経路へ進めること**
+**企業がSelf-service登録し、Level 2 Structured Job Profileを作成・Preview・公開申請し、Platform Ownerの承認後にPublishされた情報を求職者が段階的入力で理解・比較して応募経路へ進めること**
 
 とする。
 
@@ -1486,17 +1630,19 @@ COMMIT
 5. 求人を新規作成しLevel 1を入力できる
 6. Level 2 STEP 1〜5を途中保存・再開できる
 7. PreviewでSeeker Decision Viewを確認できる
-8. Level 1必須＋Level 2 Core完了後にPublishできる
-9. Published求人が求職者側求人一覧へ出る
-10. 公開済み求人を編集中でも最後のPublish内容が維持される
-11. 求職者は簡易入力だけでも求人一覧へ進める
-12. 必要な求職者は詳細条件を追加して比較材料を増やせる
-13. Seeker Decision View v2でLevel 2情報を理解できる
-14. 現行Fit軸（職種・地域・年収・CAD / Tool）でMATCH / MISMATCH / UNKNOWNを確認できる
-15. Evidence / Provenanceを確認できる
-16. 他求人と比較できる
-17. Application Routeへ進める
-18. 企業公式HP等の外部応募先へ進める
+8. Level 1必須＋Level 2 Core完了後に公開申請できる
+9. 公開申請時にpostmaster@jobdd.jpへ通知できる
+10. Platform Owner / Adminが管理画面でPreviewし、承認 / 差戻しできる
+11. 承認時のみPublishされ、Published求人が求職者側求人一覧へ出る
+12. 公開済み求人を編集中・再審査中でも最後のPublish内容が維持される
+13. 求職者は簡易入力だけでも求人一覧へ進める
+14. 必要な求職者は詳細条件を追加して比較材料を増やせる
+15. Seeker Decision View v2でLevel 2情報を理解できる
+16. 現行Fit軸（職種・地域・年収・CAD / Tool）でMATCH / MISMATCH / UNKNOWNを確認できる
+17. Evidence / Provenanceを確認できる
+18. 他求人と比較できる
+19. Application Routeへ進める
+20. 企業公式HP等の外部応募先へ進める
 
 ここまでをPhase A完成条件とする。
 
@@ -1518,6 +1664,10 @@ Level 1
 Level 2
 ↓
 Preview
+↓
+公開申請
+↓
+Platform Owner承認 / 差戻し
 ↓
 Publish
 ↓
@@ -1575,6 +1725,12 @@ CAD / Toolの使用文脈・経験要件を登録
 Typical Dayを入力
 ↓
 Preview
+↓
+公開申請
+↓
+postmaster@jobdd.jpへ通知
+↓
+Platform Owner管理画面で承認
 ↓
 Publish
 ↓
@@ -1990,7 +2146,7 @@ JobDDのガイド付きLevel 2入力によって、
 
 ---
 
-# 39. v5.2直近優先順位 / 実装Batch
+# 39. v5.3直近優先順位 / 実装Batch
 
 ## DECISION
 
@@ -2016,11 +2172,11 @@ Self-service登録、Ownership、Policy、Platform Owner / Admin分離を実装�
 
 STEP 1〜5、Tool、Typical Day、Completion計算、途中保存・再開を実装する。
 
-### Batch 5｜Preview / Publish Core
+### Batch 5｜Preview / Review / Publish Core
 
-Publish Validator、Job Fact Dictionary、Transformer、Source / Provenance、Context Role、Direct Route、Published Snapshotを実装する。
+Preview、公開申請、postmaster@jobdd.jpへの通知、Platform Owner向け公開審査画面、承認 / 差戻し、Publish Validator、Job Fact Dictionary、Transformer、Source / Provenance、Context Role、Direct Route、Published Snapshotを実装する。
 
-**Batch 5は重点レビュー箇所とし、Transaction / rollback / 既存Fact保護を厚くテストする。**
+**Batch 5は重点レビュー箇所とし、Transaction / rollback / 既存Fact保護 / 再審査中Snapshot維持を厚くテストする。**
 
 ### Batch 6｜Seeker Decision View v2
 
@@ -2099,7 +2255,7 @@ Codexは、
 
 ---
 
-# 42. v5.2で絶対に戻らない原則
+# 42. v5.3で絶対に戻らない原則
 
 1. HYPOTHESISをFACTとして扱わない
 2. HM型業務効率化SaaSへ根拠なく戻らない
@@ -2132,7 +2288,7 @@ Codexは、
 
 # 44. 現在の最重要問い
 
-JobDD v5.2で最も重要なのは、
+JobDD v5.3で最も重要なのは、
 
 > **機械設計・電気設計の仕事について、企業が仕事内容をより深く構造化して伝え、求職者が応募前にそれを比較できることに、企業・求職者双方が本当に価値を感じるのか？**
 

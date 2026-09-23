@@ -100,7 +100,7 @@ class UserQueryController extends Controller
             ->take(3)
             ->get();
 
-        $jobPostings = JobPosting::query()
+        $jobPostings = JobPosting::query()->where('status', 'published')
             ->with([
                 'company',
                 'applicationRoutes.platform',
@@ -139,7 +139,7 @@ class UserQueryController extends Controller
             ->unique()
             ->values();
 
-        $agentEvidenceJobs = JobPosting::query()
+        $agentEvidenceJobs = JobPosting::query()->where('status', 'published')
             ->with([
                 'company',
                 'applicationRoutes' => fn($query) =>

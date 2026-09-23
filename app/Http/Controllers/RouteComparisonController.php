@@ -11,6 +11,8 @@ class RouteComparisonController extends Controller
     public function show(Request $request, JobPosting $jobPosting)
     {
 
+        abort_unless($jobPosting->status === 'published', 404);
+
         $jobPosting->load([
             'company',
             'applicationRoutes' => fn($query) => $query
@@ -68,6 +70,8 @@ class RouteComparisonController extends Controller
 
     public function action(\App\Models\JobPosting $jobPosting)
     {
+        abort_unless($jobPosting->status === 'published', 404);
+
         $jobPosting->load([
             'company',
             'applicationRoutes' => fn($query) => $query

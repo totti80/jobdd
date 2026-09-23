@@ -27,7 +27,7 @@ class JobSelectionUseCaseService
 
         // Mirror the v0.1 Discovery contract for bounded ID access, not its first page.
         // Contract-parity tests guard this boundary; core Discovery is deliberately unchanged.
-        $loaded = JobPosting::query()->whereIn('id', $ids)->where('occupation', $query->occupation)
+        $loaded = JobPosting::query()->where('status', 'published')->whereIn('id', $ids)->where('occupation', $query->occupation)
             ->whereIn('region', self::REGIONS)->whereNull('unavailable_at')
             ->with(['jobFacts' => fn ($facts) => $facts->orderBy('id')])->get()->keyBy('id');
         if ($loaded->count() !== count($ids) || $loaded->contains(fn ($job) => ! $this->candidateSource($job->source_url))) {

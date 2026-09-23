@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AgencyFactReviewController;
+use App\Http\Controllers\CompanyDashboardController;
+use App\Http\Controllers\CompanyJobBasicController;
 use App\Http\Controllers\CompanyRegistrationController;
 use App\Http\Controllers\IconController;
 use App\Http\Controllers\JobDecisionController;
@@ -32,7 +34,11 @@ Route::prefix('company')->name('company.')->group(function () {
     });
 
     Route::middleware(['auth', EnsureCompanyMember::class])->group(function () {
-        Route::view('/dashboard', 'company.dashboard')->name('dashboard');
+        Route::get('/dashboard', CompanyDashboardController::class)->name('dashboard');
+        Route::get('/jobs/create', [CompanyJobBasicController::class, 'create'])->name('jobs.create');
+        Route::post('/jobs', [CompanyJobBasicController::class, 'store'])->name('jobs.store');
+        Route::get('/jobs/{jobPosting}/basic', [CompanyJobBasicController::class, 'edit'])->name('jobs.basic.edit');
+        Route::patch('/jobs/{jobPosting}/basic', [CompanyJobBasicController::class, 'update'])->name('jobs.basic.update');
     });
 });
 

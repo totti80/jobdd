@@ -9,7 +9,7 @@ uses(TestCase::class, DatabaseMigrations::class);
 
 test('Phase A migrations preserve legacy rows through rollback and reapplication', function () {
     // DatabaseMigrations runs only against the isolated test database.
-    $paths = glob(database_path('migrations/2026_09_23_*.php'));
+    $paths = glob(database_path('migrations/2026_09_23_00000[1-8]_*.php'));
     expect($paths)->toHaveCount(8);
     $migrations = array_map(fn ($path) => require $path, $paths);
     foreach (array_reverse($migrations) as $migration) {

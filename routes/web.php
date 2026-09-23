@@ -4,6 +4,7 @@ use App\Http\Controllers\AgencyFactReviewController;
 use App\Http\Controllers\CompanyDashboardController;
 use App\Http\Controllers\CompanyJobBasicController;
 use App\Http\Controllers\CompanyRegistrationController;
+use App\Http\Controllers\CompanyStructuredJobController;
 use App\Http\Controllers\IconController;
 use App\Http\Controllers\JobDecisionController;
 use App\Http\Controllers\JobSearchController;
@@ -34,6 +35,8 @@ Route::prefix('company')->name('company.')->group(function () {
     });
 
     Route::middleware(['auth', EnsureCompanyMember::class])->group(function () {
+        Route::get('/jobs/{jobPosting}/structured/step-{step}', [CompanyStructuredJobController::class, 'edit'])->where('step', '[1-5]')->name('jobs.structured.edit');
+        Route::patch('/jobs/{jobPosting}/structured/step-{step}', [CompanyStructuredJobController::class, 'update'])->where('step', '[1-5]')->name('jobs.structured.update');
         Route::get('/dashboard', CompanyDashboardController::class)->name('dashboard');
         Route::get('/jobs/create', [CompanyJobBasicController::class, 'create'])->name('jobs.create');
         Route::post('/jobs', [CompanyJobBasicController::class, 'store'])->name('jobs.store');

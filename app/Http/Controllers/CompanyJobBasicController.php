@@ -25,12 +25,12 @@ class CompanyJobBasicController extends Controller
     public function store(CompanyJobBasicRequest $request): RedirectResponse
     {
         $job = $request->company()->jobPostings()->create([
-            ...$request->validated(),
+            ...$request->safe()->except('navigation'),
             'status' => 'draft',
             'review_status' => 'not_submitted',
         ]);
 
-        return redirect()->route('company.jobs.basic.edit', $job)->with('status', 'Level 1を保存しました。');
+        return ($request->input('navigation') === 'next' ? redirect()->route('company.jobs.structured.edit', [$job, 1]) : redirect()->route('company.jobs.basic.edit', $job))->with('status', 'Level 1を保存しました。');
     }
 
     public function edit(JobPosting $jobPosting): View
@@ -46,9 +46,9 @@ class CompanyJobBasicController extends Controller
             $job = JobPosting::query()->lockForUpdate()->findOrFail($jobPosting->id);
             Gate::authorize('update', $job);
             abort_unless($job->status === 'draft', 409, '公開済み求人の編集は現在利用できません。');
-            $job->update($request->validated());
+            $job->update($request->safe()->except('navigation'));
         });
 
-        return redirect()->route('company.jobs.basic.edit', $jobPosting)->with('status', 'Level 1を保存しました。');
+        return ($request->input('navigation') === 'next' ? redirect()->route('company.jobs.structured.edit', [$jobPosting, 1]) : redirect()->route('company.jobs.basic.edit', $jobPosting))->with('status', 'Level 1を保存しました。');
     }
 }

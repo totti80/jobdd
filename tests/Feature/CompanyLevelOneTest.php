@@ -83,7 +83,7 @@ test('platform owner without membership is never assigned an arbitrary company',
 test('owner and editor create a draft only on valid first save with fixed server ownership', function (string $role) {
     [$user, $company] = levelOneMember($role);
     $other = Company::create(['name' => '他社']);
-    $this->actingAs($user)->get(route('company.jobs.create'))->assertOk()->assertSee('最低限の応募条件')->assertSee('STEP 1へ進む（準備中）');
+    $this->actingAs($user)->get(route('company.jobs.create'))->assertOk()->assertSee('最低限の応募条件')->assertSee('保存してSTEP 1へ進む');
     $this->assertDatabaseCount('job_postings', 0);
     $this->post(route('company.jobs.store'), levelOneInput([
         'company_id' => $other->id, 'status' => 'published', 'review_status' => 'approved',
@@ -189,7 +189,7 @@ test('company pages render labelled responsive forms for desktop and mobile clie
     $this->actingAs($user)->withHeader('User-Agent', $agent);
     $this->get(route('company.dashboard'))->assertOk()->assertSee('name="viewport"', false)->assertSee('求人はまだありません');
     $response = $this->get(route('company.jobs.create'))->assertOk()->assertSee('name="viewport"', false)
-        ->assertSee('sm:grid-cols-2', false)->assertSee('下書き保存')->assertSee('STEP 1へ進む（準備中）');
+        ->assertSee('sm:grid-cols-2', false)->assertSee('下書き保存')->assertSee('保存してSTEP 1へ進む');
     foreach (array_keys(levelOneInput()) as $field) {
         $response->assertSee('for="'.$field.'"', false)->assertSee('name="'.$field.'"', false);
     }

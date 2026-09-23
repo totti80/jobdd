@@ -59,7 +59,7 @@
                 @if (!$readOnly)
                     <div class="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row">
                         <button type="submit" class="min-h-12 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800">下書き保存</button>
-                        <button type="button" disabled class="min-h-12 rounded-lg border border-slate-300 bg-slate-100 px-6 py-3 text-slate-500">STEP 1へ進む（準備中）</button>
+                        <button type="submit" name="navigation" value="next" class="min-h-12 rounded-lg border border-blue-700 bg-white px-6 py-3 text-blue-800">保存してSTEP 1へ進む</button>
                     </div>
                 @endif
             </fieldset>
@@ -71,7 +71,7 @@
             </section>
             <section class="rounded-xl border border-slate-200 bg-white p-5">
                 <h2 class="font-bold text-blue-950">公開までの流れ</h2>
-                <p class="mt-3 text-sm leading-7 text-slate-700">求職者向け公開には、情報の入力後に公開申請と運営の承認が必要です。現在はLevel 1の下書き保存まで利用できます。</p>
+                <p class="mt-3 text-sm leading-7 text-slate-700">求職者向け公開には、情報の入力後に公開申請と運営の承認が必要です。Level 2の5STEPまで下書き保存できます。公開申請は準備中です。</p>
             </section>
         </aside>
     </div>

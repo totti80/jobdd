@@ -34,6 +34,7 @@ class CompanyJobBasicRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'navigation' => ['nullable', Rule::in(['save', 'next'])],
             'title' => ['required', 'string', 'max:255'],
             'occupation' => ['nullable', 'string', Rule::in(['機械設計', '電気設計'])],
             'region' => ['nullable', 'string', 'max:255'],

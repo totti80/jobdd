@@ -32,6 +32,11 @@
             </form>
         </details>
     </section>
+    <section class="jobdd-card" aria-labelledby="progressive-title">
+        <h2 id="progressive-title" class="font-bold text-blue-950">仕事の中身まで詳しく比較したいときに</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">担当工程や関わり方の希望を追加して、求人詳細で並べて確認できます。入力は任意です。</p>
+        @include('query.partials.preference-link', ['preferencePage' => $pagination['page']])
+    </section>
     <section aria-labelledby="status-legend" class="rounded-xl bg-slate-100 p-4 sm:p-6">
         <h2 id="status-legend" class="font-bold">確認結果の見方</h2>
         <ul class="mt-3 flex flex-wrap gap-3">

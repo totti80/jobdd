@@ -28,8 +28,23 @@
             <a class="jobdd-button" href="{{ $routesUrl }}">応募方法を見る</a>
         </div>
         <p class="mt-3 text-sm leading-6 text-slate-600">比較は一覧で2〜3件を選びます。この求人を選択した状態で一覧へ戻ります。</p>
+        @include('query.partials.preference-link', ['preferencePage' => $page, 'returnJob' => $job->id])
         <noscript><p class="mt-2 text-sm">JavaScriptが無効な場合は、一覧でこの求人を選択してください。</p></noscript>
     </article>
+    @if ($view['preference_rows'])
+        <x-decision-section id="detailed-preferences" title="あなたの詳細希望と、この求人の仕事">
+            <p class="mb-5 leading-7 text-slate-600">希望と企業提供の公開情報を並べています。一致・不一致の自動判定はしません。違いを確かめ、判断するための比較材料です。</p>
+            <div class="divide-y divide-slate-200" data-preference-comparison>
+                @foreach ($view['preference_rows'] as $row)
+                    <section class="min-w-0 py-5">
+                        <h3 class="mb-4 font-bold text-blue-950">{{ $row['label'] }}</h3>
+                        <x-decision-fields :fields="['あなたの希望' => $row['preference'], 'この求人の公開情報' => $row['job']]" />
+                    </section>
+                @endforeach
+            </div>
+            @include('query.partials.preference-link', ['preferencePage' => $page, 'returnJob' => $job->id, 'preferenceLinkLabel' => '詳細希望を変更する'])
+        </x-decision-section>
+    @endif
     @foreach ($view['sections'] as $section)
         <x-decision-section :id="$section['id']" :title="$section['title']">
             @switch($section['type'] ?? 'fields')

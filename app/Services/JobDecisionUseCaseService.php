@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Company;
 use App\Models\UserQuery;
+use App\Support\SeekerPreferences;
 use InvalidArgumentException;
 
 class JobDecisionUseCaseService
@@ -24,7 +25,7 @@ class JobDecisionUseCaseService
         foreach ($jobs as $job) {
             $facts[$job->id] = $job->getRelation('jobFacts')->all();
         }
-        $fits = $this->runner->run($query, $jobs, $facts, $confirmedRequirements);
+        $fits = $this->runner->run(SeekerPreferences::fitInput($query), $jobs, $facts, $confirmedRequirements);
         $companies = $jobs->isEmpty() ? collect() : Company::query()
             ->whereIn('id', $jobs->pluck('company_id')->unique())->pluck('name', 'id');
         $items = [];

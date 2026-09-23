@@ -1,0 +1,1 @@
+<a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.preferences.edit', ['userQuery' => $query['public_id'], 'page' => $preferencePage, 'tools' => $selected_tools, ...(!empty($returnJob) ? ['return_job' => $returnJob] : [])]) }}">{{ $preferenceLinkLabel ?? 'もっと詳しく比較する' }}</a>

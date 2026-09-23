@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ApplicationRoute;
 use App\Models\UserQuery;
 use App\Support\PublishedJobDecisionPresenter;
+use App\Support\SeekerPreferences;
 use Illuminate\Support\Facades\DB;
 
 class JobDetailUseCaseService
@@ -47,7 +48,7 @@ class JobDetailUseCaseService
             abort_unless(($snapshot->profile_data['schema_version'] ?? null) === 1, 404);
             $facts = $item['job']->getRelation('jobFacts');
             $facts->load('source');
-            $data['decision_view'] = (new PublishedJobDecisionPresenter)->present($snapshot, $item['fit'], $facts, $data['application_routes']);
+            $data['decision_view'] = (new PublishedJobDecisionPresenter)->present($snapshot, $item['fit'], $facts, $data['application_routes'], SeekerPreferences::read($query));
         }
 
         return $data;

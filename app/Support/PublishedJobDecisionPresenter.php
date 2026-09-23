@@ -11,7 +11,7 @@ class PublishedJobDecisionPresenter
 {
     public const MISSING = 'この情報はまだ確認できていません';
 
-    public function present(JobPublishedProfile $snapshot, array $fit, Collection $facts, Collection $routes): array
+    public function present(JobPublishedProfile $snapshot, array $fit, Collection $facts, Collection $routes, array $preferences = []): array
     {
         $data = $snapshot->profile_data;
         $basic = $data['level_one'] ?? [];
@@ -65,7 +65,7 @@ class PublishedJobDecisionPresenter
             'basic' => ['職種' => $this->text($basic['occupation'] ?? null), '勤務地' => $this->text($basic['region'] ?? null),
                 '掲載年収' => (isset($basic['salary_min']) ? $basic['salary_min'].'万円' : '下限未確認').' 〜 '.(isset($basic['salary_max']) ? $basic['salary_max'].'万円' : '上限未確認'),
                 '雇用形態' => $this->text($basic['employment_type'] ?? null)],
-            'sections' => $sections, 'source' => $source, 'source_title' => $this->text($provenance['title'] ?? null),
+            'preference_rows' => SeekerPreferences::comparison($preferences, $profile), 'sections' => $sections, 'source' => $source, 'source_title' => $this->text($provenance['title'] ?? null),
             'published_at' => $snapshot->published_at?->timezone('Asia/Tokyo')->format('Y年m月d日 H:i（日本時間）') ?? self::MISSING,
             'evidence' => $facts->map(fn ($fact) => $this->fact($fact))->all()];
     }

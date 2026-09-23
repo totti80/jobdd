@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\JobPosting;
 use App\Models\UserQuery;
+use App\Support\SeekerPreferences;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use InvalidArgumentException;
 
@@ -38,7 +39,7 @@ class JobSelectionUseCaseService
         foreach ($jobs as $job) {
             $facts[$job->id] = $job->getRelation('jobFacts')->all();
         }
-        $fits = $this->runner->run($query, $jobs, $facts, $requirements);
+        $fits = $this->runner->run(SeekerPreferences::fitInput($query), $jobs, $facts, $requirements);
         $companies = Company::query()->whereIn('id', $loaded->pluck('company_id')->unique())->pluck('name', 'id');
         $items = [];
         foreach ($jobs as $i => $job) {

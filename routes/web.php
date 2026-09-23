@@ -12,6 +12,7 @@ use App\Http\Controllers\JobReviewController;
 use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\RouteComparisonController;
 use App\Http\Controllers\UserQueryController;
+use App\Http\Controllers\UserQueryPreferenceController;
 use App\Http\Middleware\EnsureCompanyMember;
 use App\Http\Middleware\EnsurePlatformOwner;
 use App\Models\InteractionLog;
@@ -122,6 +123,9 @@ Route::post('/jobs/start', [JobSearchController::class, 'store'])->name('jobs.st
 
 Route::get('/query/{userQuery:public_id}/agencies', [JobDecisionController::class, 'agencies'])
     ->name('query.agencies');
+
+Route::get('/query/{userQuery:public_id}/preferences', [UserQueryPreferenceController::class, 'edit'])->name('query.preferences.edit');
+Route::patch('/query/{userQuery:public_id}/preferences', [UserQueryPreferenceController::class, 'update'])->name('query.preferences.update');
 
 Route::get('/query/{userQuery:public_id}/jobs/compare', [JobDecisionController::class, 'compare'])
     ->name('query.jobs.compare');

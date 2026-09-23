@@ -1,6 +1,6 @@
 # JobDD Decision Log
 
-**Version:** 4.2  
+**Version:** 4.3  
 **更新:** 2026-09-23  
 
 **目的：**  
@@ -4426,4 +4426,212 @@ Phase A本番のPlatform OwnerはOwner本人のアカウントとする。
 ## OPEN
 
 具体的なCompany / 求人は未決定。
+
+---
+
+# D-101｜Production DB Backup Gate 1をPASSとする
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## FACT
+
+V5.3 migration前の本番DB backup取得を実施し、Gate 1はPASSした。
+
+保存先：
+
+```text
+/home/ikeda-dev/jobdd-backups/pre-v53-20260923-174046/
+```
+
+結果：
+
+- dump正常終了
+- dumpサイズ：5,141,507 bytes
+- dump SHA-256：`2fb364c09ba8f01363c1b11312f0ffc302b2e57c0689b9bc1dc86cdd7791f9c9`
+- baseline：24 tables / 27 migrations
+- backup前後で件数・全列hash・schema・migration履歴一致
+- dump checksum不変
+- 一時MySQL認証ファイル削除済み
+- Web maintenance解除・UP確認済み
+- 本番DB更新 / migration / deploy / 実メール送信なし
+
+## 意思決定
+
+このbackupをV5.3 migration前の復旧基準として保持する。
+
+Gate 2のrestore rehearsalがPASSするまではdeployへ進まない。
+
+---
+
+# D-102｜Restore Rehearsalは隔離ローカルMySQLを第一候補として正式採用する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## それまでの状態
+
+当初は、さくらMySQL 8.0上に別DBを作成し、そこへrestoreする案を第一候補としていた。
+
+## 得られた情報
+
+さくら管理画面では、
+
+- 別DB作成UIは存在する
+- ただし、別DBユーザーを作成し
+- 特定DBだけへ権限を限定し
+- SELECTだけに制限する
+
+安全な検証用接続の分離機能を確認できなかった。
+
+「機能が存在しない」とは断定しないが、安全な分離を確認できない状態で本番サーバー上にrehearsal環境を作らない。
+
+## 意思決定
+
+Restore rehearsalは、
+
+**専用MySQL 8.0 Dockerコンテナ + 専用volumeによる隔離ローカル環境**
+
+を第一候補として正式採用する。
+
+予定：
+
+```text
+ローカル保存先：
+/home/aatik/jobdd-restore-rehearsal/pre-v53-20260923-174046/
+
+Restore専用DB：
+jobdd_restore_v1
+```
+
+既存 `jobdd_v4` / `testing` は使用しない。
+
+本番 `.env` / 認証ファイルは転送しない。
+
+転送対象はdump・checksum・baselineファイルに限定する。
+
+v1 rollback表示検証もこの隔離環境上で行う。
+
+## 現在状態
+
+Gate 2は承認済みだが、ローカル転送・restore・v1表示検証はまだ未実施。
+
+---
+
+# D-103｜Production Schedulerは毎時00分にschedule:runを起動する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## それまでの状態
+
+旧本体 `/home/ikeda-dev/jobdd` のLaravel schedulerは、CRONから毎分 `schedule:run` を起動していた。
+
+Laravel側では `crawler.run-mhi` が、
+
+- `dailyAt('05:00')`
+- `withoutOverlapping()`
+
+として定義されている。
+
+## 得られた情報
+
+さくら管理画面では、毎分CRONを再登録しようとすると、
+
+**「CRON実行の間隔が短すぎます」**
+
+として拒否された。
+
+毎日05:00だけ `schedule:run` を実行する案も検討したが、05:01等に遅延した場合に05:00指定のscheduleを取り逃す可能性がある。
+
+## 意思決定
+
+Laravel scheduler起動CRONを、
+
+```text
+0 * * * *
+```
+
+へ変更する。
+
+つまり、**毎時00分に `schedule:run` を起動する。**
+
+実行コマンド自体は変更しない。
+
+## 判断理由
+
+- さくら側のCRON頻度制限に対応できる
+- 05:00にはschedulerが起動する
+- Laravel側の `dailyAt('05:00')` を維持できる
+- 毎日05:00の1回だけより取り逃しリスクが低い
+
+## FACT
+
+Gate 1終了後、CRONはこの設定で復帰済み。
+
+最終cron SHA-256：
+
+`2ed3e34b05df6ae8843dbf32f550a89e27d0fd0c588635fcbccc045a2ba787da`
+
+元の毎分CRON原本はbackupとして保持する。
+
+---
+
+# D-104｜Gate 2の転送・Restore構成を固定する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+Gate 2では、取得済み本番dumpをローカルへ `scp` で転送し、隔離MySQLへrestoreする。
+
+採用構成：
+
+```text
+転送：
+scp
+
+ローカル保存先：
+/home/aatik/jobdd-restore-rehearsal/pre-v53-20260923-174046/
+
+Restore環境：
+専用MySQL 8.0 Dockerコンテナ + 専用volume
+
+Restore DB：
+jobdd_restore_v1
+```
+
+権限：
+
+- directory 700
+- transferred files 600
+
+転送対象：
+
+- DB dump
+- checksum
+- baseline-before.json
+- baseline-after.json
+
+転送しないもの：
+
+- 本番 `.env`
+- MySQL credential file
+- その他secret
+
+v1は別作業領域へ配置し、restore DBだけへ接続する。
+
+Production DBへの接続は禁止する。
+
+## 実行順
+
+1. 転送
+2. checksum一致
+3. 隔離MySQL作成
+4. restore
+5. integrity照合
+6. v1表示検証
+
+各段階で結果を確認し、一気に次工程へ進めない。
 

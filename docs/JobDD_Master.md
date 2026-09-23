@@ -1,6 +1,6 @@
 # JobDD Master Context
 
-**Version:** 5.4  
+**Version:** 5.5  
 **初版:** 2026-08-13  
 **更新:** 2026-09-23  
 **Project:** JobDD  
@@ -166,7 +166,7 @@ Platform Owner / AdminがJobDD管理画面で確認
 
 ---
 
-# 2.4 v5.4で確定した本番配置・リリース方針
+# 2.4 v5.5で確定した本番配置・リリース方針
 
 ## FACT
 
@@ -260,26 +260,96 @@ PHP
 
 ## DECISION｜Backup / Restore / Rollback
 
-V5.3 migration前に本番DB backupを取得し、**別DBへのrestore rehearsalを成功させてからdeployへ進む**。
+V5.3 migration前に本番DB backupを取得し、**隔離環境でrestore rehearsalを成功させてからdeployへ進む**。
 
 BackupはWeb公開領域外へ保存する。
 
-候補：
+正式保存先：
 
 ```text
 /home/ikeda-dev/jobdd-backups/
   pre-v53-YYYYMMDD-HHMMSS/
 ```
 
-Restore rehearsal用DB候補：
+2026-09-23にGate 1を実行し、本番DB backup取得はPASSした。
 
-`ikeda-dev_jobdd_restore_v1`
+### FACT｜Gate 1 Backup結果
 
-まずは本番と同じさくらMySQL 8.0上の別DBでrestore rehearsalする方針を第一候補とする。安全な検証用接続を分離できない場合は、隔離したローカルMySQLへ切り替える。
+保存先：
+
+```text
+/home/ikeda-dev/jobdd-backups/pre-v53-20260923-174046/
+```
+
+結果：
+
+- dump正常終了
+- dumpサイズ：5,141,507 bytes
+- dump SHA-256：`2fb364c09ba8f01363c1b11312f0ffc302b2e57c0689b9bc1dc86cdd7791f9c9`
+- baseline：24 tables / 27 migrations
+- backup前後で件数・全列hash・schema・migration履歴が一致
+- dump checksum不変
+- 一時認証ファイルは削除済み
+- Web maintenance解除・UP確認済み
+- migration / deploy / 本番DB更新 / 実メール送信は未実施
+
+### DECISION｜Restore Rehearsal
+
+さくら管理画面では、別DBユーザーを作成し、特定DBだけへSELECT権限を限定する安全な分離方法を確認できなかった。
+
+そのため、Restore rehearsalは**隔離したローカルMySQL 8.0 Dockerコンテナ + 専用volume**を第一候補として正式採用する。
+
+Gate 2で使用する予定：
+
+```text
+ローカル保存先：
+/home/aatik/jobdd-restore-rehearsal/pre-v53-20260923-174046/
+
+Restore専用DB：
+jobdd_restore_v1
+```
+
+既存開発DB `jobdd_v4` / `testing` にはrestoreしない。
+
+本番 `.env` や認証ファイルはローカルへ転送せず、転送対象はdump・checksum・baselineのみとする。
 
 重要：**v1コードだけをV5 migration後DBへ接続してRollbackしない。**
 
-v1へ戻す場合は、移行前backupを別DBへ復元し、v1コードとその復元DBをセットで切り替える。移行後DBは破棄せず保全する。
+v1へ戻す場合は、移行前backupを隔離DBへ復元し、v1コードとその復元DBをセットで切り替える。移行後DBは破棄せず保全する。
+
+Gate 2（ローカル転送・restore・v1表示検証）は承認済みだが、2026-09-23時点では未実施。
+
+## DECISION｜Production Scheduler / CRON
+
+旧本体 `/home/ikeda-dev/jobdd` のLaravel scheduler起動CRONについて、さくら管理画面では毎分実行が「実行間隔が短すぎます」と拒否された。
+
+元のCRONは毎分 `* * * * *` だったが、Laravel側では `crawler.run-mhi` が `dailyAt('05:00')` / `withoutOverlapping()` で定義されている。
+
+そのため、本番CRONは以下へ意図的に変更した。
+
+```text
+0 * * * *
+```
+
+つまり、**毎時00分に `php artisan schedule:run` を起動する。**
+
+実行コマンド自体は変更していない。
+
+これにより、
+
+- さくら側の実行頻度制限へ対応
+- 05:00にLaravel schedulerが起動
+- Laravel内の `dailyAt('05:00')` の意味を維持
+
+する。
+
+Gate 1終了時点で、CRON有効行は1件、毎時00分設定で復帰済み。
+
+最終cron SHA-256：
+
+`2ed3e34b05df6ae8843dbf32f550a89e27d0fd0c588635fcbccc045a2ba787da`
+
+元の毎分CRON原本もbackup内に保持する。
 
 ## DECISION｜Platform Owner
 
@@ -311,9 +381,10 @@ Production Smokeで公開承認するCompany / 求人は未決定。
 
 - APP_URL変更の実施と実環境確認
 - sendmailによる実配送 / 受信確認
-- migration前backup取得
-- 別DB restore rehearsal
-- cron停止 / 再開とrelease切替手順の最終確認
+- migration前backup取得：**完了 / PASS**
+- 隔離ローカルMySQLでのrestore rehearsal：未実施
+- cron停止 / 再開：Gate 1で実施・復帰済み。毎時00分へ意図的変更
+- release切替手順の最終確認
 - Platform Owner作成 / 本人確認 / 昇格
 - Production Smoke用の実在Company / 求人決定
 - Production Smoke PASS
@@ -2469,7 +2540,7 @@ Codexは、
 
 ---
 
-# 42. v5.4で絶対に戻らない原則
+# 42. v5.5で絶対に戻らない原則
 
 1. HYPOTHESISをFACTとして扱わない
 2. HM型業務効率化SaaSへ根拠なく戻らない

@@ -157,7 +157,7 @@ test('platform owner can edit a draft without a company membership', function ()
         ->and(Gate::forUser($user)->allows('create', [JobPosting::class, $company]))->toBeTrue();
 });
 
-test('published records and snapshots are immutable through the basic editor even for admins', function (bool $admin) {
+test('legacy published records without a versioned snapshot remain immutable even for admins', function (bool $admin) {
     [$user, $company] = levelOneMember();
     if ($admin) {
         $user->system_role = 'platform_owner';

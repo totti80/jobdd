@@ -11,7 +11,7 @@ class RouteComparisonController extends Controller
     public function show(Request $request, JobPosting $jobPosting)
     {
 
-        abort_unless($jobPosting->status === 'published', 404);
+        $jobPosting = JobPosting::query()->forPublic()->where('status', 'published')->findOrFail($jobPosting->id);
 
         $jobPosting->load([
             'company',
@@ -70,7 +70,7 @@ class RouteComparisonController extends Controller
 
     public function action(\App\Models\JobPosting $jobPosting)
     {
-        abort_unless($jobPosting->status === 'published', 404);
+        $jobPosting = JobPosting::query()->forPublic()->where('status', 'published')->findOrFail($jobPosting->id);
 
         $jobPosting->load([
             'company',

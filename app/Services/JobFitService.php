@@ -37,6 +37,8 @@ class JobFitService
     {
         $definitions = array_column(JobFactDictionary::definitions(), null, 'fact_key');
         [$desired, $hard] = $this->validateInputs($job, $facts, $confirmedRequirements, $definitions);
+        // Company declarations are displayed with explicit roles; no new Fit axes or classifier inference.
+        $facts = array_values(array_filter($facts, fn ($fact) => $fact->extraction_method !== 'company_self_reported'));
         usort($facts, fn (JobFact $a, JobFact $b) => (int) $a->id <=> (int) $b->id);
         $axes = [];
         $notes = [];
@@ -122,8 +124,9 @@ class JobFitService
             if (! $fact instanceof JobFact || ! $this->positiveInteger($fact->id)
                 || ! $this->positiveInteger($job->id) || ! $this->positiveInteger($fact->job_posting_id)
                 || (int) $fact->job_posting_id !== (int) $job->id
-                || ! is_string($fact->fact_key) || ! isset($definitions[$fact->fact_key])
-                || $definitions[$fact->fact_key]['fact_category'] !== $fact->fact_category
+                || ! is_string($fact->fact_key)
+                || ($fact->extraction_method !== 'company_self_reported' && (! isset($definitions[$fact->fact_key])
+                    || $definitions[$fact->fact_key]['fact_category'] !== $fact->fact_category))
                 || isset($ids[(int) $fact->id])) {
                 throw new InvalidArgumentException('Invalid, duplicate or foreign JobFact model.');
             }

@@ -76,7 +76,7 @@ test('steps save their own fields and navigation persists before redirect', func
     expect($job->fresh()->structuredProfile->design_target)->toBe('産業機械')->and($job->fresh()->structuredProfile->difficult_points)->toBe('仕様調整');
     $this->patch(authoringUrl($job, 1), ['design_target' => '変更', 'navigation' => 'back'])->assertRedirect(route('company.jobs.basic.edit', $job));
     expect($job->fresh()->structuredProfile->design_phases)->toBe([])->and($job->fresh()->structuredProfile->difficult_points)->toBe('仕様調整');
-    $this->patch(authoringUrl($job, 5), ['representative_project' => ['what_made' => '装置', 'phases' => ['testing'], 'duration' => '半年', 'team' => '3名', 'difficult_point' => '精度'], 'navigation' => 'next'])->assertRedirect(authoringUrl($job, 5))->assertSessionHas('status', 'STEP 5を保存しました。公開前確認は準備中です。');
+    $this->patch(authoringUrl($job, 5), ['representative_project' => ['what_made' => '装置', 'phases' => ['testing'], 'duration' => '半年', 'team' => '3名', 'difficult_point' => '精度'], 'navigation' => 'next'])->assertRedirect(route('company.jobs.preview', $job))->assertSessionHas('status', 'STEP 5を保存しました。');
     expect($job->fresh()->structuredProfile->representative_project['phases'])->toBe(['testing']);
     $this->post(route('logout'));
     $this->assertGuest();

@@ -19,6 +19,7 @@
         </nav>
     </header>
     <main id="main-content" class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+        @if(auth()->user()?->isPlatformOwner())<a href="{{ route('admin.job-reviews.index') }}" class="mb-4 inline-flex min-h-11 items-center text-blue-800 underline">求人の公開審査</a>@endif
         @if(session('status'))<p role="status" class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">{{ session('status') }}</p>@endif
         {{ $slot }}
     </main>

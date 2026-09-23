@@ -3,10 +3,12 @@
 use App\Http\Controllers\AgencyFactReviewController;
 use App\Http\Controllers\CompanyDashboardController;
 use App\Http\Controllers\CompanyJobBasicController;
+use App\Http\Controllers\CompanyJobPreviewController;
 use App\Http\Controllers\CompanyRegistrationController;
 use App\Http\Controllers\CompanyStructuredJobController;
 use App\Http\Controllers\IconController;
 use App\Http\Controllers\JobDecisionController;
+use App\Http\Controllers\JobReviewController;
 use App\Http\Controllers\JobSearchController;
 use App\Http\Controllers\RouteComparisonController;
 use App\Http\Controllers\UserQueryController;
@@ -17,6 +19,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->middleware(['auth', EnsurePlatformOwner::class, 'verified'])->group(function () {
+    Route::get('/job-reviews', [JobReviewController::class, 'index'])->name('job-reviews.index');
+    Route::get('/job-reviews/{jobPosting}', [JobReviewController::class, 'show'])->name('job-reviews.show');
+    Route::post('/job-reviews/{jobPosting}/approve', [JobReviewController::class, 'approve'])->name('job-reviews.approve');
+    Route::post('/job-reviews/{jobPosting}/changes-requested', [JobReviewController::class, 'changesRequested'])->name('job-reviews.changes-requested');
     Route::patch('/agency-facts/{agencyFact}/verify', [AgencyFactReviewController::class, 'verify'])
         ->name('agency-facts.verify');
 
@@ -37,6 +43,8 @@ Route::prefix('company')->name('company.')->group(function () {
     Route::middleware(['auth', EnsureCompanyMember::class])->group(function () {
         Route::get('/jobs/{jobPosting}/structured/step-{step}', [CompanyStructuredJobController::class, 'edit'])->where('step', '[1-5]')->name('jobs.structured.edit');
         Route::patch('/jobs/{jobPosting}/structured/step-{step}', [CompanyStructuredJobController::class, 'update'])->where('step', '[1-5]')->name('jobs.structured.update');
+        Route::get('/jobs/{jobPosting}/preview', [CompanyJobPreviewController::class, 'show'])->name('jobs.preview');
+        Route::post('/jobs/{jobPosting}/review-request', [CompanyJobPreviewController::class, 'requestReview'])->name('jobs.review-request');
         Route::get('/dashboard', CompanyDashboardController::class)->name('dashboard');
         Route::get('/jobs/create', [CompanyJobBasicController::class, 'create'])->name('jobs.create');
         Route::post('/jobs', [CompanyJobBasicController::class, 'store'])->name('jobs.store');
@@ -152,3 +160,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+Route::get('/jobs/{jobPosting}/provenance', [JobReviewController::class, 'provenance'])->name('jobs.provenance');

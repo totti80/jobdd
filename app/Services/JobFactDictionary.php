@@ -150,4 +150,31 @@ class JobFactDictionary
       ],
     ];
   }
+
+  /** Company authoring definitions are separate from the unchanged legacy extraction dictionary. */
+  public static function companyDefinitions(): array
+  {
+    return [
+      'job_content' => ['design_target'=>'responsibility','product_context'=>'product_context','hard_to_convey'=>'company_context'],
+      'design_phase' => array_fill_keys(array_keys(\App\Support\StructuredJobOptions::PHASES), 'responsibility'),
+      'assignment' => ['initial_assignment'=>'responsibility','future_scope'=>'responsibility'],
+      'tool_usage' => array_fill_keys(array_keys(\App\Support\StructuredJobOptions::TOOLS), 'unknown'),
+      'tool_expectation' => array_fill_keys(array_keys(\App\Support\StructuredJobOptions::TOOLS), 'unknown'),
+      'experience' => ['required_experience'=>'required_experience','preferred_experience'=>'preferred_experience'],
+      'collaboration' => array_fill_keys([...array_keys(\App\Support\StructuredJobOptions::COLLABORATORS),'customer_contact','manufacturing_relation','site_relation'], 'collaboration'),
+      'work_style' => ['work_style'=>'company_context','fit_work_style'=>'company_context','misfit_work_style'=>'company_context'],
+      'work_reality' => ['project_duration'=>'company_context','concurrent_projects'=>'company_context','difficult_points'=>'company_context','onboarding_challenges'=>'company_context'],
+      'project_example' => ['representative_project'=>'project_example'],
+    ];
+  }
+
+  public static function companyRole(string $category, string $key, string $value): string
+  {
+    $role = self::companyDefinitions()[$category][$key] ?? throw new \InvalidArgumentException('Unknown company Fact definition.');
+    return match ($category) {
+      'tool_usage' => match ($value) { 'primary','occasional'=>'responsibility', 'other_department'=>'other_department', default=>'unknown' },
+      'tool_expectation' => match ($value) { 'required'=>'required_experience','preferred'=>'preferred_experience',default=>'unknown' },
+      default => $role,
+    };
+  }
 }

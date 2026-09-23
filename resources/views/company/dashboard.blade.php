@@ -28,7 +28,8 @@
                             <div><dt class="text-slate-500">公開審査</dt><dd class="mt-1">{{ \App\Models\JobPosting::REVIEW_STATUS_LABELS[$job->review_status] ?? $job->review_status }}</dd></div>
                             <div><dt class="text-slate-500">更新日時</dt><dd class="mt-1">{{ $job->updated_at?->format('Y/m/d H:i') ?? '―' }}</dd></div>
                         </dl>
-                        <a href="{{ route('company.jobs.basic.edit', $job) }}" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-800">{{ $job->status === 'draft' ? '編集' : '基本情報を確認' }}<span class="sr-only">：{{ $job->title }}</span></a>
+                        <div class="flex flex-col gap-2"><a href="{{ route('company.jobs.preview', $job) }}" class="inline-flex min-h-11 items-center justify-center text-sm text-blue-800 underline">Preview・公開申請</a><a href="{{ route('company.jobs.basic.edit', $job) }}" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-800">編集<span class="sr-only">：{{ $job->title }}</span></a></div>
+                        @if($job->review_note)<p class="whitespace-pre-wrap break-words text-sm text-amber-900 md:col-span-3">差戻し理由：{{ $job->review_note }}</p>@endif
                     </article>
                 @empty
                     <p class="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">求人はまだありません。「求人を作成」から基本情報を入力してください。</p>

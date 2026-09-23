@@ -1,0 +1,1 @@
+<p>求人の公開申請が届きました。</p><dl><dt>企業</dt><dd>{{ $companyName }}</dd><dt>求人</dt><dd>{{ $jobTitle }}</dd><dt>申請日時</dt><dd>{{ $requestedAt }}</dd></dl><p><a href="{{ $reviewUrl }}">JobDD管理画面で内容を確認</a></p><p>このリンクは確認画面を開きます。承認・差戻しはログイン後、管理画面で操作してください。</p>

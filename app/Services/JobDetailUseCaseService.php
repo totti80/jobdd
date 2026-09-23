@@ -24,7 +24,9 @@ class JobDetailUseCaseService
         $data['presence_facts'] = [];
         foreach ($item['job']->getRelation('jobFacts') as $fact) {
             $data['presence_facts'][] = ['fact' => $fact,
-                'context' => $contexts[$fact->id] ?? $this->classifier->classify($item['job'], $fact)];
+                'context' => $fact->extraction_method === 'company_self_reported'
+                    ? ['role' => $fact->context_role ?? 'unknown', 'reason' => '企業がフォームで申告した内容です。公開確認は真偽の保証を意味しません。', 'matched_contexts' => [], 'notes' => []]
+                    : ($contexts[$fact->id] ?? $this->classifier->classify($item['job'], $fact))];
         }
         $data['application_routes'] = ApplicationRoute::query()->where('job_posting_id', $id)
             ->whereIn('route_type', ['direct', 'agent', 'platform'])

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\PublishedJobQuery;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -54,6 +56,16 @@ class JobPosting extends Model
         'published_at' => 'datetime',
         'provider_updated_at' => 'datetime',
     ];
+
+    public function scopeForPublic(Builder $query): Builder
+    {
+        return PublishedJobQuery::apply($query);
+    }
+
+    public function authoringEditable(): bool
+    {
+        return $this->status === 'draft' || ($this->status === 'published' && ($this->publishedProfile?->profile_data['schema_version'] ?? null) === 1);
+    }
 
     public function reviewedBy(): BelongsTo
     {

@@ -1,4 +1,4 @@
-@php($readOnly = $job->exists && $job->status !== 'draft')
+@php($readOnly = $job->exists && ! $job->authoringEditable())
 <x-company-layout :title="$job->exists ? 'Level 1 基本情報' : '求人新規作成'">
     <a href="{{ route('company.dashboard') }}" class="inline-flex min-h-11 items-center text-sm text-blue-800 underline">企業ダッシュボードへ戻る</a>
     <h1 class="mt-3 text-2xl font-bold text-blue-950 sm:text-3xl">{{ $job->exists ? 'Level 1 基本情報' : '求人新規作成' }}</h1>
@@ -8,7 +8,7 @@
         <p class="mt-3 text-sm">公開状態：{{ \App\Models\JobPosting::STATUS_LABELS[$job->status] ?? $job->status }} ／ 公開審査：{{ \App\Models\JobPosting::REVIEW_STATUS_LABELS[$job->review_status] ?? $job->review_status }}</p>
     @endif
     @if ($readOnly)
-        <p role="status" class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">公開済み求人の編集は準備中です。現在は基本情報の確認のみ可能です。</p>
+        <p role="status" class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">この既存求人には公開Snapshotがないため、現在は確認のみ可能です。</p>
     @endif
     @if ($errors->any())
         <section role="alert" class="mt-5 rounded-xl border border-red-300 bg-red-50 p-4 text-red-900">
@@ -71,7 +71,7 @@
             </section>
             <section class="rounded-xl border border-slate-200 bg-white p-5">
                 <h2 class="font-bold text-blue-950">公開までの流れ</h2>
-                <p class="mt-3 text-sm leading-7 text-slate-700">求職者向け公開には、情報の入力後に公開申請と運営の承認が必要です。Level 2の5STEPまで下書き保存できます。公開申請は準備中です。</p>
+                <p class="mt-3 text-sm leading-7 text-slate-700">求職者向け公開には、情報の入力後に公開申請と運営の承認が必要です。Level 2の5STEPまで下書き保存できます。入力後、Previewから公開申請できます。</p>
             </section>
         </aside>
     </div>

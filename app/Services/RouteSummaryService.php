@@ -22,7 +22,7 @@ class RouteSummaryService
   public function summarize(UserQuery $userQuery): Collection
   {
     $routes = ApplicationRoute::query()
-      ->with(['jobPosting.company', 'agency', 'platform'])
+      ->with(['jobPosting' => fn ($query) => $query->forPublic()->where('status', 'published')->with('company'), 'agency', 'platform'])
       ->where('availability_status', 'available')
       ->whereNull('unavailable_at')
       ->latest('last_seen_at')

@@ -1,6 +1,6 @@
 @php
     use App\Support\StructuredJobOptions as Options;
-    $readOnly = $job->status !== 'draft';
+    $readOnly = ! $job->authoringEditable();
     $profile = $job->structuredProfile;
 @endphp
 <x-company-layout :title="'Level 2 STEP '.$step">
@@ -10,7 +10,7 @@
     <ol class="mt-5 grid grid-cols-5 gap-1 text-center text-sm" aria-label="入力ステップ">
         @foreach(Options::TITLES as $number => $title)<li class="rounded-lg border p-3 {{ $step === $number ? 'border-blue-700 bg-blue-700 text-white' : 'border-slate-300 bg-white' }}" @if($step === $number) aria-current="step" @endif>STEP {{ $number }}</li>@endforeach
     </ol>
-    @if($readOnly)<p role="status" class="mt-5 rounded-xl bg-amber-50 p-4">公開済み求人は閲覧のみ可能です。</p>@endif
+    @if($readOnly)<p role="status" class="mt-5 rounded-xl bg-amber-50 p-4">公開Snapshotのない既存求人は閲覧のみ可能です。</p>@endif
     @if($errors->any())<div role="alert" class="mt-5 rounded-xl bg-red-50 p-4 text-red-900"><p class="font-bold">入力内容を確認してください</p><ul class="list-inside list-disc">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
     <div class="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <form method="POST" action="{{ route('company.jobs.structured.update', [$job, $step]) }}" class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 sm:p-7">
@@ -51,7 +51,7 @@
                     <div class="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:flex-wrap">
                         <button name="navigation" value="save" class="min-h-12 rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white">下書き保存</button>
                         <button name="navigation" value="back" class="min-h-12 rounded-lg border border-slate-400 px-5 py-3">保存して前へ</button>
-                        <button name="navigation" value="next" class="min-h-12 rounded-lg border border-blue-700 px-5 py-3 text-blue-800">{{ $step === 5 ? '保存して公開前確認へ（準備中）' : '保存して次へ' }}</button>
+                        <button name="navigation" value="next" class="min-h-12 rounded-lg border border-blue-700 px-5 py-3 text-blue-800">{{ $step === 5 ? '保存してPreviewへ' : '保存して次へ' }}</button>
                     </div>
                 @endif
             </fieldset>
@@ -72,7 +72,7 @@
                 </dl>
             </section>
             <section class="rounded-xl border border-blue-100 bg-blue-50 p-5"><h2 class="font-bold text-blue-950">保存済みの入力充足率</h2><p class="mt-3 text-3xl font-bold text-blue-800">{{ $completion['percentage'] }}%</p><p class="mt-2 text-sm">{{ $completion['completed'] }} / {{ $completion['total'] }}項目</p><p class="mt-3 text-sm leading-7">Level 1の8項目とLevel 2 Coreの13項目を集計しています。入力を進めるための目安で、Fitや公開可否の判定には使用しません。</p></section>
-            <section class="rounded-xl border border-slate-200 bg-white p-5"><h2 class="font-bold text-blue-950">仕事の具体像を伝える</h2><p class="mt-3 text-sm leading-7">工程、相手、頻度、具体的な作業を記載しましょう。保存後はログインし直しても続きから編集できます。</p><p class="mt-3 text-sm leading-7">公開前確認・公開申請は準備中です。</p></section>
+            <section class="rounded-xl border border-slate-200 bg-white p-5"><h2 class="font-bold text-blue-950">仕事の具体像を伝える</h2><p class="mt-3 text-sm leading-7">工程、相手、頻度、具体的な作業を記載しましょう。保存後はログインし直しても続きから編集できます。</p><p class="mt-3 text-sm leading-7">Previewで内容を確認して公開申請できます。</p></section>
             <a href="{{ route('company.jobs.basic.edit', $job) }}" class="inline-flex min-h-11 items-center text-blue-800 underline">Level 1 基本情報を確認</a>
         </aside>
     </div>

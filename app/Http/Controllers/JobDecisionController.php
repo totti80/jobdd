@@ -39,7 +39,7 @@ class JobDecisionController extends Controller
             abort(422, '比較条件を確認してください。');
         }
 
-        return response()->view('query.job-show', [...$data, 'page' => (int) ($input['page'] ?? 1)])
+        return response()->view(isset($data['decision_view']) ? 'query.job-show-v2' : 'query.job-show', [...$data, 'page' => (int) ($input['page'] ?? 1)])
             ->header('Cache-Control', 'private, no-store');
     }
 

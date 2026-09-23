@@ -70,6 +70,13 @@ function initializeJobdd(root) {
             target?.focus();
         }
     });
+    // The detail CTA returns to the existing page-local comparison selection.
+    const requestedJob = new URLSearchParams(window.location.search).get('select_job');
+    const requestedInput = /^\d+$/.test(requestedJob || '')
+        ? checkboxes.find(input => input.value === requestedJob) : null;
+    if (requestedInput && checkboxes.filter(input => input.checked).length < 3) {
+        requestedInput.checked = true;
+    }
     render();
     // Without ResizeObserver the form stays in normal flow; no obscuring fixed bar.
     if (bar && typeof ResizeObserver !== 'undefined') {

@@ -94,7 +94,7 @@ test('job detail exposes escaped Facts context and stored application routes wit
     } finally {
         $record = false;
     }
-    expect($sql)->toHaveCount(5)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
+    expect($sql)->toHaveCount(6)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
 });
 
 test('detail keeps missing routes and invalid or unavailable application links unconfirmed', function ($url, $status, $unavailable) {
@@ -240,7 +240,7 @@ test('new detail and compare routes keep database sessions read-only', function 
     } finally {
         $record = false;
     }
-    expect($sql)->toHaveCount($detail ? 6 : 5)
+    expect($sql)->toHaveCount($detail ? 7 : 5)
         ->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([])
         ->and(DB::table('sessions')->orderBy('id')->get()->toJson())->toBe($before);
 })->with([true, false]);

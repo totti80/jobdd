@@ -4,12 +4,20 @@ namespace App\Services;
 
 use App\Models\ApplicationRoute;
 use App\Models\UserQuery;
+use App\Support\PublishedJobDecisionPresenter;
+use Illuminate\Support\Facades\DB;
 
 class JobDetailUseCaseService
 {
     public function __construct(private JobSelectionUseCaseService $selection, private ContextRoleClassifier $classifier) {}
 
     public function run(UserQuery $query, int $id, array $requirements = []): array
+    {
+        // Read one committed publication: snapshot, facts and routes change atomically on approval.
+        return DB::transaction(fn () => $this->read($query, $id, $requirements));
+    }
+
+    private function read(UserQuery $query, int $id, array $requirements): array
     {
         $data = $this->selection->run($query, [$id], $requirements);
         $item = $data['items'][0];
@@ -32,6 +40,15 @@ class JobDetailUseCaseService
             ->whereIn('route_type', ['direct', 'agent', 'platform'])
             ->orderByRaw("CASE route_type WHEN 'direct' THEN 0 WHEN 'agent' THEN 1 ELSE 2 END")
             ->orderBy('id')->get();
+
+        $snapshot = $item['job']->publishedProfile()->first();
+        if ($snapshot !== null) {
+            // An unreadable publication must never fall back to the editable JobPosting.
+            abort_unless(($snapshot->profile_data['schema_version'] ?? null) === 1, 404);
+            $facts = $item['job']->getRelation('jobFacts');
+            $facts->load('source');
+            $data['decision_view'] = (new PublishedJobDecisionPresenter)->present($snapshot, $item['fit'], $facts, $data['application_routes']);
+        }
 
         return $data;
     }

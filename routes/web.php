@@ -15,6 +15,7 @@ use App\Http\Controllers\UserQueryController;
 use App\Http\Controllers\UserQueryPreferenceController;
 use App\Http\Middleware\EnsureCompanyMember;
 use App\Http\Middleware\EnsurePlatformOwner;
+use App\Http\Requests\ApplicationRouteInteractionRequest;
 use App\Models\InteractionLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -54,11 +55,8 @@ Route::prefix('company')->name('company.')->group(function () {
     });
 });
 
-Route::post('/interaction/contact-clicked', function (Request $request) {
-    $validated = $request->validate([
-        'user_query_id' => ['nullable', 'integer', 'exists:user_queries,id'],
-        'application_route_id' => ['required', 'integer', 'exists:application_routes,id'],
-    ]);
+Route::post('/interaction/contact-clicked', function (ApplicationRouteInteractionRequest $request) {
+    $validated = $request->validated();
 
     try {
         InteractionLog::create([
@@ -76,20 +74,21 @@ Route::post('/interaction/contact-clicked', function (Request $request) {
     return response()->noContent();
 })->name('interaction.contact-clicked');
 
-Route::post('/interaction/route-selected', function (Request $request) {
-    $validated = $request->validate([
-        'user_query_id' => ['nullable', 'integer', 'exists:user_queries,id'],
-        'application_route_id' => ['required', 'integer', 'exists:application_routes,id'],
-    ]);
+Route::post('/interaction/route-selected', function (ApplicationRouteInteractionRequest $request) {
+    $validated = $request->validated();
 
-    InteractionLog::create([
-        'user_query_id' => $validated['user_query_id'] ?? null,
-        'event_type' => 'route_selected',
-        'target_type' => 'application_route',
-        'target_id' => $validated['application_route_id'],
-        'metadata' => null,
-        'occurred_at' => now(),
-    ]);
+    try {
+        InteractionLog::create([
+            'user_query_id' => $validated['user_query_id'] ?? null,
+            'event_type' => 'route_selected',
+            'target_type' => 'application_route',
+            'target_id' => $validated['application_route_id'],
+            'metadata' => null,
+            'occurred_at' => now(),
+        ]);
+    } catch (Throwable) {
+        // A logging failure must not block route selection.
+    }
 
     return response()->noContent();
 })->name('interaction.route-selected');

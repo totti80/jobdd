@@ -96,7 +96,7 @@
       </h2>
 
       <p class="mt-2 font-semibold text-slate-700">
-        <x-company-name :name="$jobPosting->company->name" />
+        <x-company-name :name="($jobPosting->published_company_name ?? $jobPosting->company?->name)" />
       </p>
 
     </section>
@@ -157,7 +157,7 @@
 
         <div class="mt-auto pt-6">
 
-          @if ($route->application_url)
+          @if (\App\Support\JobDecisionPresenter::safeUrl($route->application_url))
 
           <a
             href="{{ $route->application_url }}"

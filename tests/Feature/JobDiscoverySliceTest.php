@@ -179,7 +179,8 @@ test('discovery preloads all Facts in ID order with full attributes and no extra
     $factsBefore = JobFact::orderBy('id')->get()->map->getAttributes()->all();
     $service = new JobDiscoveryService;
     $jobs = $service->discover(discoveryQuery());
-    expect($jobs)->toHaveCount(2)->and(collect($jobs[0]->getAttributes())->sortKeys()->all())->toBe(collect($before)->sortKeys()->all())
+    // The public projection adds a read-only company label; legacy rows keep every stored attribute.
+    expect($jobs)->toHaveCount(2)->and(collect($jobs[0]->getAttributes())->sortKeys()->all())->toBe(collect([...$before, 'published_company_name' => null])->sortKeys()->all())
         ->and($jobs[0]->getRelations())->toHaveKeys(['jobFacts'])
         ->and(array_keys($jobs[0]->getRelations()))->toBe(['jobFacts'])
         ->and($jobs[0]->jobFacts->modelKeys())->toBe([$b->id, $a->id])

@@ -58,7 +58,7 @@
           <p class="font-semibold text-blue-950">代表候補</p>@foreach ($summary['representative_candidates'] as $candidate)<div class="rounded-xl border border-slate-200 p-3 text-sm">
             <p class="font-semibold"><x-company-name :name="$candidate['company_name'] ?? ($candidate['agency_name'] ?? $candidate['platform_name'] ?? '候補')" /></p>
             <p class="mt-1 text-slate-700">{{ $candidate['title'] }}</p>
-            <p class="mt-1 text-slate-500">{{ $candidate['region'] ?: '地域未確認' }}</p>@if ($candidate['application_url'])<a class="mt-2 inline-block font-semibold text-blue-600 underline" href="{{ $candidate['application_url'] }}" target="_blank" rel="noopener noreferrer">外部リンクを確認</a>@endif
+            <p class="mt-1 text-slate-500">{{ $candidate['region'] ?: '地域未確認' }}</p>@if (\App\Support\JobDecisionPresenter::safeUrl($candidate['application_url']))<a class="mt-2 inline-block font-semibold text-blue-600 underline" href="{{ $candidate['application_url'] }}" target="_blank" rel="noopener noreferrer">外部リンクを確認</a>@endif
           </div>@endforeach
         </div>@endif
         <a href="#candidates-{{ $summary['route_type'] }}" class="mt-6 inline-flex justify-center rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700">この経路の候補を見る</a>
@@ -73,7 +73,7 @@
           <h3 class="mt-1 font-bold">{{ $candidate['title'] }}</h3>
           <p class="mt-2 text-sm text-slate-600">地域：{{ $candidate['region'] ?: '未確認' }}</p>
           <p class="text-sm text-slate-600">年収：{{ $candidate['salary_min'] ? $candidate['salary_min'] . '万円以上' : '未確認' }}</p>
-          <p class="mt-2 text-xs text-slate-500">確認日：{{ optional($candidate['confirmed_at'])->format('Y-m-d') ?: '未確認' }}</p>@if ($candidate['application_url'])<a class="mt-3 inline-block text-sm font-semibold text-blue-600 underline" href="{{ $candidate['application_url'] }}" target="_blank" rel="noopener noreferrer">応募可能URLを開く</a>@endif
+          <p class="mt-2 text-xs text-slate-500">確認日：{{ optional($candidate['confirmed_at'])->format('Y-m-d') ?: '未確認' }}</p>@if (\App\Support\JobDecisionPresenter::safeUrl($candidate['application_url']))<a class="mt-3 inline-block text-sm font-semibold text-blue-600 underline" href="{{ $candidate['application_url'] }}" target="_blank" rel="noopener noreferrer">応募可能URLを開く</a>@endif
         </article>@endforeach</div>@endif
     </section>
     @endforeach
@@ -410,7 +410,7 @@
 
               @if ($job->company)
               <div class="mt-1 text-sm text-slate-500">
-                <x-company-name :name="$job->company->name" />
+                <x-company-name :name="($job->published_company_name ?? $job->company?->name)" />
               </div>
               @endif
 
@@ -453,7 +453,7 @@
                 <span>✓ 年収条件一致</span>
               </div>
 
-              @if ($job->source_url)
+              @if (\App\Support\JobDecisionPresenter::safeUrl($job->source_url))
               <div class="mt-3">
                 <a
                   href="{{ $job->source_url }}"
@@ -578,7 +578,7 @@
             <div class="min-w-0">
 
               <div class="text-sm font-semibold text-blue-600">
-                <x-company-name :name="$jobPosting->company->name ?? '企業名未確認'" />
+                <x-company-name :name="($jobPosting->published_company_name ?? $jobPosting->company?->name) ?? '企業名未確認'" />
               </div>
 
               <h3 class="mt-1 text-lg font-bold leading-7 text-slate-900">

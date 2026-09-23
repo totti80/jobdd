@@ -21,12 +21,6 @@ class RouteComparisonController extends Controller
                 ->with(['agency', 'platform']),
         ]);
 
-        $snapshot = $jobPosting->publishedProfile()->first();
-        abort_if($snapshot && ($snapshot->profile_data['schema_version'] ?? null) !== 1, 404);
-        if ($snapshot && $jobPosting->company) {
-            $jobPosting->company->name = $snapshot->profile_data['company']['name'] ?? '会社名未確認';
-        }
-
         $jobPosting->setRelation(
             'applicationRoutes',
             $jobPosting->applicationRoutes

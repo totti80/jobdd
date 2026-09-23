@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agency;
+use App\Models\InteractionLog;
+use App\Models\JobPosting;
 use App\Models\ScoreResult;
 use App\Models\UserQuery;
 use App\Services\QueryParserService;
-use App\Services\ScoreService;
 use App\Services\RouteSummaryService;
+use App\Services\ScoreService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use App\Models\InteractionLog;
-use App\Models\JobPosting;
 
 class UserQueryController extends Controller
 {
@@ -60,7 +60,7 @@ class UserQueryController extends Controller
         ]);
 
         $request->session()->put(
-            'jobdd_query_token_' . $userQuery->public_id,
+            'jobdd_query_token_'.$userQuery->public_id,
             $userQuery->session_token
         );
 
@@ -84,13 +84,9 @@ class UserQueryController extends Controller
 
     public function results(Request $request, UserQuery $userQuery, RouteSummaryService $routeSummaryService)
     {
-        abort_unless(
-            hash_equals(
-                (string) $userQuery->session_token,
-                (string) $request->session()->get('jobdd_query_token_' . $userQuery->public_id)
-            ),
-            404
-        );
+        $token = $request->session()->get('jobdd_query_token_'.$userQuery->public_id);
+        abort_unless(is_string($token) && $token !== '' && is_string($userQuery->session_token)
+            && $userQuery->session_token !== '' && hash_equals($userQuery->session_token, $token), 404);
 
         $results = $userQuery->scoreResults()
             ->with([
@@ -106,24 +102,22 @@ class UserQueryController extends Controller
                 'applicationRoutes.platform',
                 'applicationRoutes.agency',
             ])
-            ->whereHas('company', function ($query) {
-                $query->where('name', '!=', 'A製作所');
+            ->where(function ($query) {
+                $query->where('published_company_name', '!=', 'A製作所')
+                    ->orWhere(fn ($legacy) => $legacy->whereNull('published_company_name')->whereHas('company', fn ($company) => $company->where('name', '!=', 'A製作所')));
             })
 
             ->when(
                 $userQuery->occupation,
-                fn($query, $occupation) =>
-                $query->where('occupation', $occupation)
+                fn ($query, $occupation) => $query->where('occupation', $occupation)
             )
             ->when(
                 $userQuery->region,
-                fn($query, $region) =>
-                $query->where('region', 'like', $region . '%')
+                fn ($query, $region) => $query->where('region', 'like', $region.'%')
             )
             ->when(
                 $userQuery->salary_min,
-                fn($query, $salaryMin) =>
-                $query->where(function ($q) use ($salaryMin) {
+                fn ($query, $salaryMin) => $query->where(function ($q) use ($salaryMin) {
                     $q->whereNull('salary_max')
                         ->orWhere('salary_max', '>=', $salaryMin);
                 })
@@ -142,32 +136,27 @@ class UserQueryController extends Controller
         $agentEvidenceJobs = JobPosting::query()->forPublic()->where('status', 'published')
             ->with([
                 'company',
-                'applicationRoutes' => fn($query) =>
-                $query->where('route_type', 'agent')
+                'applicationRoutes' => fn ($query) => $query->where('route_type', 'agent')
                     ->whereIn('agency_id', $agentIds)
                     ->where('availability_status', 'available'),
             ])
             ->whereHas(
                 'applicationRoutes',
-                fn($query) =>
-                $query->where('route_type', 'agent')
+                fn ($query) => $query->where('route_type', 'agent')
                     ->whereIn('agency_id', $agentIds)
                     ->where('availability_status', 'available')
             )
             ->when(
                 $userQuery->occupation,
-                fn($query, $occupation) =>
-                $query->where('occupation', $occupation)
+                fn ($query, $occupation) => $query->where('occupation', $occupation)
             )
             ->when(
                 $userQuery->region,
-                fn($query, $region) =>
-                $query->where('region', 'like', $region . '%')
+                fn ($query, $region) => $query->where('region', 'like', $region.'%')
             )
             ->when(
                 $userQuery->salary_min,
-                fn($query, $salaryMin) =>
-                $query->whereNotNull('salary_max')
+                fn ($query, $salaryMin) => $query->whereNotNull('salary_max')
                     ->where('salary_max', '>=', $salaryMin)
             )
             ->latest('updated_at')
@@ -180,8 +169,7 @@ class UserQueryController extends Controller
                 $agencyId,
                 $agentEvidenceJobs
                     ->filter(
-                        fn($job) =>
-                        $job->applicationRoutes
+                        fn ($job) => $job->applicationRoutes
                             ->contains('agency_id', $agencyId)
                     )
                     ->values()

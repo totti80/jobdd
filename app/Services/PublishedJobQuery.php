@@ -11,7 +11,10 @@ class PublishedJobQuery
 {
     public static function apply(Builder $query): Builder
     {
-        $base = DB::table('job_postings as authoring')->leftJoin('job_published_profiles as published', fn ($join) => $join->on('published.job_posting_id', '=', 'authoring.id')->where('published.profile_data->schema_version', 1));
+        $base = DB::table('job_postings as authoring')->leftJoin('job_published_profiles as published', fn ($join) => $join->on('published.job_posting_id', '=', 'authoring.id'));
+        // A present but unreadable Snapshot must never expose editable fallback values.
+        $base->where(fn ($where) => $where->whereNull('published.id')->orWhere('published.profile_data->schema_version', 1));
+        $base->selectRaw("CASE WHEN published.id IS NULL THEN NULL ELSE COALESCE(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(published.profile_data, '$.company.name')), 'null'), '会社名未確認') END AS published_company_name");
         foreach (['id', ...(new JobPosting)->getFillable(), 'created_at', 'updated_at'] as $field) {
             if (in_array($field, CompanyJobAuthoringData::BASIC_FIELDS)) {
                 $json = "CASE WHEN JSON_TYPE(JSON_EXTRACT(published.profile_data, '$.level_one.{$field}')) = 'NULL' THEN NULL ELSE JSON_UNQUOTE(JSON_EXTRACT(published.profile_data, '$.level_one.{$field}')) END";

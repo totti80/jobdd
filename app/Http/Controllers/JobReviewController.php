@@ -39,7 +39,7 @@ class JobReviewController extends Controller
 
     public function provenance(JobPosting $jobPosting)
     {
-        abort_unless($jobPosting->status === 'published' && $jobPosting->publishedProfile, 404);
+        abort_unless($jobPosting->status === 'published' && $jobPosting->publishedProfile && ($jobPosting->publishedProfile->profile_data['schema_version'] ?? null) === 1, 404);
 
         return view('jobs.provenance', ['data' => $jobPosting->publishedProfile->profile_data]);
     }

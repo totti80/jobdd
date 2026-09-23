@@ -30,7 +30,7 @@ class JobDecisionUseCaseService
             ->whereIn('id', $jobs->pluck('company_id')->unique())->pluck('name', 'id');
         $items = [];
         foreach ($jobs as $index => $job) {
-            $items[] = ['job' => $job, 'company_name' => $companies->get($job->company_id, '会社名未確認'), 'fit' => $fits[$index]];
+            $items[] = ['job' => $job, 'company_name' => $job->published_company_name ?? $companies->get($job->company_id, '会社名未確認'), 'fit' => $fits[$index]];
         }
 
         return [

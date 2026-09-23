@@ -43,7 +43,7 @@ class JobSelectionUseCaseService
         $companies = Company::query()->whereIn('id', $loaded->pluck('company_id')->unique())->pluck('name', 'id');
         $items = [];
         foreach ($jobs as $i => $job) {
-            $items[] = ['job' => $job, 'company_name' => $companies->get($job->company_id, '会社名未確認'), 'fit' => $fits[$i]];
+            $items[] = ['job' => $job, 'company_name' => $job->published_company_name ?? $companies->get($job->company_id, '会社名未確認'), 'fit' => $fits[$i]];
         }
 
         return ['query' => $query->only(['public_id', 'occupation', 'region', 'salary_min', 'salary_max']),

@@ -24,7 +24,7 @@
         <div class="mt-5"><x-decision-fields :fields="$view['basic']" /></div>
         <p class="mt-4 text-sm leading-6 text-slate-600">掲載年収・保存上の掲載状態は、提示年収や現在の募集を保証しません。情報を比較し、最終的な判断はご自身で行ってください。</p>
         <div class="mt-5 flex flex-col gap-3 sm:flex-row">
-            <a class="jobdd-button" href="{{ $compareUrl }}">比較に追加</a>
+            <a class="jobdd-button" href="{{ $compareUrl }}" data-compare-add="{{ $job->id }}" data-query-id="{{ $query['public_id'] }}" data-job-label="{{ $view['company'] }} {{ $job->title }}">比較に追加</a>
             <a class="jobdd-button" href="{{ $routesUrl }}">応募方法を見る</a>
         </div>
         <p class="mt-3 text-sm leading-6 text-slate-600">比較は一覧で2〜3件を選びます。この求人を選択した状態で一覧へ戻ります。</p>
@@ -109,7 +109,7 @@
                     <p class="leading-7 text-slate-600">{{ $section['count'] }}件の応募経路が保存されています。利用条件と現在の募集状況は応募方法の画面とリンク先で確認してください。</p>
                     <div class="mt-5 flex flex-col gap-3 sm:flex-row">
                         <a class="jobdd-button" href="{{ $routesUrl }}">応募方法を見る</a>
-                        <a class="jobdd-button" href="{{ $compareUrl }}">比較に追加</a>
+                        <a class="jobdd-button" href="{{ $compareUrl }}" data-compare-add="{{ $job->id }}" data-query-id="{{ $query['public_id'] }}" data-job-label="{{ $view['company'] }} {{ $job->title }}">比較に追加</a>
                     </div>
                     @break
                 @default

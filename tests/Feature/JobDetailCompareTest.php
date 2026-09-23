@@ -142,7 +142,7 @@ test('detail allows legitimate candidates beyond the first page without Fact or 
     $this->get(detailCompareUrl($query, $jobs[23]->id))->assertOk();
 });
 
-test('compare renders two or three jobs in input order with four reads and no writes', function ($count) {
+test('compare renders two or three jobs in input order with six reads and no writes', function ($count) {
     [$query, $jobs] = detailCompareFixture();
     $ids = array_slice(array_reverse(array_map(fn ($j) => $j->id, $jobs)), 3 - $count);
     $sql = [];
@@ -163,7 +163,7 @@ test('compare renders two or three jobs in input order with four reads and no wr
     } finally {
         $record = false;
     }
-    expect($sql)->toHaveCount(4)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
+    expect($sql)->toHaveCount(6)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
     $items = $response->viewData('items');
     expect(array_map(fn ($item) => $item['job']->id, $items))->toBe($ids);
     foreach ($items as $item) {
@@ -240,7 +240,7 @@ test('new detail and compare routes keep database sessions read-only', function 
     } finally {
         $record = false;
     }
-    expect($sql)->toHaveCount($detail ? 7 : 5)
+    expect($sql)->toHaveCount(7)
         ->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([])
         ->and(DB::table('sessions')->orderBy('id')->get()->toJson())->toBe($before);
 })->with([true, false]);

@@ -114,13 +114,13 @@ select:focus[data-flux-control] {
     .jobdd [aria-disabled='true'] { @apply bg-slate-100 text-slate-700 ring-1 ring-slate-500; }
     .jobdd-provenance { overflow-wrap: anywhere; }
     .jobdd-mobile-compare { display: none; }
-    .jobdd-comparison { --axis-width: 104px; overflow-x: auto; scroll-padding-inline-start: calc(var(--axis-width) + 8px); }
+    .jobdd-comparison { position: relative; --axis-width: 104px; overflow: auto; max-height: 70svh; scroll-padding-top: calc(var(--jobdd-header-height, 0px) + 8px); scroll-padding-inline-start: calc(var(--axis-width) + 8px); }
     .jobdd-comparison table { width: 100%; min-width: calc(104px + var(--job-count) * 240px); table-layout: fixed; border-collapse: separate; border-spacing: 0; }
     .jobdd-comparison .jobdd-axis-column { width: var(--axis-width); }
     .jobdd-comparison :where(th, td) { @apply border-b border-r border-slate-200 p-4 text-left align-top; overflow-wrap: anywhere; }
-    .jobdd-comparison thead th { @apply bg-blue-50; }
+    .jobdd-comparison thead th { @apply sticky top-0 z-20 bg-blue-50; }
     .jobdd-comparison th[scope='row'] { @apply sticky left-0 z-10 bg-white; }
-    .jobdd-comparison .jobdd-corner { @apply sticky left-0 z-20; }
+    .jobdd-comparison .jobdd-corner { @apply sticky left-0 z-30; }
     .jobdd-comparison .jobdd-group { @apply bg-slate-100 text-slate-700; }
     @media (width >= 1024px) {
         .jobdd-comparison { --axis-width: 160px; overflow: auto; max-height: 70svh; scroll-padding-top: calc(var(--jobdd-header-height, 0px) + 8px); }

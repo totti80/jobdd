@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Agency;
 use App\Models\UserQuery;
+use App\Services\JobComparisonUseCaseService;
 use App\Services\JobDecisionUseCaseService;
 use App\Services\JobDetailUseCaseService;
-use App\Services\JobSelectionUseCaseService;
 use App\Support\AgencyDecisionPresenter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
@@ -43,7 +43,7 @@ class JobDecisionController extends Controller
             ->header('Cache-Control', 'private, no-store');
     }
 
-    public function compare(Request $request, UserQuery $userQuery, JobSelectionUseCaseService $useCase)
+    public function compare(Request $request, UserQuery $userQuery, JobComparisonUseCaseService $useCase)
     {
         [$input, $requirements] = $this->input($request, $userQuery, true);
         try {

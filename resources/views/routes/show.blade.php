@@ -300,7 +300,7 @@
               @endif
             </button>
 
-            @if ($route->application_url)
+            @if (\App\Support\JobDecisionPresenter::safeUrl($route->application_url))
 
             <a
               href="{{ $route->application_url }}"
@@ -568,7 +568,7 @@
 
                   @foreach ($comparisonRoutes as $comparisonRoute)
 
-                  @if ($comparisonRoute->application_url)
+                  @if (\App\Support\JobDecisionPresenter::safeUrl($comparisonRoute->application_url))
 
                   <div>
                     <a
@@ -782,7 +782,7 @@
               'Accept': 'application/json',
             },
             body: JSON.stringify({
-              user_query_id: Number(button.dataset.userQueryId),
+              user_query_id: Number(button.dataset.userQueryId) || null,
               application_route_id: Number(button.dataset.applicationRouteId),
             }),
           });
@@ -824,35 +824,27 @@
     document.querySelectorAll('.contact-link').forEach((link) => {
 
       link.addEventListener('click', async (event) => {
-        const destination = link.href;
         const payload = JSON.stringify({
           user_query_id: Number(link.dataset.userQueryId) || null,
           application_route_id: Number(link.dataset.applicationRouteId),
         });
 
         try {
-          if (navigator.sendBeacon) {
-            const body = new Blob([payload], {
-              type: 'application/json'
-            });
-            navigator.sendBeacon('{{ route("interaction.contact-clicked") }}', body);
-          } else {
-            fetch('{{ route("interaction.contact-clicked") }}', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-              },
-              body: payload,
-              keepalive: true,
-            });
-          }
+          await fetch('{{ route("interaction.contact-clicked") }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'Accept': 'application/json',
+            },
+            body: payload,
+            keepalive: true,
+          });
         } catch (error) {
           console.error('contact_clicked best effort failed:', error);
         }
 
-        window.location.href = destination;
+        // Let the anchor open its destination once, independently of logging.
       });
     });
   </script>

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JobPosting;
 use App\Models\InteractionLog;
+use App\Models\JobPosting;
 use Illuminate\Http\Request;
 
 class RouteComparisonController extends Controller
@@ -15,16 +15,22 @@ class RouteComparisonController extends Controller
 
         $jobPosting->load([
             'company',
-            'applicationRoutes' => fn($query) => $query
+            'applicationRoutes' => fn ($query) => $query
                 ->where('availability_status', 'available')
                 ->whereNull('unavailable_at')
                 ->with(['agency', 'platform']),
         ]);
 
+        $snapshot = $jobPosting->publishedProfile()->first();
+        abort_if($snapshot && ($snapshot->profile_data['schema_version'] ?? null) !== 1, 404);
+        if ($snapshot && $jobPosting->company) {
+            $jobPosting->company->name = $snapshot->profile_data['company']['name'] ?? '会社名未確認';
+        }
+
         $jobPosting->setRelation(
             'applicationRoutes',
             $jobPosting->applicationRoutes
-                ->sortBy(fn($route) => match ($route->route_type) {
+                ->sortBy(fn ($route) => match ($route->route_type) {
                     'direct' => 1,
                     'agent' => 2,
                     'platform' => 3,
@@ -68,13 +74,13 @@ class RouteComparisonController extends Controller
         ]);
     }
 
-    public function action(\App\Models\JobPosting $jobPosting)
+    public function action(JobPosting $jobPosting)
     {
         $jobPosting = JobPosting::query()->forPublic()->where('status', 'published')->findOrFail($jobPosting->id);
 
         $jobPosting->load([
             'company',
-            'applicationRoutes' => fn($query) => $query
+            'applicationRoutes' => fn ($query) => $query
                 ->where('availability_status', 'available')
                 ->whereNull('unavailable_at')
                 ->with(['agency', 'platform']),

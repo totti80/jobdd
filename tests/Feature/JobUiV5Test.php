@@ -148,8 +148,8 @@ test('v5 comparison has row headers and equal identifiable columns for two or th
     $response = $this->get(route('query.jobs.compare', ['userQuery' => $query->public_id, 'jobs' => $ids, 'tools' => ['autocad']]));
     $dom = uiV5Dom($response, 'compare-'.$count);
     expect($dom->query('//thead//th[@scope="col"]')->length)->toBe($count + 1)
-        ->and($dom->query('//th[@scope="row"]')->length)->toBe(9)
-        ->and($dom->query('//tbody')->length)->toBe(3)
+        ->and($dom->query('//th[@scope="row"]')->length)->toBe(21)
+        ->and($dom->query('//tbody')->length)->toBe(4)
         ->and($dom->query('//caption')->length)->toBe(1);
     $actual = [];
     foreach ($dom->query('//thead//th[@data-job-id]') as $node) {

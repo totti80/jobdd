@@ -1,6 +1,6 @@
 # JobDD Master Context
 
-**Version:** 5.3  
+**Version:** 5.4  
 **初版:** 2026-08-13  
 **更新:** 2026-09-23  
 **Project:** JobDD  
@@ -163,6 +163,161 @@ Platform Owner / AdminがJobDD管理画面で確認
 - メールは通知のみとし、承認 / 差戻し操作は必ずJobDD管理画面上で行う
 - 求人のLevel 1に `application_requirements`（最低限の応募条件）を正式追加する
 - Platform Ownerの公開確認は企業申告内容の真偽保証ではなく、公開可否・必須入力・明らかな矛盾等を確認する運用とする
+
+---
+
+# 2.4 v5.4で確定した本番配置・リリース方針
+
+## FACT
+
+2026-09-23時点で、Phase A Batch 1〜9のローカル実装・Hardeningは完了している。
+
+- Batch 9最終：**832 tests PASS / 5,561 assertions**
+- PC / 390px確認、Pint、`npm run build`、`git diff --check` PASS
+- ローカル実DB主要19テーブルの件数・SHA-256不変
+- Batch 9 checkpoint：`83a5734 Harden Phase A public boundaries and document production readiness`
+- Production deploy / migration / 実メール送信 / Platform Owner昇格 / 第2Submit Ready Tagは未実施
+
+## FACT｜現行本番構成
+
+現行の提出保険版V4は、さくらレンタルサーバ上で以下の構成で稼働している。
+
+```text
+Laravel本体：/home/ikeda-dev/jobdd-v4-deploy
+公開フォルダ：/home/ikeda-dev/www/jobdd
+公開URL：https://jobdd.jp/
+```
+
+本番はGit checkoutで直接運用する方式ではなく、**ローカル等でvendor / assetsを用意した成果物を配置する方式**である。
+
+サーバー側にはPHP / MySQL / mysqldumpは存在するが、Composer / Node / npmはPATH上に存在しない。
+
+## DECISION｜V5.3の本番配置方式
+
+現行V4を削除・上書きせず、非公開のRollback用保険として保持する。
+
+最新Phase Aは新しい本体ディレクトリへ別配置する。
+
+候補：
+
+`/home/ikeda-dev/jobdd-v5-deploy`
+
+その後、承認済み手順に従い、公開側 `/home/ikeda-dev/www/jobdd` のLaravel参照先・assets・storage参照をV5.3へ切り替える。
+
+切替後は、
+
+- `https://jobdd.jp/`
+- `https://jobdd.jp/jobs/start`
+- `https://jobdd.jp/company/register`
+
+を含む公開URL全体をV5.3で動かす。
+
+旧V4を `/jobs/start` だけで恒久公開する構成にはしない。
+
+## DECISION｜APP_URL / HTTPS
+
+本番の正規URLは、
+
+`https://jobdd.jp`
+
+とする。
+
+現行 `.env` の旧値 `https://ikeda-dev.sakura.ne.jp/jobdd` は、V5.3 deploy承認後に `https://jobdd.jp` へ変更する。
+
+さくら管理画面では、
+
+- Web公開フォルダ：`~/www/jobdd`
+- SSL：有効
+- HTTPS転送：有効
+- `www.jobdd.jp` → `jobdd.jp` 転送：有効
+
+を確認済み。
+
+現時点では `URL::forceScheme('https')` やTrusted Proxy全許可を追加する根拠はない。最終確認はProduction Smokeで行う。
+
+## DECISION｜本番メール通知
+
+公開申請通知先は引き続き、
+
+`postmaster@jobdd.jp`
+
+とする。
+
+さくら側でSPF / DKIM/ARC / DMARC、および `postmaster@jobdd.jp` メールボックスの存在を確認済み。
+
+PHPのsendmail経路は、
+
+```text
+PHP
+→ /usr/sbin/sendmail -t -i
+→ mailwrapper
+→ /usr/libexec/sendmail/sendmail
+```
+
+まで確認済み。
+
+本番通知方式は**ローカルsendmail transportを第一候補**とする。ただし、実配送・受信確認が完了するまではPublic Release GOとしない。
+
+## DECISION｜Backup / Restore / Rollback
+
+V5.3 migration前に本番DB backupを取得し、**別DBへのrestore rehearsalを成功させてからdeployへ進む**。
+
+BackupはWeb公開領域外へ保存する。
+
+候補：
+
+```text
+/home/ikeda-dev/jobdd-backups/
+  pre-v53-YYYYMMDD-HHMMSS/
+```
+
+Restore rehearsal用DB候補：
+
+`ikeda-dev_jobdd_restore_v1`
+
+まずは本番と同じさくらMySQL 8.0上の別DBでrestore rehearsalする方針を第一候補とする。安全な検証用接続を分離できない場合は、隔離したローカルMySQLへ切り替える。
+
+重要：**v1コードだけをV5 migration後DBへ接続してRollbackしない。**
+
+v1へ戻す場合は、移行前backupを別DBへ復元し、v1コードとその復元DBをセットで切り替える。移行後DBは破棄せず保全する。
+
+## DECISION｜Platform Owner
+
+Phase A本番のPlatform Ownerは、Owner本人のアカウントを対象とする。
+
+本番deploy後、Owner本人が通常登録フローでUserを作成し、本人確認後に承認された手順で `system_role=platform_owner` へ昇格する。
+
+事前に汎用Seederや公開昇格APIは作らない。
+
+## OPEN｜Production Smoke用Company / 求人
+
+Production Smokeで公開承認するCompany / 求人は未決定。
+
+架空求人は一般公開しない。
+
+- 実在Company
+- 公開して問題のない実在求人
+- Ownerが内容を確認し明示承認したもの
+
+だけを公開Smokeに利用する。
+
+## FACT｜Preflight判定
+
+2026-09-23 Production Preflightの判定は、**Public Release NO-GO**。
+
+これはコード品質のNO-GOではなく、本番公開前の運用・環境条件が未完了であるため。
+
+主な未完了事項：
+
+- APP_URL変更の実施と実環境確認
+- sendmailによる実配送 / 受信確認
+- migration前backup取得
+- 別DB restore rehearsal
+- cron停止 / 再開とrelease切替手順の最終確認
+- Platform Owner作成 / 本人確認 / 昇格
+- Production Smoke用の実在Company / 求人決定
+- Production Smoke PASS
+- `graduation-submit-ready-v2` tag作成
 
 ---
 
@@ -395,6 +550,63 @@ Evidence確認
 - Draftを求職者側の一覧・詳細・比較・応募経路から除外
 - 680 tests PASS / 4,183 assertions
 - 既存1,591求人・主要既存データ件数・ハッシュ不変を確認
+
+## FACT｜2026-09-23 Phase A Batch 4〜9
+
+### Batch 4｜Level 2 Authoring
+
+- STEP 1〜5、Tool、Typical Day、Representative Project、途中保存・再開を実装
+- Level 2 Core completion判定を実装
+- 702 tests PASS / 4,402 assertions
+
+### Batch 5｜Controlled Publish Core
+
+- Preview → 公開申請 → 通知 → Platform Owner審査 → 承認 / 差戻し → Publishを接続
+- Publish時にSource / Job Fact / Published Snapshot / Direct RouteをTransactionで更新
+- 二重承認、rollback、既存Fact保護、再審査中Snapshot維持を検証
+- 751 tests PASS / 4,675 assertions
+
+### Batch 6｜Seeker Decision View v2
+
+- Published Snapshotを正本とするSeeker Decision View v2を実装
+- SnapshotなしLegacy求人は既存表示へfallback
+- 未承認Authoringを求職者側へ漏らさない境界を実装
+- 766 tests PASS / 4,861 assertions
+- Git checkpoint：`2a6b74f Add Seeker Decision View v2`
+
+### Batch 7｜Seeker Progressive Input
+
+- 任意の詳細希望入力・保存・再編集・解除を実装
+- 詳細希望はFit / Rankingへ利用せず、比較材料としてのみ表示
+- 799 tests PASS / 5,108 assertions
+- Git checkpoint：`9992a1c`（Batch 7完了時HEAD）
+
+### Batch 8｜Compare v2 / Evidence / Application Route
+
+- 最大3求人のCompare v2を実装
+- Evidence / Provenance / Application Routeへの導線を接続
+- ページをまたぐ比較選択保持を実装
+- 813 tests PASS / 5,275 assertions
+- Self-service / Legacy混在比較を検証
+
+### Batch 9｜Hardening / Production Readiness
+
+- Draft / Published Snapshot / interaction log targetの公開境界を総点検・修正
+- 空token、危険URL、未知Snapshot schemaからの未承認Authoring漏洩を防止
+- Company → Review → Publish → Seeker → Compare → RouteのVertical Sliceを全回帰
+- Authorization matrix、Republish、Data Integrity、UI、PerformanceをHardening
+- **832 tests PASS / 5,561 assertions**
+- PC / 390px、Pint、build、diff check PASS
+- ローカル実DB主要19テーブルの件数・SHA-256不変
+- Git checkpoint：`83a5734 Harden Phase A public boundaries and document production readiness`
+
+## FACT｜Production Preflight
+
+Phase AコードHardeningはPASSしているが、本番公開はまだ実施していない。
+
+Preflightでは現行本番構成、PHP / MySQL、公開フォルダ、SSL / HTTPS、sendmail経路、DB容量、backup / restore可能性等を確認した。
+
+現時点のPublic Release判定は**NO-GO（運用・環境条件待ち）**。
 
 ---
 
@@ -2190,9 +2402,11 @@ Published Snapshot / Job Factを使った仕事理解画面を実装する。
 
 求人理解 → 比較 → Evidence / Provenance → 応募方法 → 外部遷移を一本につなぐ。
 
-### Batch 9｜Hardening / Production / Submit Ready
+### Batch 9｜Hardening / Production Readiness
 
-全回帰、認可、Draft漏洩、再Publish、PC / mobile、本番Smokeを確認し、第2Submit Ready Tagを作成する。
+全回帰、認可、Draft漏洩、再Publish、PC / mobile、Production Preflightまでを確認する。
+
+実Production Smokeと第2Submit Ready Tagは、deploy後に別リリース工程として実施する。
 
 ## Git
 
@@ -2255,7 +2469,7 @@ Codexは、
 
 ---
 
-# 42. v5.3で絶対に戻らない原則
+# 42. v5.4で絶対に戻らない原則
 
 1. HYPOTHESISをFACTとして扱わない
 2. HM型業務効率化SaaSへ根拠なく戻らない

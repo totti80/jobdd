@@ -1,6 +1,6 @@
 # JobDD Decision Log
 
-**Version:** 4.1  
+**Version:** 4.2  
 **更新:** 2026-09-23  
 
 **目的：**  
@@ -4236,4 +4236,194 @@ Batch 3で `application_requirements` と公開審査状態のschemaを追加し
 - 主要既存データ件数・ハッシュ不変
 - 企業求人作成時に `status=draft`、`review_status=not_submitted` を明示
 - Draftは求職者側の一覧・詳細・比較・応募経路から非表示
+
+---
+
+# D-095｜Phase A Batch 1〜9のコードHardening完了と本番公開判定を分離する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 得られた情報
+
+Batch 1〜9を完了し、Batch 9最終で以下を確認した。
+
+- 832 tests PASS / 5,561 assertions
+- PC / 390px確認
+- Pint / build / diff check PASS
+- ローカル実DB主要19テーブル件数・SHA-256不変
+- Company登録 → Authoring → Review → Publish → Seeker → Compare → RouteのVertical Slice PASS
+- Git checkpoint `83a5734 Harden Phase A public boundaries and document production readiness`
+
+一方、本番環境ではAPP_URL、メール実配送、backup / restore、Platform Owner、Production Smoke等が未完了。
+
+## 意思決定
+
+**コードHardeningのPASSとPublic Release GOを分離する。**
+
+Phase Aコードは完成扱いとするが、Production Preflight / Smokeの未完了項目が解消するまで本番公開完了とは扱わない。
+
+## 判断理由
+
+ローカル品質確認と本番運用条件は別問題であり、片方のPASSをもう片方のPASSとして扱わないため。
+
+---
+
+# D-096｜V5.3を新deployディレクトリへ配置し、V4をRollback用に保持する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## FACT
+
+現行本番は以下。
+
+```text
+Laravel本体：/home/ikeda-dev/jobdd-v4-deploy
+公開フォルダ：/home/ikeda-dev/www/jobdd
+```
+
+本番サーバーはGit管理による直接deployではなく、成果物配置型である。
+
+## 意思決定
+
+V5.3は新しい本体ディレクトリへ別配置する。
+
+候補：
+
+`/home/ikeda-dev/jobdd-v5-deploy`
+
+旧 `jobdd-v4-deploy` は削除せず、非公開のRollback用保険として保持する。
+
+公開側 `/home/ikeda-dev/www/jobdd` をV5.3へ切り替え、切替後は `/`、`/jobs/start`、`/company/register` 等をすべてV5.3で提供する。
+
+## 判断理由
+
+現行提出保険版を壊さず、新版の転送・検証・Rollbackを安全に行うため。
+
+---
+
+# D-097｜本番正規URLをhttps://jobdd.jpへ統一する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## FACT
+
+現行APP_URLは `https://ikeda-dev.sakura.ne.jp/jobdd`。
+
+さくら管理画面では、
+
+- Web公開フォルダ `~/www/jobdd`
+- SSL有効
+- HTTPS転送有効
+- `www.jobdd.jp` → `jobdd.jp` 転送
+
+を確認済み。
+
+## 意思決定
+
+V5.3 deploy時に、APP_URLを
+
+`https://jobdd.jp`
+
+へ変更する。
+
+物理公開フォルダ `~/www/jobdd` は変更しない。
+
+現時点で `URL::forceScheme('https')` やTrusted Proxy全許可は追加しない。
+
+## 今後の確認
+
+Production Smokeで、生成URLに旧ホスト・`/jobdd`・HTTPが残らないこと、session cookieのSecure属性を確認する。
+
+---
+
+# D-098｜公開申請通知はpostmaster@jobdd.jp、sendmailを第一候補とする
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## FACT
+
+- `postmaster@jobdd.jp` は存在する
+- SPF / DKIM/ARC / DMARC設定を確認済み
+- PHP `sendmail_path` は `/usr/sbin/sendmail -t -i`
+- `/usr/sbin/sendmail` → mailwrapper → `/usr/libexec/sendmail/sendmail`
+- 現行Laravel mailerは `log`
+
+## 意思決定
+
+公開申請通知先は `postmaster@jobdd.jp` を維持する。
+
+本番mail transportは、さくらサーバーのローカルsendmailを第一候補とする。
+
+## OPEN
+
+実配送 / 受信は未検証。承認後のProduction Smokeで確認し、成功するまでPublic Release GOとしない。
+
+---
+
+# D-099｜V5.3 migration前にBackupと別DB Restore Rehearsalを必須化する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## 意思決定
+
+V5.3 migration前に、本番DB全体のbackupを取得し、別DBへrestore rehearsalを行う。
+
+BackupはWeb公開領域外へ保存する。
+
+候補：
+
+```text
+/home/ikeda-dev/jobdd-backups/
+  pre-v53-YYYYMMDD-HHMMSS/
+```
+
+Restore rehearsal用DB候補：
+
+`ikeda-dev_jobdd_restore_v1`
+
+第一候補は、さくらMySQL 8.0上の別DB。安全な検証用接続を分離できない場合は隔離ローカルMySQLへ切り替える。
+
+## Rollback原則
+
+**v1コードだけをV5 migration後DBへ接続して戻さない。**
+
+Rollback時は、移行前backupを別DBへ復元し、v1コードと復元DBをセットで切り替える。V5側DBは破棄せず保全する。
+
+## 判断理由
+
+MySQL DDLを含むmigration後に旧コードだけへ戻すと、Draft等の公開境界を旧コードが理解せず、非公開情報漏洩につながる可能性があるため。
+
+---
+
+# D-100｜Platform OwnerはOwner本人、Production Smokeは実在求人のみ使用する
+
+**日付：** 2026-09-23  
+**Status：** 現在採用中
+
+## Platform Owner
+
+Phase A本番のPlatform OwnerはOwner本人のアカウントとする。
+
+本番deploy後に通常登録フローでUserを作成し、本人確認後、承認された手順で `system_role=platform_owner` へ昇格する。
+
+汎用Seederや公開昇格APIは作らない。
+
+## Production Smoke
+
+公開承認まで行うSmokeでは架空求人を一般公開しない。
+
+- 実在Company
+- 公開して問題のない実在求人
+- Ownerが内容確認し明示承認したもの
+
+だけを利用する。
+
+## OPEN
+
+具体的なCompany / 求人は未決定。
 

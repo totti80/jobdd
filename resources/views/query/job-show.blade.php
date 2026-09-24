@@ -115,5 +115,6 @@
     </section>
     <a href="{{ $backUrl }}" class="jobdd-link inline-flex min-h-12 items-center">求人一覧へ戻る</a>
 </main>
+<x-site-footer />
 </body>
 </html>

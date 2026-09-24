@@ -148,3 +148,54 @@ select:focus[data-flux-control] {
     @media (width >= 1024px) { .jobdd-map-plot { height: 480px; } }
     @media (height < 480px) and (width < 1024px) { .jobdd-map-plot { height: 200px; } }
 }
+
+/* Public V5: shared navigation, restrained cards and mobile-first spacing. */
+@layer components {
+    .site-container { @apply mx-auto w-full max-w-6xl px-4 sm:px-6; }
+    .site-header { @apply border-b border-blue-100 bg-white; }
+    .site-header-inner { @apply mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-5 px-4 py-3 sm:px-6; }
+    .site-brand { @apply inline-flex min-h-11 items-center; }
+    .site-menu { @apply min-w-0; }
+    .site-menu > summary { @apply flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-lg border border-blue-200 px-3 text-sm font-semibold text-blue-900; }
+    .site-menu > summary::-webkit-details-marker { display: none; }
+    .site-menu nav { @apply flex flex-col gap-1 py-3; }
+    .site-nav-link { @apply inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-800; }
+    .site-nav-link[aria-current='page'] { @apply bg-blue-50 text-blue-800; box-shadow: inset 0 -2px var(--color-blue-700); }
+    .site-header :focus-visible, .site-footer :focus-visible { outline: 2px solid var(--color-blue-700); outline-offset: 3px; }
+    .site-footer { @apply mt-auto border-t border-blue-100 bg-white py-8; }
+    .site-footer-top { @apply flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between; }
+    .site-footer nav { @apply flex flex-wrap gap-1; }
+    .site-eyebrow { @apply mb-3 text-sm font-bold tracking-wide text-blue-700; }
+    .site-page-hero { @apply mb-8 border-b border-blue-100 pb-8; }
+    .site-section { @apply py-12 sm:py-16; }
+    .site-section-title { @apply text-2xl font-bold leading-9 tracking-tight text-blue-950 sm:text-3xl sm:leading-10; }
+    .site-actions { @apply mt-7 flex flex-wrap items-center gap-3; }
+    .site-button-secondary { @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-blue-700 bg-white px-4 py-3 text-center font-semibold leading-6 text-blue-800 hover:bg-blue-50; }
+    .site-landing-hero { @apply border-b border-blue-100 py-10 sm:py-16; background: linear-gradient(125deg, #f0f7ff, #fff 60%, #eaf6ff); }
+    .site-hero-grid { @apply grid items-center gap-9 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-12; }
+    .site-hero-grid h1 { @apply text-[30px] font-bold leading-[1.55] tracking-tight text-blue-950 sm:text-[42px]; }
+    .site-hero-panel { @apply min-w-0 rounded-2xl border border-blue-100 bg-white p-6 shadow-sm sm:p-8; }
+    .site-hero-topics { @apply mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-1; }
+    .site-hero-topics > div { @apply flex items-center gap-4; }
+    .site-topic-dot { @apply size-3 shrink-0 rounded-full bg-blue-600 ring-4 ring-blue-50; }
+    .site-capabilities { @apply mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4; }
+    .site-decision { @apply grid gap-6 rounded-2xl border border-blue-100 bg-blue-50 p-6 sm:p-8 lg:grid-cols-2 lg:items-center; }
+    .site-jobs-grid { @apply mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3; }
+    .site-job-card { @apply flex flex-col; }
+    .site-job-facts { @apply my-5 space-y-3 text-sm leading-6; }
+    .site-job-facts > div { @apply grid grid-cols-[4em_minmax(0,1fr)] gap-3; }
+    .site-job-facts dt { @apply text-slate-500; }
+    .site-job-link { @apply mt-auto flex min-h-11 items-center justify-between border-t border-slate-200 pt-4 font-semibold text-blue-800 underline-offset-4 hover:underline; }
+    .site-company-cta { @apply flex flex-col items-start gap-6 rounded-2xl border border-blue-200 bg-blue-50 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between; }
+    @media (width >= 1200px) {
+        .site-menu > summary { display: none; }
+        .site-menu::details-content { content-visibility: visible; display: contents; }
+        .site-menu nav { @apply flex flex-row flex-wrap gap-0 py-0; }
+    }
+    @media (width < 1200px) {
+        .site-header-inner { position: relative; }
+        .site-menu[open] { @apply w-full; }
+        .site-menu[open] > summary { position: absolute; top: 12px; right: 16px; }
+        .site-menu[open] nav { @apply mt-2 border-t border-blue-100; }
+    }
+}

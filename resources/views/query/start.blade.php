@@ -7,26 +7,22 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="jobdd min-h-screen" data-jobdd-root>
-<header class="border-b border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6">
-        @include('query.partials.brand')
-    </div>
-</header>
+<x-site-header />
 <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:py-10">
-    <section aria-labelledby="entry-title" class="jobdd-entry-hero jobdd-entry-hero-illustrated">
-        <div class="jobdd-hero-copy">
-        <p class="jobdd-scope-badge"><x-jobdd-icon name="map" /><span>近畿6府県 × 機械設計・電気設計 専門</span></p>
-        <h1 id="entry-title" class="jobdd-page-title jobdd-hero-title">求人を探すだけでは、わからない。<br>仕事の中身まで比べて、選ぶ。</h1>
-        <p class="mt-4 max-w-3xl leading-7">JobDDは、求人情報を「確認できたこと・条件と異なること・未確認」に整理し、根拠を見ながら比較できるDecision Supportサービスです。</p>
-        <p class="mt-3 text-sm leading-6 text-slate-600">現在のJobDDは、近畿地方の機械設計・電気設計職に対象を絞った卒業制作版です。</p>
-        <a href="#entry-form" class="jobdd-link mt-4 inline-flex min-h-11 items-center gap-2">希望条件を入力する<x-jobdd-icon name="arrow" /></a>
-        </div>
-        <div class="jobdd-hero-frame">
-        <img src="{{ asset('images/jobdd/jobdd-hero-kinki.png') }}" width="1672" height="941" class="jobdd-hero-image"
-            alt="神戸の港、大阪城、京都の寺社、奈良の鹿、琵琶湖や和歌山の風景を背景に、機械・電気設計の求人を比較して考える人たち"
-            fetchpriority="high" decoding="async">
-        </div>
-    </section>
+    <x-page-hero id="entry-title" title="まずは4つの条件から求人を見てみる" eyebrow="かんたん入力">
+        <p>詳しい条件は、求人を見たあとから追加できます。</p>
+        <p class="mt-2 text-sm">現在の対象は、近畿6府県の機械設計・電気設計です。</p>
+        <a href="#entry-form" class="jobdd-link mt-3 inline-flex min-h-11 items-center">条件を入力する →</a>
+    </x-page-hero>
+    @if ($selectedJob)
+        <div class="jobdd-decision-note mb-6" role="status"><p class="font-bold">「{{ $selectedJob->title }}」が気になった方へ</p><p class="mt-2 leading-7">まず希望条件を入力してください。求人一覧から、この求人を含めた仕事の内容を確認・比較できます。職種や公開状況によっては一覧に表示されない場合があります。</p></div>
+    @elseif (request()->query('guide') === 'compare')
+        <div class="jobdd-decision-note mb-6"><p>比較したい求人を選んでください。まず条件を入力して求人一覧へ進みます。</p></div>
+    @elseif (request()->query('guide') === 'preferences')
+        <div class="jobdd-decision-note mb-6"><p>詳細条件は、かんたん入力のあとで追加できます。まずは希望する職種と地域から始めましょう。</p></div>
+    @elseif (request()->query('guide') === 'unavailable')
+        <div class="jobdd-decision-note mb-6"><p>この求人は現在確認できません。条件を入力して公開中の求人をご覧ください。</p></div>
+    @endif
     @if ($inputErrors)
         <section role="alert" aria-labelledby="input-errors" tabindex="-1" data-input-errors class="mb-6 rounded-xl border border-red-700 bg-red-50 p-4 text-red-800">
             <h2 id="input-errors" class="font-bold">入力内容を確認してください</h2>
@@ -42,7 +38,7 @@
     <form id="entry-form" method="POST" action="{{ route('jobs.store') }}" aria-labelledby="entry-form-title" class="jobdd-card jobdd-entry-form space-y-7">
         @csrf
         <div class="border-b border-slate-200 pb-5">
-            <h2 id="entry-form-title" class="flex items-center gap-3 text-xl font-bold text-blue-950"><span class="jobdd-icon-tile"><x-jobdd-icon name="compare" /></span>希望条件から、求人を比較する</h2>
+            <h2 id="entry-form-title" class="flex items-center gap-3 text-xl font-bold text-blue-950"><span class="jobdd-icon-tile"><x-jobdd-icon name="compare" /></span>4つの条件を入力</h2>
             <p class="mt-2 text-sm leading-6 text-slate-600">対象：近畿6府県 × 機械設計・電気設計</p>
         </div>
         <fieldset aria-describedby="occupation-help{{ isset($fieldErrors['occupation']) ? ' occupation-error' : '' }}">
@@ -99,7 +95,15 @@
     </form>
     <aside aria-labelledby="entry-guide-title" class="min-w-0 space-y-5">
         <section class="jobdd-card">
-            <h2 id="entry-guide-title" class="text-xl font-bold text-blue-950">JobDDで分かること</h2>
+            <h2 id="entry-guide-title" class="text-xl font-bold text-blue-950">JobDDの使い方</h2>
+            <ol class="jobdd-guide-list">
+                @foreach (['かんたん入力', '求人を見る', '必要なら詳細条件を追加', '仕事の中身を比較', '応募方法を確認'] as $step)
+                    <li class="jobdd-guide-item"><span class="jobdd-guide-icon jobdd-guide-confirmed" aria-hidden="true">{{ $loop->iteration }}</span><span class="pt-1 font-semibold text-blue-950">{{ $step }}</span></li>
+                @endforeach
+            </ol>
+        </section>
+        <section class="jobdd-card">
+            <h2 class="text-xl font-bold text-blue-950">JobDDで分かること</h2>
             <p class="mt-3 text-sm leading-6 text-slate-600">希望条件と求人の記載を照らし合わせ、3つの状態に整理します。</p>
             <ul class="jobdd-guide-list">
                 <li class="jobdd-guide-item" data-explanation="confirmed"><span class="jobdd-guide-icon jobdd-guide-confirmed"><x-jobdd-icon name="match" /></span><div><h3 class="font-bold text-blue-950">確認できた</h3><p class="mt-1 text-sm leading-6 text-slate-600">希望条件との一致を、求人の記載から確認できた情報です。</p></div></li>
@@ -118,5 +122,6 @@
     </aside>
     </div>
 </main>
+<x-site-footer />
 </body>
 </html>

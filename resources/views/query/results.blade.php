@@ -8,13 +8,8 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-900">
-  <header class="border-b border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-6 py-5">
-      <p class="text-xl font-bold tracking-tight text-blue-950 md:text-3xl">JobDD | 応募経路Decision Support</p>
-      <p class="mt-2 text-sm text-slate-600 md:text-base">公開情報とEvidenceを整理し、最終判断はあなた自身が行います。</p>
-    </div>
-  </header>
+<body class="jobdd min-h-screen bg-slate-50 text-slate-900">
+  <x-site-header />
   <main class="mx-auto max-w-6xl px-6 py-10">
     <div class="mb-8">
       <h1 class="text-3xl font-bold tracking-tight text-blue-950 md:text-4xl">応募経路を比較</h1>
@@ -82,6 +77,7 @@
       <p class="mt-1 text-sm leading-6 text-slate-600">JobDDは比較材料とEvidenceを整理します。最終判断はご本人が行います。</p>
     </div>
   </main>
+<x-site-footer />
 </body>
 
 </html>

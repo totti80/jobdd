@@ -10,6 +10,7 @@ use App\Http\Controllers\IconController;
 use App\Http\Controllers\JobDecisionController;
 use App\Http\Controllers\JobReviewController;
 use App\Http\Controllers\JobSearchController;
+use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\RouteComparisonController;
 use App\Http\Controllers\UserQueryController;
 use App\Http\Controllers\UserQueryPreferenceController;
@@ -140,7 +141,13 @@ Route::post('/query', [UserQueryController::class, 'store'])->name('query.store'
 Route::get('/results/{userQuery:public_id}', [UserQueryController::class, 'results'])
     ->name('query.results');
 
-Route::get('/', [UserQueryController::class, 'create'])->name('home');
+Route::get('/', [PublicPageController::class, 'home'])->name('home');
+Route::get('/preferences', [PublicPageController::class, 'preferences'])->name('public.preferences');
+Route::get('/compare', [PublicPageController::class, 'compare'])->name('public.compare');
+Route::get('/new-jobs/{job}', [PublicPageController::class, 'job'])->whereNumber('job')->name('public.job');
+Route::get('/for-companies', [PublicPageController::class, 'company'])->name('public.company');
+Route::view('/resources', 'public.coming-soon', ['title' => 'お役立ち情報', 'description' => 'お役立ち情報は現在準備中です。'])->name('public.resources');
+Route::view('/contact', 'public.coming-soon', ['title' => 'お問い合わせ', 'description' => 'お問い合わせ窓口は現在準備中です。'])->name('public.contact');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [IconController::class, 'index'])

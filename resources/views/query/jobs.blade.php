@@ -11,14 +11,14 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="jobdd min-h-screen" data-jobdd-root>
-<header class="border-b border-slate-200 bg-white">
+<x-site-header />
+<section class="border-b border-slate-200 bg-white">
     <div class="mx-auto max-w-6xl space-y-4 px-4 py-6 sm:px-6 lg:py-8">
-        @include('query.partials.brand')
         <h1 class="jobdd-page-title">求人候補を確認・比較する</h1>
         <p class="leading-7 text-slate-600">確認できたこと・条件と異なること・未確認の情報を、根拠とともに比べられます。最終判断はあなた自身が行います。</p>
         <a href="{{ route('jobs.start') }}" class="jobdd-link inline-flex min-h-11 items-center">新しい条件を入力する</a>
     </div>
-</header>
+</section>
 <main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:space-y-8 lg:py-8">
     <section aria-labelledby="conditions" class="jobdd-card">
         <h2 id="conditions" class="mb-4 text-xl font-bold text-blue-950">希望条件</h2>
@@ -109,5 +109,6 @@
     <div class="min-w-0 flex-1"><p class="text-sm font-semibold" data-selection-count>比較する求人を2〜3件選んでください</p><a href="#compare-selection" class="jobdd-link inline-flex min-h-11 items-center text-sm">選択中の求人を確認</a></div>
     <button form="compare-selection" type="submit" data-compare-submit class="jobdd-button">比較する</button>
 </div>
+<x-site-footer />
 </body>
 </html>

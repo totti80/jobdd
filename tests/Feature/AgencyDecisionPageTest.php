@@ -117,7 +117,7 @@ test('agency page renders four layers evidence safe links escaped content and pr
     expect($xpath->query('//*[@data-layer]')->length)->toBe(4)
         ->and($xpath->query('//*[@data-fact-key="non_public_jobs" and @data-status="match"]')->length)->toBe(1)
         ->and($xpath->query('//*[@data-fact-key="personal_opportunities" and @data-status="unknown"]')->length)->toBe(1)
-        ->and($xpath->query('//details/summary')->length)->toBe(10);
+        ->and($xpath->query('//main//details/summary')->length)->toBe(10);
     if (getenv('JOBDD_UI_CAPTURE_DIR')) {
         file_put_contents(getenv('JOBDD_UI_CAPTURE_DIR').'/agencies.html', $response->getContent());
     }

@@ -14,7 +14,7 @@ class JobDecisionSession extends StartSession
     public function handle($request, Closure $next)
     {
         $entry = $request->routeIs('jobs.start', 'jobs.store');
-        if (! $entry && ! $request->routeIs('query.jobs', 'query.jobs.show', 'query.jobs.compare', 'query.agencies', 'query.preferences.*')) {
+        if (! $entry && ! $request->routeIs('home', 'public.*', 'query.jobs', 'query.jobs.show', 'query.jobs.compare', 'query.agencies', 'query.preferences.*')) {
             return parent::handle($request, $next);
         }
 

@@ -10,24 +10,10 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-screen bg-slate-50 text-slate-900">
+<body class="jobdd min-h-screen bg-slate-50 text-slate-900">
 
   {{-- ヘッダー --}}
-  <header class="border-b border-slate-200 bg-white">
-
-    <div class="mx-auto max-w-6xl px-6 py-5">
-
-      <p class="text-xl font-bold tracking-tight text-blue-950 md:text-3xl">
-        あなた専用 転職コンシェルジュ | JobDD
-      </p>
-
-      <p class="mt-2 text-sm text-slate-600 md:text-base">
-        求人・企業・人材紹介会社・求人媒体を横断して、あなたに合う応募経路を整理します。
-      </p>
-
-    </div>
-
-  </header>
+  <x-site-header />
 
   <main class="mx-auto max-w-6xl px-6 py-10">
     <a href="{{ route('jobs.start') }}" class="mb-6 inline-block rounded-lg bg-blue-800 px-5 py-3 font-semibold text-white">新しい求人比較を試す</a>
@@ -572,6 +558,7 @@
     });
   </script>
 
+<x-site-footer />
 </body>
 
 </html>

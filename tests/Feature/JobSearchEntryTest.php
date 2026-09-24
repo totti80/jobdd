@@ -32,7 +32,7 @@ function entryFreshSessionDriver(): void
 }
 
 test('new entry form is accessible and old input and result routes remain intact', function () {
-    $this->get(route('jobs.start'))->assertOk()->assertSee('希望条件から、求人を比較する')
+    $this->get(route('jobs.start'))->assertOk()->assertSee('まずは4つの条件から求人を見てみる')
         ->assertSee('万円以上')->assertSee('電気設計')->assertSee('和歌山県')->assertSee('電気CAD')
         ->assertDontSee('name="raw_text"', false)->assertDontSee('name="salary_max"', false);
     $this->get('/query')->assertOk()->assertSee('新しい求人比較を試す');

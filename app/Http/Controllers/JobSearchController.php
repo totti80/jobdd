@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JobPosting;
 use App\Models\UserQuery;
 use App\Services\JobDecisionUseCaseService;
 use Illuminate\Http\Request;
@@ -15,9 +16,13 @@ class JobSearchController extends Controller
 
     public const REGIONS = ['兵庫県', '大阪府', '京都府', '滋賀県', '奈良県', '和歌山県'];
 
-    public function create()
+    public function create(Request $request)
     {
-        return $this->form();
+        $id = $request->query('job');
+        $job = is_string($id) && ctype_digit($id) && strlen($id) <= 16
+            ? JobPosting::query()->forPublic()->where('status', 'published')->whereNull('unavailable_at')->find($id) : null;
+
+        return $this->form(selectedJob: $job);
     }
 
     public function store(Request $request)
@@ -73,12 +78,12 @@ class JobSearchController extends Controller
             ->header('Cache-Control', 'private, no-store');
     }
 
-    private function form(array $values = [], array $inputErrors = [], int $status = 200, array $fieldErrors = [])
+    private function form(array $values = [], array $inputErrors = [], int $status = 200, array $fieldErrors = [], ?JobPosting $selectedJob = null)
     {
         return response()->view('query.start', [
             'occupations' => self::OCCUPATIONS, 'regions' => self::REGIONS,
             'tools' => JobDecisionUseCaseService::TOOLS, 'values' => $values, 'inputErrors' => $inputErrors,
-            'fieldErrors' => $fieldErrors,
+            'fieldErrors' => $fieldErrors, 'selectedJob' => $selectedJob,
         ], $status)->header('Cache-Control', 'private, no-store');
     }
 }

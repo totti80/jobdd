@@ -56,11 +56,11 @@ test('graduation entry integrates scope hero responsive form and explanation wit
         ->and($dom->query('//*[@data-entry-layout]/aside')->length)->toBe(1)
         ->and($dom->query('//textarea[@id="custom_tools" and @name="custom_tools" and @maxlength="500"]')->length)->toBe(1)
         ->and($dom->query('//label[@for="custom_tools"]')->length)->toBe(1);
-    $response->assertSee('求人を探すだけでは、わからない。')->assertSee('仕事の中身まで比べて、選ぶ。')
-        ->assertSee('近畿6府県 × 機械設計・電気設計 専門')->assertSee('卒業制作版')
+    $response->assertSee('まずは4つの条件から求人を見てみる')->assertSee('詳しい条件は、求人を見たあとから追加できます。')
+        ->assertSee('近畿6府県の機械設計・電気設計')->assertSee('JobDDの使い方')
         ->assertSee('JobDDで分かること')->assertSee('根拠を確認')->assertSee('2〜3求人')
         ->assertSee('grid-cols-1')->assertSee('lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]', false)
-        ->assertSeeInOrder(['<header', '近畿6府県 ×', 'id="entry-title"', '<form', '<aside'])
+        ->assertSeeInOrder(['<header', 'id="entry-title"', '近畿6府県の', '<form', '<aside'])
         ->assertDontSee('TOP3')->assertDontSee('おすすめ')->assertDontSee('全国対応');
 });
 
@@ -74,8 +74,8 @@ test('visual polish groups tools keeps a direct form link and makes icons decora
         ->and($dom->query('//*[@data-tool-group]//input[@name="tools[]"]')->length)->toBe(7)
         ->and($dom->query('//*[@data-tool-group]//textarea[@name="custom_tools"]')->length)->toBe(1)
         ->and($dom->query('//svg[not(@aria-hidden="true") or not(@focusable="false")]')->length)->toBe(0)
-        ->and($dom->query('//img')->length)->toBe(2)
-        ->and($dom->query('//img[contains(@src,"jobdd-hero-kinki.png") and @width="1672" and @height="941" and @fetchpriority="high" and not(@loading="lazy")]')->length)->toBe(1);
+        ->and($dom->query('//img')->length)->toBe(1)
+        ->and($dom->query('//aside//ol/li')->length)->toBe(5);
     foreach ($dom->query('//img') as $image) {
         expect(trim($image->getAttribute('alt')))->not->toBe('');
         expect(is_file(public_path('images/jobdd/'.basename($image->getAttribute('src')))))->toBeTrue();
@@ -83,9 +83,9 @@ test('visual polish groups tools keeps a direct form link and makes icons decora
     $response->assertSee('地図で見る')->assertSee('実際の勤務地を示すものではありません。')
         ->assertSee('確認できた')->assertSee('条件と異なる')->assertSee('未確認')
         ->assertSee('判定未対応')->assertSee('最終判断は、あなた自身で');
-    $response->assertSee('根拠とともに、仕事を選ぶ。')->assertSee('近畿の機械・電気設計')
+    $response->assertSee('仕事の中身を知って、比べて、自分で選ぶ。')->assertSee('フッターナビゲーション')
         ->assertDontSee('根拠とともに、求人を比較');
-    expect($dom->query('//*[contains(@class,"jobdd-hero-frame")]/img')->length)->toBe(1)
+    expect($dom->query('//nav[@aria-label="メインナビゲーション"]/a')->length)->toBe(8)
         ->and($dom->query('//aside//*[@data-explanation]')->length)->toBe(6);
     foreach (['confirmed', 'different', 'unknown', 'evidence', 'compare', 'map'] as $item) {
         expect($dom->query('//aside//*[@data-explanation="'.$item.'"]//h3')->length)->toBe(1)
@@ -128,7 +128,7 @@ test('v5 list keeps canonical checkboxes and every axis outside closed evidence'
         ->and($dom->query('//input[@name="jobs[]" and @form="compare-selection"]')->length)->toBe(4)
         ->and($dom->query('//form[@id="compare-selection" and @method="GET"]')->length)->toBe(1)
         ->and($dom->query('//article//*[@data-axis and not(ancestor::details)]')->length)->toBe(16)
-        ->and($dom->query('//details[@open]')->length)->toBe(0);
+        ->and($dom->query('//main//details[@open]')->length)->toBe(0);
     foreach ($dom->query('//article') as $card) {
         expect($dom->query('.//*[@data-status="match"]', $card)->length)->toBeGreaterThan(0)
             ->and($dom->query('.//*[@data-status="mismatch"]', $card)->length)->toBeGreaterThan(0)

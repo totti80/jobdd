@@ -23,6 +23,20 @@ function initializeJobdd(root) {
 
     const valid = value => Array.isArray(value) ? value.filter(item => item && typeof item.id === 'string' && /^[1-9]\d{0,15}$/.test(item.id) && Number.isSafeInteger(Number(item.id)) && Number(item.id) > 0 && typeof item.label === 'string').filter((item, index, all) => all.findIndex(other => other.id === item.id) === index).slice(0, 3).map(item => ({ id: item.id, label: item.label.slice(0, 300) })) : [];
     const read = storageKey => { try { return valid(JSON.parse(sessionStorage.getItem(storageKey) || '[]')); } catch { return []; } };
+    root.querySelectorAll('[data-compare-entry]').forEach(entry => {
+        const update = () => {
+            const link = entry.querySelector('[data-compare-entry-link]');
+            const selected = read('jobdd:compare:' + entry.dataset.queryId);
+            link.hidden = selected.length < 2 || entry.dataset.invalidSelection === 'true';
+            if (link.hidden) return;
+            const url = new URL(entry.dataset.resolveUrl, window.location.href);
+            selected.forEach(item => url.searchParams.append('jobs[]', item.id));
+            link.href = url.href;
+            link.textContent = `選択した${selected.length}件を比較する`;
+        };
+        update();
+        window.addEventListener('pageshow', update);
+    });
     root.querySelectorAll('[data-compare-add]').forEach(link => link.addEventListener('click', () => {
         const storageKey = 'jobdd:compare:' + link.dataset.queryId;
         const selected = read(storageKey);

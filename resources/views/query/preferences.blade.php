@@ -59,5 +59,6 @@
         </div>
     </form>
 </main>
+<x-site-footer />
 </body>
 </html>

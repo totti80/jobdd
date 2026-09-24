@@ -62,5 +62,6 @@
         <p class="jobdd-card">現在、確認できる相談先候補がありません。</p>
     @endforelse
 </main>
+<x-site-footer />
 </body>
 </html>

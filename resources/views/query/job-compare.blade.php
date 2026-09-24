@@ -121,5 +121,6 @@
         </table>
     </div>
 </main>
+<x-site-footer />
 </body>
 </html>

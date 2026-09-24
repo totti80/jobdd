@@ -17,11 +17,22 @@ function navigationJob(array $attributes = []): JobPosting
     return JobPosting::create([...['company_id' => Company::create(['name' => '公開企業'])->id, 'title' => '公開の機械設計', 'occupation' => '機械設計', 'region' => '兵庫県', 'status' => 'published', 'source_url' => 'https://careers.real-company.jp/job'], ...$attributes]);
 }
 
-test('public navigation renders all eight links and shared footer', function (string $route) {
+test('public navigation renders six matching header and footer links', function (string $route) {
     $response = $this->get(route($route))->assertOk();
-    foreach (['トップ', 'かんたん入力', '詳細条件', '新着求人', '求人を比較', 'お役立ち情報', '企業向け', 'お問い合わせ'] as $label) {
-        $response->assertSee($label);
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    $expected = ['トップ', 'かんたん入力', '詳細条件', 'お役立ち情報', '企業向け', 'お問い合わせ'];
+    $destinations = [];
+    foreach (['header', 'footer'] as $area) {
+        $links = $xpath->query('//'.$area.'//nav/a');
+        expect($links->length)->toBe(6);
+        foreach ($links as $i => $link) {
+            expect(trim($link->textContent))->toBe($expected[$i]);
+            $destinations[$area][] = $link->getAttribute('href');
+        }
     }
+    expect($destinations['header'])->toBe($destinations['footer']);
     $response->assertSee('メインナビゲーション')->assertSee('フッターナビゲーション')->assertSee('data-site-menu', false)
         ->assertDontSee('あなた専用 転職コンシェルジュ');
 })->with(['home', 'jobs.start', 'public.resources', 'public.contact']);

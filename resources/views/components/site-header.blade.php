@@ -6,8 +6,6 @@
         ['トップ', route('home'), request()->routeIs('home')],
         ['かんたん入力', route('jobs.start'), request()->routeIs('jobs.start')],
         ['詳細条件', route('public.preferences', $context), request()->routeIs('query.preferences.*')],
-        ['新着求人', route('home').'#new-jobs', false],
-        ['求人を比較', route('public.compare', $context), request()->routeIs('public.compare', 'query.jobs.compare')],
         ['お役立ち情報', route('public.resources'), request()->routeIs('public.resources')],
         ['企業向け', route('public.company'), request()->routeIs('public.company')],
         ['お問い合わせ', route('public.contact'), request()->routeIs('public.contact')],

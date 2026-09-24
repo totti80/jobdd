@@ -305,3 +305,22 @@ select:focus[data-flux-control] {
         .home-company-inner { flex-direction: row; align-items: center; justify-content: space-between; }
     }
 }
+
+@layer components {
+    /* Keep the rail inside the main flex item's intrinsic width. */
+    .site-header + main, .homepage { min-width: 0; }
+    .site-footer nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .home-rail-controls button:not([aria-disabled="true"]):hover { background: var(--color-blue-50); }
+    .home-jobs-rail .site-job-link:focus-visible { outline-offset: 0; }
+    @media (min-width: 768px) {
+        .site-footer nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 479px) {
+        .home-hero .site-actions { align-items: stretch; flex-direction: column; }
+        .home-hero .site-actions .jobdd-button { width: 100%; text-align: center; }
+        .home-hero .home-secondary-link { justify-content: center; }
+        .home-sample { max-width: none; }
+        .home-comparison th, .home-comparison td { padding-inline: 6px; }
+        .home-feature-grid { column-gap: 16px; }
+    }
+}

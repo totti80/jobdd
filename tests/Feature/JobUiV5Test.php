@@ -74,7 +74,8 @@ test('visual polish groups tools keeps a direct form link and makes icons decora
         ->and($dom->query('//*[@data-tool-group]//input[@name="tools[]"]')->length)->toBe(7)
         ->and($dom->query('//*[@data-tool-group]//textarea[@name="custom_tools"]')->length)->toBe(1)
         ->and($dom->query('//svg[not(@aria-hidden="true") or not(@focusable="false")]')->length)->toBe(0)
-        ->and($dom->query('//img')->length)->toBe(1)
+        ->and($dom->query('//img')->length)->toBe(2)
+        ->and($dom->query('//footer//img[@alt="JobDD"]')->length)->toBe(1)
         ->and($dom->query('//aside//ol/li')->length)->toBe(5);
     foreach ($dom->query('//img') as $image) {
         expect(trim($image->getAttribute('alt')))->not->toBe('');
@@ -85,7 +86,7 @@ test('visual polish groups tools keeps a direct form link and makes icons decora
         ->assertSee('判定未対応')->assertSee('最終判断は、あなた自身で');
     $response->assertSee('仕事の中身を知って、比べて、自分で選ぶ。')->assertSee('フッターナビゲーション')
         ->assertDontSee('根拠とともに、求人を比較');
-    expect($dom->query('//nav[@aria-label="メインナビゲーション"]/a')->length)->toBe(8)
+    expect($dom->query('//nav[@aria-label="メインナビゲーション"]/a')->length)->toBe(6)
         ->and($dom->query('//aside//*[@data-explanation]')->length)->toBe(6);
     foreach (['confirmed', 'different', 'unknown', 'evidence', 'compare', 'map'] as $item) {
         expect($dom->query('//aside//*[@data-explanation="'.$item.'"]//h3')->length)->toBe(1)

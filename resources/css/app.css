@@ -262,6 +262,7 @@ select:focus[data-flux-control] {
     }
     @media (min-width: 1024px) {
         .home-hero { padding-block: 48px 56px; }
+        .home-hero h1 { font-size: clamp(44px, 3.6vw, 52px); }
         .home-hero-grid { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 28px; }
         .home-sample { margin: -24px 12px 0 auto; width: 360px; }
     }
@@ -279,7 +280,7 @@ select:focus[data-flux-control] {
     .home-pickup { background: white; }
     .home-editorial-preview { display: grid; margin-top: 28px; background: #f2f5f7; }
     .home-editorial-image { position: relative; min-width: 0; background: #e9f3fc; }
-    .home-editorial-image img { display: block; width: 100%; aspect-ratio: 2.4; object-fit: cover; object-position: center 70%; }
+    .home-editorial-image img { display: block; width: 100%; aspect-ratio: 2.4; object-fit: cover; object-position: center bottom; }
     .home-editorial-image figcaption { padding: 10px 20px; background: #e9f3fc; color: #405777; font-size: 14px; }
 
     .home-editorial-copy { padding: 28px; }

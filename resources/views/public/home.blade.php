@@ -49,7 +49,7 @@
     </section>
     <section class="site-container home-section" aria-labelledby="preview-title">
         <p class="site-eyebrow">違いが見えると、考えやすい</p>
-        <h2 id="preview-title" class="site-section-title">同じ職種でも、仕事の中身は違う。</h2>
+        <h2 id="preview-title" class="site-section-title"><span class="inline-block">同じ職種でも、</span><span class="inline-block">仕事の中身は違う。</span></h2>
         <div class="home-preview">
             <div class="home-source-example"><x-jobdd-icon name="evidence" /><p class="home-sample-label">説明用サンプル</p><h3>求人票の記載例</h3><p class="home-source-title">機械設計業務</p><p>仕事内容を、同じ項目で整理すると。</p><span aria-hidden="true">↓</span></div>
             <div class="home-comparison">

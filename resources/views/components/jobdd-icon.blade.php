@@ -31,6 +31,9 @@
         @case('agent')
             <path d="M4 4h16v12H9l-5 4zM8 8h8M8 12h5" />
             @break
+        @case('day')
+            <circle cx="12" cy="12" r="9" /><path d="M12 6v6l4 3" />
+            @break
         @case('arrow')
             <path d="M4 12h16m-6-6 6 6-6 6" />
             @break

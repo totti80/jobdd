@@ -66,11 +66,27 @@
         <p class="home-supporting">仕事内容を理解したら、利用できる応募方法も確認。求人ごとに利用できる経路を確かめられます。</p>
         <a href="{{ route('jobs.start') }}" class="home-secondary-link">条件を入力して、仕事の中身を見る <span aria-hidden="true">→</span></a>
     </section>
-    <section id="new-jobs" class="site-container site-section scroll-mt-6" aria-labelledby="new-jobs-title">
-        <p class="site-eyebrow">仕事との新しい接点</p><h2 id="new-jobs-title" class="site-section-title">新着求人</h2><p class="mt-3 leading-7 text-slate-600">公開済みの求人を新しい順に表示しています。掲載情報と現在の募集状況は、応募前にご確認ください。</p>
-        <div class="site-jobs-grid">@forelse ($jobs as $job)<x-new-job-card :job="$job" />@empty<div class="jobdd-card sm:col-span-2 lg:col-span-3"><p class="leading-7">公開中の求人はまだありません。掲載の準備が整い次第、こちらに表示します。</p></div>@endforelse</div>
-        <p class="mt-5 text-sm leading-7 text-slate-600">初めての方は「詳細を見る」から条件入力へ進みます。希望条件を整理して、求人の内容を確認できます。</p>
+    <section id="new-jobs" class="site-container home-section scroll-mt-6" aria-labelledby="new-jobs-title" data-jobs-carousel>
+        <div class="home-section-heading">
+            <div><p class="site-eyebrow">仕事との新しい接点</p><h2 id="new-jobs-title" class="site-section-title">新着求人</h2></div>
+            @if ($jobs->isNotEmpty())
+                <div class="home-rail-controls" data-rail-controls hidden>
+                    <button type="button" data-rail-prev aria-controls="new-jobs-rail" aria-label="新着求人を前へ">← <span>前へ</span></button>
+                    <button type="button" data-rail-next aria-controls="new-jobs-rail" aria-label="新着求人を次へ"><span>次へ</span> →</button>
+                </div>
+            @endif
+        </div>
+        <p class="home-supporting">公開済みの求人を新しい順に表示しています。掲載情報と現在の募集状況は、応募前にご確認ください。</p>
+        @if ($jobs->isNotEmpty())
+            <p id="new-jobs-help" class="mt-3 text-sm text-slate-600">横にスクロールして確認できます。初めての方は「詳細を見る」から条件入力へ進みます。</p>
+            <div id="new-jobs-rail" class="home-jobs-rail" tabindex="0" role="region" aria-labelledby="new-jobs-title" aria-describedby="new-jobs-help" data-jobs-rail>
+                @foreach ($jobs as $job)<x-new-job-card :job="$job" />@endforeach
+            </div>
+        @else
+            <div class="home-empty"><p>公開中の求人はまだありません。掲載の準備が整い次第、こちらに表示します。</p></div>
+        @endif
     </section>
+    <x-pickup-preview />
     <section class="home-section home-decision" aria-labelledby="decision-title">
         <div class="site-container">
             <p class="site-eyebrow">Decision Support</p>
@@ -85,6 +101,20 @@
             <a href="{{ route('jobs.start') }}" class="jobdd-button mt-7">かんたん入力から始める <span aria-hidden="true">→</span></a>
         </div>
     </section>
-    <section class="site-container pb-16" aria-labelledby="company-cta-title"><div class="site-company-cta"><div><p class="site-eyebrow">企業の皆さまへ</p><h2 id="company-cta-title" class="site-section-title">仕事の中身を、求職者へ正しく伝える。</h2><p class="mt-4 leading-8 text-slate-600">求人票だけでは伝わりにくい仕事の実態を構造化して登録できます。</p></div><a href="{{ route('public.company') }}" class="site-button-secondary shrink-0">企業向けJobDDを見る <span aria-hidden="true">→</span></a></div></section>
+    <section class="site-container home-section" aria-labelledby="resources-title">
+        <p class="site-eyebrow">仕事選びのヒント</p>
+        <h2 id="resources-title" class="site-section-title">お役立ち情報</h2>
+        <div class="home-resource-grid">
+            <x-resource-teaser title="CAD・設計職" description="経験やツールの使い方を、仕事選びにつなげる。" icon="tools" />
+            <x-resource-teaser title="転職ノウハウ" description="希望を整理し、自分のペースで次の一歩へ。" icon="agent" />
+            <x-resource-teaser title="求人の読み方" description="仕事内容の違いと、確認したい点を見つける。" icon="evidence" />
+        </div>
+    </section>
+    <section class="home-company home-section" aria-labelledby="company-cta-title">
+        <div class="site-container home-company-inner">
+            <div><p class="home-company-label">企業の皆さまへ</p><h2 id="company-cta-title" class="site-section-title">仕事の中身を、求職者へ正しく伝える。</h2><p class="mt-5">求人票だけでは伝わりにくい仕事の実態を、構造化して登録できます。</p></div>
+            <a href="{{ route('public.company') }}" class="site-button-secondary shrink-0">企業向けJobDDを見る <span aria-hidden="true">→</span></a>
+        </div>
+    </section>
 </div>
 </x-public-layout>

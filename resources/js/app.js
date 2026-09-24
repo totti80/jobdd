@@ -5,3 +5,5 @@ import './jobdd-map';
 import './company-authoring';
 
 import './public-navigation';
+
+import './homepage-jobs';

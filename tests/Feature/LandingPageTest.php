@@ -39,3 +39,20 @@ test('new jobs escape titles and use created date when publication date is absen
     $job = JobPosting::create(['company_id' => Company::create(['name' => '企業'])->id, 'title' => '<script>alert(1)</script>', 'status' => 'published']);
     $this->get('/')->assertOk()->assertSee($job->title)->assertDontSee($job->title, false)->assertSee('未確認');
 });
+
+test('homepage keeps editorial placeholders separate from public jobs and existing input', function () {
+    $html = $this->get('/')->assertOk()->assertSeeInOrder([
+        'id="home-title"', 'id="search-entry-title"', 'id="features-title"', 'id="preview-title"',
+        'id="new-jobs"', 'id="pickup-title"', 'id="decision-title"', 'id="resources-title"', 'id="company-cta-title"',
+    ], false)->assertDontSee('data-jobs-rail', false)->getContent();
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$html);
+    $xpath = new DOMXPath($dom);
+    expect($xpath->query('//section[@aria-labelledby="pickup-title"]//a')->length)->toBe(0);
+    expect($xpath->query('//section[@aria-labelledby="resources-title"]//a')->length)->toBe(0);
+    $entries = $xpath->query('//section[@aria-labelledby="search-entry-title"]//a');
+    expect($entries->length)->toBe(4);
+    foreach ($entries as $entry) {
+        expect($entry->getAttribute('href'))->toBe(route('jobs.start'));
+    }
+});

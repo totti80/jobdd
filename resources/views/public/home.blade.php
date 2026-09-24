@@ -16,6 +16,7 @@
                 <div class="home-illustration"><img src="{{ asset('images/jobdd/jobdd-hero-kinki.png') }}" width="1672" height="941" alt="近畿の街並みと、機械・電気の仕事について考える技術者" fetchpriority="high"></div>
                 <div class="home-sample">
                     <p class="home-sample-label">説明用サンプル</p>
+                    <p class="home-sample-title">仕事の中身を、見える形に。</p>
                     <dl>
                         <div><dt>担当工程</dt><dd>詳細設計〜評価</dd></div>
                         <div><dt>CAD / Tool</dt><dd>SolidWorks</dd></div>
@@ -50,7 +51,7 @@
         <p class="site-eyebrow">違いが見えると、考えやすい</p>
         <h2 id="preview-title" class="site-section-title">同じ職種でも、仕事の中身は違う。</h2>
         <div class="home-preview">
-            <div class="home-source-example"><p class="home-sample-label">説明用サンプル</p><h3>求人票の記載例</h3><p class="home-source-title">機械設計業務</p><p>仕事内容を、同じ項目で整理すると。</p><span aria-hidden="true">↓</span></div>
+            <div class="home-source-example"><x-jobdd-icon name="evidence" /><p class="home-sample-label">説明用サンプル</p><h3>求人票の記載例</h3><p class="home-source-title">機械設計業務</p><p>仕事内容を、同じ項目で整理すると。</p><span aria-hidden="true">↓</span></div>
             <div class="home-comparison">
                 <h3>JobDDで整理した表示例</h3>
                 <table><caption class="sr-only">説明用サンプル：求人Aと求人Bの仕事の違い</caption>
@@ -66,7 +67,8 @@
         <p class="home-supporting">仕事内容を理解したら、利用できる応募方法も確認。求人ごとに利用できる経路を確かめられます。</p>
         <a href="{{ route('jobs.start') }}" class="home-secondary-link">条件を入力して、仕事の中身を見る <span aria-hidden="true">→</span></a>
     </section>
-    <section id="new-jobs" class="site-container home-section scroll-mt-6" aria-labelledby="new-jobs-title" data-jobs-carousel>
+    <section id="new-jobs" class="home-new-jobs home-section scroll-mt-6" aria-labelledby="new-jobs-title" data-jobs-carousel>
+        <div class="site-container home-rail-container">
         <div class="home-section-heading">
             <div><p class="site-eyebrow">仕事との新しい接点</p><h2 id="new-jobs-title" class="site-section-title">新着求人</h2></div>
             @if ($jobs->isNotEmpty())
@@ -85,6 +87,7 @@
         @else
             <div class="home-empty"><p>公開中の求人はまだありません。掲載の準備が整い次第、こちらに表示します。</p></div>
         @endif
+        </div>
     </section>
     <x-pickup-preview />
     <section class="home-section home-decision" aria-labelledby="decision-title">

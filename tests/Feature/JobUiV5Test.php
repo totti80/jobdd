@@ -84,7 +84,7 @@ test('visual polish groups tools keeps a direct form link and makes icons decora
     $response->assertSee('地図で見る')->assertSee('実際の勤務地を示すものではありません。')
         ->assertSee('確認できた')->assertSee('条件と異なる')->assertSee('未確認')
         ->assertSee('判定未対応')->assertSee('最終判断は、あなた自身で');
-    $response->assertSee('仕事の中身を知って、比べて、自分で選ぶ。')->assertSee('フッターナビゲーション')
+    $response->assertSee('根拠とともに、仕事を選ぶ。')->assertSee('フッターナビゲーション')
         ->assertDontSee('根拠とともに、求人を比較');
     expect($dom->query('//nav[@aria-label="メインナビゲーション"]/a')->length)->toBe(6)
         ->and($dom->query('//aside//*[@data-explanation]')->length)->toBe(6);

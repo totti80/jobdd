@@ -15,6 +15,7 @@
     <div class="site-header-inner">
         <a href="{{ route('home') }}" class="site-brand" data-jobdd-brand aria-label="JobDD トップへ">
             <span class="jobdd-logo-frame"><img src="{{ asset('images/jobdd/jobdd-logo.png') }}" width="1448" height="1086" alt="JobDD" class="jobdd-logo-image" decoding="async"></span>
+            <span class="site-tagline">根拠とともに、仕事を選ぶ。</span>
         </a>
         <details class="site-menu" data-site-menu open>
             <summary aria-label="ナビゲーションメニュー"><span>メニュー</span><span aria-hidden="true">☰</span></summary>

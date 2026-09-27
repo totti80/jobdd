@@ -13,7 +13,7 @@ class JobDecisionSession extends StartSession
 
     public function handle($request, Closure $next)
     {
-        $entry = $request->routeIs('jobs.start', 'jobs.store');
+        $entry = $request->routeIs('home', 'jobs.start', 'jobs.store');
         if (! $entry && ! $request->routeIs('home', 'public.*', 'query.jobs', 'query.jobs.show', 'query.jobs.compare', 'query.agencies', 'query.preferences.*')) {
             return parent::handle($request, $next);
         }
@@ -35,7 +35,7 @@ class JobDecisionSession extends StartSession
 
         // No garbage collection, lock or sliding lifetime refresh on decision GETs.
         $response = $next($request);
-        if ($request->routeIs('jobs.start')) {
+        if ($request->routeIs('home', 'jobs.start')) {
             $this->addCookieToResponse($response, $session);
             $config = $this->manager->getSessionConfig();
             $expires = time() + 1200;

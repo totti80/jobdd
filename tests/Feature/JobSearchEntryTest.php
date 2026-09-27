@@ -126,7 +126,7 @@ test('new entry rejects invalid inputs in Japanese without creating a query', fu
     [['tools' => [['autocad']]], 'ツールは'], [['tools' => null], 'ツールは'],
 ]);
 
-test('fresh browser form bootstraps real CSRF without GET writes and POST persists only query and session', function () {
+test('fresh browser form bootstraps real CSRF without GET writes and POST persists only query and session', function (string $entryRoute) {
     config(['session.driver' => 'database', 'session.lottery' => [100, 100]]);
     entryFreshSessionDriver();
     entryRealCsrf();
@@ -135,7 +135,7 @@ test('fresh browser form bootstraps real CSRF without GET writes and POST persis
     DB::listen(function ($e) use (&$sql) {
         $sql[] = $e->sql;
     });
-    $form = $this->get(route('jobs.start'))->assertOk();
+    $form = $this->get(route($entryRoute))->assertOk();
     expect(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
     $this->assertDatabaseCount('sessions', 1);
     $bootstrap = $form->getCookie(JobDecisionSession::FORM_COOKIE);
@@ -146,7 +146,7 @@ test('fresh browser form bootstraps real CSRF without GET writes and POST persis
         $cookies[$cookie->getName()] = $cookie->getValue();
     }
     entryFreshSessionDriver(); // A second tab / reload must retain the first form's CSRF token.
-    $revisit = $this->withUnencryptedCookies($cookies)->get(route('jobs.start'))->assertOk();
+    $revisit = $this->withUnencryptedCookies($cookies)->get(route($entryRoute === 'home' ? 'jobs.start' : 'home'))->assertOk();
     $revisit->assertSee('name="_token" value="'.$token[1].'"', false);
     expect(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
     entryFreshSessionDriver(); // A new HTTP request must not retain the previous in-memory token.
@@ -164,13 +164,13 @@ test('fresh browser form bootstraps real CSRF without GET writes and POST persis
     $this->get($post->headers->get('Location'))->assertOk()->assertDontSee($query->session_token);
     expect(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([])
         ->and(DB::table('sessions')->orderBy('id')->get()->toJson())->toBe($before);
-});
+})->with(['jobs.start', 'home']);
 
-test('entry bootstrap rejects missing tampered expired or foreign cookies and wrong CSRF', function ($mode) {
+test('entry bootstrap rejects missing tampered expired or foreign cookies and wrong CSRF', function ($mode, string $entryRoute) {
     config(['session.driver' => 'database']);
     entryFreshSessionDriver();
     entryRealCsrf();
-    $form = $this->get(route('jobs.start'))->assertOk();
+    $form = $this->get(route($entryRoute))->assertOk();
     $session = $form->getCookie(config('session.cookie'))->getValue();
     $bootstrap = json_decode($form->getCookie(JobDecisionSession::FORM_COOKIE)->getValue(), true);
     $token = $bootstrap['csrf'];
@@ -187,9 +187,9 @@ test('entry bootstrap rejects missing tampered expired or foreign cookies and wr
     entryFreshSessionDriver();
     $this->withCookies($cookies)->post(route('jobs.store'), entryInput(['_token' => $mode === 'wrong token' ? 'wrong' : $token]))->assertStatus(419);
     $this->assertDatabaseCount('user_queries', 0);
-})->with(['missing', 'tampered', 'expired', 'foreign', 'wrong token']);
+})->with(['missing', 'tampered', 'expired', 'foreign', 'wrong token'])->with(['jobs.start', 'home']);
 
-test('new entry preserves an existing session and cannot replace its CSRF token', function () {
+test('new entry preserves an existing session and cannot replace its CSRF token', function (string $entryRoute) {
     config(['session.driver' => 'database']);
     entryFreshSessionDriver();
     entryRealCsrf();
@@ -200,7 +200,7 @@ test('new entry preserves an existing session and cannot replace its CSRF token'
     $session->save();
     $id = $session->getId();
     entryFreshSessionDriver();
-    $form = $this->withCookie(config('session.cookie'), $id)->get(route('jobs.start'))->assertOk();
+    $form = $this->withCookie(config('session.cookie'), $id)->get(route($entryRoute))->assertOk();
     $form->assertDontSee('existing-secret');
     $fake = json_encode(['id' => $id, 'csrf' => str_repeat('a', 40), 'expires' => time() + 1200]);
     entryFreshSessionDriver();
@@ -208,7 +208,7 @@ test('new entry preserves an existing session and cannot replace its CSRF token'
     entryFreshSessionDriver();
     $this->post(route('jobs.store'), entryInput(['_token' => $csrf]))->assertRedirect()
         ->assertSessionHas('jobdd_query_token_existing', 'existing-secret');
-});
+})->with(['jobs.start', 'home']);
 
 test('new entry connects list detail comparison and application routes with tools and navigation', function () {
     $company = Company::create(['name' => '主導線確認企業']);
@@ -233,11 +233,11 @@ test('new entry connects list detail comparison and application routes with tool
     }
 });
 
-test('entry rejects a modified encrypted bootstrap cookie', function () {
+test('entry rejects a modified encrypted bootstrap cookie', function (string $entryRoute) {
     config(['session.driver' => 'database']);
     entryFreshSessionDriver();
     entryRealCsrf();
-    $form = $this->get(route('jobs.start'))->assertOk();
+    $form = $this->get(route($entryRoute))->assertOk();
     preg_match('/name="_token" value="([^"]+)"/', $form->getContent(), $token);
     $cookies = [];
     foreach ($form->headers->getCookies() as $cookie) {
@@ -247,4 +247,4 @@ test('entry rejects a modified encrypted bootstrap cookie', function () {
     entryFreshSessionDriver();
     $this->withUnencryptedCookies($cookies)->post(route('jobs.store'), entryInput(['_token' => $token[1]]))->assertStatus(419);
     $this->assertDatabaseCount('user_queries', 0);
-});
+})->with(['jobs.start', 'home']);

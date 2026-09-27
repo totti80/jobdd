@@ -34,7 +34,9 @@ test('public navigation renders six matching header and footer links', function 
     }
     expect($destinations['header'])->toBe($destinations['footer']);
     $response->assertSee('メインナビゲーション')->assertSee('フッターナビゲーション')->assertSee('data-site-menu', false)
-        ->assertDontSee('あなた専用 転職コンシェルジュ');
+        ->assertSee('根拠とともに、仕事を選ぶ。')->assertDontSee('あなた専用 転職コンシェルジュ');
+    expect($xpath->query('//header//nav/a[@aria-current="page"]')->length)->toBe(1);
+    expect($xpath->query('//header//span[@class="site-tagline"]')->length)->toBe(1);
 })->with(['home', 'jobs.start', 'public.resources', 'public.contact']);
 
 test('coming soon pages neither expose operations email nor provide inquiry forms', function () {

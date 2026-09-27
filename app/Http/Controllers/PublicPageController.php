@@ -21,7 +21,7 @@ class PublicPageController extends Controller
             ->leftJoin('job_published_profiles as dates', 'dates.job_posting_id', '=', 'job_postings.id')
             ->select('job_postings.*')
             ->orderByRaw('COALESCE(dates.published_at, job_postings.published_at, job_postings.created_at) DESC')
-            ->orderByDesc('job_postings.id')->with('company:id,name')->limit(6)->get();
+            ->orderByDesc('job_postings.id')->with('company:id,name')->limit(10)->get();
 
         return response()->view('public.home', compact('jobs'))->header('Cache-Control', 'private, no-store');
     }

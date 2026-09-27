@@ -12,7 +12,6 @@
     <x-page-hero id="entry-title" title="まずは4つの条件から求人を見てみる" eyebrow="かんたん入力">
         <p>詳しい条件は、求人を見たあとから追加できます。</p>
         <p class="mt-2 text-sm">現在の対象は、近畿6府県の機械設計・電気設計です。</p>
-        <a href="#entry-form" class="jobdd-link mt-3 inline-flex min-h-11 items-center">条件を入力する →</a>
     </x-page-hero>
     @if ($selectedJob)
         <div class="jobdd-decision-note mb-6" role="status"><p class="font-bold">「{{ $selectedJob->title }}」が気になった方へ</p><p class="mt-2 leading-7">まず希望条件を入力してください。求人一覧から、この求人を含めた仕事の内容を確認・比較できます。職種や公開状況によっては一覧に表示されない場合があります。</p></div>

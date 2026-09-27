@@ -47,7 +47,8 @@ test('simple entry remains sufficient and the list progressively offers optional
     $response->assertRedirect();
     $query = UserQuery::sole();
     expect($query->detailed_skills)->toBe(['custom_tools' => 'iCAD']);
-    $this->get($response->headers->get('Location'))->assertOk()->assertSee('もっと詳しく比較する')->assertSee('入力は任意です')->assertSee('iCAD');
+    $this->get($response->headers->get('Location'))->assertOk()->assertSee('詳細条件を追加')
+        ->assertSee(preferenceUrl($query, ['page' => 1, 'tools' => ['autocad']]))->assertSee('iCAD');
     $this->get(preferenceUrl($query, ['tools' => ['autocad']]))->assertOk()->assertSee('すべて任意です')->assertSee('詳細設計')->assertSee('試験・評価')->assertSee('保存せず求人へ戻る')->assertSee('iCAD');
     $this->assertDatabaseCount('user_queries', 1);
     $this->assertDatabaseCount('score_results', 0);

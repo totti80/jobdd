@@ -72,8 +72,11 @@ function initializeJobdd(root) {
         checkboxes.forEach(input => { input.removeAttribute('name'); });
         const count = selected.length;
         const message = count === 0 ? '比較する求人を2〜3件選んでください' : count === 1 ? '比較中1求人。あと1件選んでください' : '比較中' + count + '求人';
-        counts.forEach(node => { node.textContent = message; });
-        buttons.forEach(button => button.setAttribute('aria-disabled', String(count < 2 || count > 3)));
+        counts.forEach(node => { node.textContent = `${count} / 3件`; node.hidden = false; });
+        buttons.forEach(button => {
+            button.disabled = count < 2 || count > 3;
+            button.setAttribute('aria-disabled', String(button.disabled));
+        });
         checkboxes.forEach(input => { input.closest('[data-job-id]').dataset.selected = String(input.checked); });
         selectedList.replaceChildren();
         selected.forEach(selection => {
@@ -87,7 +90,14 @@ function initializeJobdd(root) {
             remove.className = 'jobdd-link min-h-11 shrink-0 px-2';
             remove.textContent = '解除';
             remove.setAttribute('aria-label', selection.label + 'を比較から解除');
-            remove.addEventListener('click', () => { selected = selected.filter(item => item.id !== selection.id); render('比較から解除しました。'); root.dispatchEvent(new Event('jobdd:show-list')); (checkboxes.find(input => input.value === selection.id) || buttons[0])?.focus(); });
+            remove.addEventListener('click', () => {
+                selected = selected.filter(item => item.id !== selection.id);
+                render('比較から解除しました。');
+                root.dispatchEvent(new Event('jobdd:show-list'));
+                root.dispatchEvent(new CustomEvent('jobdd:reveal-job', { detail: selection.id }));
+                const target = checkboxes.find(input => input.value === selection.id) || form.querySelector('#comparison-title');
+                target?.focus();
+            });
             item.append(name, remove); selectedList.append(item);
         });
         announcement.textContent = notice || message;
@@ -108,6 +118,7 @@ function initializeJobdd(root) {
             render();
             const target = checkboxes.find(input => !input.checked) || checkboxes[0];
             root.dispatchEvent(new Event('jobdd:show-list'));
+            if (target) root.dispatchEvent(new CustomEvent('jobdd:reveal-job', { detail: target.value }));
             target?.focus();
         }
     });

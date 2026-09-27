@@ -1,3 +1,5 @@
+import './jobdd-result-window';
+
 import './jobdd-ui';
 
 import './jobdd-map';

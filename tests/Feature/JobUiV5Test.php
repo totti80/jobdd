@@ -64,12 +64,12 @@ test('graduation entry integrates scope hero responsive form and explanation wit
         ->assertDontSee('TOP3')->assertDontSee('おすすめ')->assertDontSee('全国対応');
 });
 
-test('visual polish groups tools keeps a direct form link and makes icons decorative', function () {
+test('visual polish groups tools without a redundant form link and makes icons decorative', function () {
     $response = $this->get(route('jobs.start'));
     $dom = uiV5Dom($response, 'visual-start');
     expect($dom->query('//header//*[@data-jobdd-brand]')->length)->toBe(1)
         ->and($dom->query('//header//*[@data-jobdd-brand]//img[@alt="JobDD" and @width="1448" and @height="1086"]')->length)->toBe(1)
-        ->and($dom->query('//a[@href="#entry-form"]')->length)->toBe(1)
+        ->and($dom->query('//a[@href="#entry-form"]')->length)->toBe(0)
         ->and($dom->query('//form[@id="entry-form" and @method="POST"]')->length)->toBe(1)
         ->and($dom->query('//*[@data-tool-group]//input[@name="tools[]"]')->length)->toBe(7)
         ->and($dom->query('//*[@data-tool-group]//textarea[@name="custom_tools"]')->length)->toBe(1)
@@ -120,7 +120,7 @@ test('v5 form has native labelled choices and field errors preserve safe values'
     $this->assertDatabaseCount('user_queries', 0);
 });
 
-test('v5 list keeps canonical checkboxes and every axis outside closed evidence', function () {
+test('v5 list keeps canonical checkboxes and compact axes without evidence details', function () {
     [$query, $jobs] = uiV5Fixture();
     $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
     $response = $this->get(route('query.jobs', ['userQuery' => $query->public_id, 'tools' => ['autocad']]));
@@ -139,7 +139,7 @@ test('v5 list keeps canonical checkboxes and every axis outside closed evidence'
     foreach (['一致率', 'TOP3', 'score', 'おすすめ'] as $forbidden) {
         $response->assertDontSee($forbidden);
     }
-    $response->assertSee('最終取得日時')->assertSee('この求人の掲載元')->assertSee('合わないという意味ではありません。');
+    $response->assertDontSee('最終取得日時')->assertDontSee('この求人の掲載元')->assertSee('合わないという意味ではありません。');
 });
 
 test('v5 comparison has row headers and equal identifiable columns for two or three jobs', function ($count) {

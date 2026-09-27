@@ -19,7 +19,8 @@ class JobDecisionUseCaseService
         if ($page < 1 || $page > intdiv(PHP_INT_MAX, 20)) {
             throw new InvalidArgumentException('Invalid page.');
         }
-        $candidates = $this->discovery->discover($query, 21, ($page - 1) * 20);
+        $total = 0;
+        $candidates = $this->discovery->discover($query, 21, ($page - 1) * 20, $total);
         $jobs = $candidates->take(20)->values();
         $facts = [];
         foreach ($jobs as $job) {
@@ -38,6 +39,7 @@ class JobDecisionUseCaseService
             'custom_tools' => $query->detailed_skills['custom_tools'] ?? null,
             'selected_tools' => array_column($confirmedRequirements['desired'] ?? [], 'fact_key'),
             'items' => $items,
+            'total' => $total,
             'pagination' => ['page' => $page, 'has_previous' => $page > 1, 'has_next' => $candidates->count() > 20],
         ];
     }

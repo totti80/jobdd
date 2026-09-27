@@ -3,6 +3,7 @@
 use App\Models\Company;
 use App\Models\JobFact;
 use App\Models\JobPosting;
+use App\Models\JobPublishedProfile;
 use App\Models\UserQuery;
 use App\Services\JobDecisionUseCaseService;
 use App\Services\JobDiscoveryService;
@@ -51,15 +52,17 @@ test('decision page renders the authorized pipeline with five reads and no write
         $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
             ->get(decisionPageUrl($query, ['tools' => ['autocad']]));
         $response->assertOk()->assertSee('求人候補を確認・比較する')->assertSee('確認できた')
-            ->assertSee('条件と異なる')->assertSee('未確認')->assertSee('根拠を見る')
-            ->assertSee('記載の文脈')->assertSee('求人元を見る')->assertSee('次へ')
-            ->assertSee('担当業務での使用は確認できません。');
+            ->assertSee('条件と異なる')->assertSee('未確認')->assertSee('詳細を見る')
+            ->assertSee('該当求人')->assertSee('次の求人を見る（21〜23件）')
+            ->assertDontSee('根拠を見る')->assertDontSee('求人元を見る')
+            ->assertDontSee('担当業務での使用は確認できません。');
     } finally {
         $record = false;
     }
     expect($sql)->toHaveCount(5)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
     $data = $response->viewData('items');
-    expect(array_map(fn ($item) => $item['job']->id, $data))->toBe($expected)->and($data)->toHaveCount(20);
+    expect(array_map(fn ($item) => $item['job']->id, $data))->toBe($expected)->and($data)->toHaveCount(20)
+        ->and($response->viewData('total'))->toBe(23);
     foreach ($data as $item) {
         expect($item['fit']['job_posting_id'])->toBe($item['job']->id)
             ->and($item['fit']['summary']['hard_mismatch_keys'])->toBe([])
@@ -75,7 +78,7 @@ test('decision page renders the authorized pipeline with five reads and no write
     }
     $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)
         ->assertSee('&lt;script&gt;alert(2)&lt;/script&gt;', false)
-        ->assertSee('&lt;script&gt;alert(3)&lt;/script&gt;', false)
+        ->assertDontSee('&lt;script&gt;alert(3)&lt;/script&gt;', false)
         ->assertDontSee('<script>alert(', false)->assertDontSee('PRIVATE RAW')->assertDontSee('private-session-value')
         ->assertDontSee('TOP3')->assertDontSee('score')->assertDontSee('不適合')->assertDontSee('×')
         ->assertSee('rel="noopener noreferrer"', false)->assertSee('tools%5B0%5D=autocad', false);
@@ -86,7 +89,7 @@ test('decision pagination keeps tools and evaluates only twenty jobs', function 
     $expected = (new JobDiscoveryService)->discover($query, 21, 20)->modelKeys();
     $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
         ->get(decisionPageUrl($query, ['page' => 2, 'tools' => ['solidworks', 'autocad']]));
-    $response->assertOk()->assertSee('前へ')->assertDontSee('次へ')->assertSee('tools%5B0%5D=solidworks', false);
+    $response->assertOk()->assertSee('前へ')->assertDontSee('次の求人を見る（')->assertSee('tools%5B0%5D=solidworks', false);
     expect($response->viewData('items'))->toHaveCount(3)
         ->and(array_map(fn ($i) => $i['job']->id, $response->viewData('items')))->toBe($expected)
         ->and($response->viewData('pagination'))->toBe(['page' => 2, 'has_previous' => true, 'has_next' => false]);
@@ -163,3 +166,122 @@ test('decision page reads database sessions without updates or garbage collectio
     expect($sql)->toHaveCount(6)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([])
         ->and(DB::table('sessions')->orderBy('id')->get()->toJson())->toBe($before);
 });
+
+test('display total counts only eligible public candidates before slicing with unchanged SQL and order', function () {
+    $query = decisionPageFixture(25);
+    $jobs = JobPosting::orderBy('id')->get();
+    $expected = $jobs->filter(fn ($job) => $job->region === '兵庫県')->merge($jobs->filter(fn ($job) => $job->region !== '兵庫県'))->modelKeys();
+    $template = $jobs->first()->only(['company_id', 'title', 'occupation', 'region', 'source_url']);
+    foreach ([
+        ['source_url' => 'https://example.com/hidden'], ['source_url' => null], ['source_url' => 'not-a-url'],
+        ['status' => 'draft'], ['status' => 'paused'], ['status' => 'closed'],
+        ['region' => '東京都'], ['occupation' => '電気設計'], ['unavailable_at' => now()],
+    ] as $excluded) {
+        JobPosting::create(array_replace($template, $excluded));
+    }
+    // Count the same published projection as the list, never editable authoring data.
+    JobPublishedProfile::create(['job_posting_id' => $jobs[0]->id, 'published_at' => now(),
+        'profile_data' => ['schema_version' => 1, 'level_one' => $template, 'company' => ['name' => '公開会社']]]);
+    $jobs[0]->update(['region' => '東京都', 'occupation' => '電気設計']);
+    foreach ([['schema_version' => 99], ['schema_version' => 1, 'level_one' => [...$template, 'source_url' => null]]] as $profile) {
+        $excluded = JobPosting::create($template);
+        JobPublishedProfile::create(['job_posting_id' => $excluded->id, 'published_at' => now(), 'profile_data' => $profile]);
+    }
+    $before = $query->getAttributes();
+    $service = app(JobDiscoveryService::class);
+    foreach ([0, 20, 40] as $offset) {
+        DB::enableQueryLog();
+        DB::flushQueryLog();
+        $withoutMetadata = $service->discover($query, 21, $offset);
+        $originalSql = array_map(fn ($entry) => [$entry['query'], $entry['bindings']], DB::getQueryLog());
+        DB::flushQueryLog();
+        $total = null;
+        $withMetadata = $service->discover($query, 21, $offset, $total);
+        $metadataSql = array_map(fn ($entry) => [$entry['query'], $entry['bindings']], DB::getQueryLog());
+        DB::disableQueryLog();
+        expect($total)->toBe(25)->and($metadataSql)->toBe($originalSql)
+            ->and($metadataSql)->toHaveCount($offset < 25 ? 3 : 1)
+            ->and($withMetadata->toArray())->toBe($withoutMetadata->toArray())
+            ->and($withMetadata->modelKeys())->toBe(array_slice($expected, $offset, 21));
+        $result = app(JobDecisionUseCaseService::class)->run($query, intdiv($offset, 20) + 1);
+        expect($result['total'])->toBe(25)
+            ->and(array_column(array_column($result['items'], 'job'), 'id'))->toBe(array_slice($expected, $offset, 20))
+            ->and(array_keys($result['pagination']))->toBe(['page', 'has_previous', 'has_next']);
+    }
+    expect($query->getAttributes())->toBe($before);
+});
+
+test('empty population has zero display total', function () {
+    $query = decisionPageFixture(0);
+    $result = app(JobDecisionUseCaseService::class)->run($query);
+    expect($result['total'])->toBe(0)->and($result['items'])->toBe([])
+        ->and($result['pagination'])->toBe(['page' => 1, 'has_previous' => false, 'has_next' => false]);
+    $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
+        ->get(decisionPageUrl($query))->assertOk()->assertSee('data-result-total>0</strong>', false);
+});
+
+test('compact result cards preserve Fit values detail routes and twenty item fallback across pages', function () {
+    $query = decisionPageFixture(25);
+    $jobs = JobPosting::orderBy('id')->get();
+    Company::whereKey($jobs[0]->company_id)->update(['name' => '関西ものづくり株式会社']);
+    foreach ($jobs as $i => $job) {
+        $job->update(['title' => ['産業機械の機械設計・製品開発', '生産設備の設計エンジニア', '精密機器の設計・開発担当'][$i % 3].'（'.($i + 1).'）']);
+    }
+    $expected = $jobs->filter(fn ($job) => $job->region === '兵庫県')->merge($jobs->filter(fn ($job) => $job->region !== '兵庫県'))->modelKeys();
+    $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
+    $capture = getenv('JOBDD_UI_CAPTURE_DIR');
+    if ($capture && ! is_dir($capture)) {
+        mkdir($capture, 0700, true);
+    }
+    foreach ([1, 2, 3] as $page) {
+        $response = $this->get(decisionPageUrl($query, ['page' => $page, 'tools' => ['autocad']]))->assertOk();
+        $html = new DOMDocument;
+        @$html->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+        $dom = new DOMXPath($html);
+        $items = $response->viewData('items');
+        $cards = $dom->query('//article[@data-job-id]');
+        if ($page === 1) {
+            $response->assertSee('次の3件を見る')->assertSee('次の求人を見る（21〜25件）');
+        } else {
+            $response->assertDontSee('次の求人を見る（');
+        }
+        expect($response->viewData('total'))->toBe(25)->and($cards->length)->toBe(count($items))
+            ->and($dom->query('//article[@hidden]')->length)->toBe(0)
+            ->and($dom->query('//*[@data-result-controls and @hidden]')->length)->toBe(1)
+            ->and($dom->query('//article//details | //article//a[@target="_blank"]')->length)->toBe(0);
+        $actual = [];
+        foreach ($cards as $index => $card) {
+            $actual[] = (int) $card->getAttribute('data-job-id');
+            $fit = $items[$index]['fit'];
+            foreach ($fit['axes'] as $axis) {
+                expect($dom->query('.//*[@data-axis="'.$axis['key'].'" and @data-status="'.$axis['status'].'"]', $card)->length)->toBe(1);
+            }
+            foreach (['confirmed_matches' => '確認できた', 'confirmed_mismatches' => '条件と異なる', 'unknowns' => '未確認'] as $key => $label) {
+                expect($card->textContent)->toContain($label.' '.$fit['summary'][$key].'項目');
+            }
+            expect($dom->query('.//input[@name="jobs[]" and @form="compare-selection"]', $card)->length)->toBe(1);
+        }
+        expect($actual)->toBe(array_slice($expected, ($page - 1) * 20, 20));
+        $response->assertDontSee('希望職種と掲載職種が一致しています。')->assertDontSee('最終取得日時')
+            ->assertDontSee('情報提供元')->assertDontSee('求人元を見る')->assertDontSee('上位3件');
+        if ($capture) {
+            file_put_contents($capture.'/results-'.$page.'.html', $response->getContent());
+        }
+    }
+    if ($capture) {
+        $ids = [$expected[0], $expected[1], $expected[20]];
+        $comparison = $this->get(route('query.jobs.compare', ['userQuery' => $query->public_id, 'jobs' => $ids, 'tools' => ['autocad'], 'page' => 2]))->assertOk();
+        $detail = $this->get(route('query.jobs.show', ['userQuery' => $query->public_id, 'job' => $expected[0], 'tools' => ['autocad']]))->assertOk();
+        file_put_contents($capture.'/comparison.html', $comparison->getContent());
+        file_put_contents($capture.'/detail.html', $detail->getContent());
+        file_put_contents($capture.'/manifest.json', json_encode(['url' => decisionPageUrl($query, ['tools' => ['autocad']]), 'ids' => $expected, 'compare_ids' => $ids]));
+    }
+});
+
+test('next page copy describes the actual next page range', function (int $page, string $label) {
+    $query = decisionPageFixture(45);
+    $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
+        ->get(decisionPageUrl($query, ['page' => $page]))->assertOk()
+        ->assertSee($label)->assertSee('data-next-label="'.$label.'"', false)
+        ->assertDontSee('次の20件を見る')->assertDontSee('他の求人を見る');
+})->with([[1, '次の求人を見る（21〜40件）'], [2, '次の求人を見る（41〜45件）']]);

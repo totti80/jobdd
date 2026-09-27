@@ -17,11 +17,12 @@ class JobDiscoveryService
     private const FIXTURE_HOSTS = ['example.com', 'example.org', 'example.net', 'test', 'invalid', 'localhost', 'example'];
 
     /**
+     * @param  int|null  $total  Output-only count after the source gate, before slicing.
      * @return Collection<int, JobPosting> Full models with all jobFacts loaded in ID order.
      *
      * A caller-owned consistent snapshot is needed for repeatability across concurrent updates.
      */
-    public function discover(UserQuery $query, int $limit = 20, int $offset = 0): Collection
+    public function discover(UserQuery $query, int $limit = 20, int $offset = 0, ?int &$total = null): Collection
     {
         if (! in_array($query->occupation, self::OCCUPATIONS, true)
             || ($query->region !== null && ! in_array($query->region, self::REGIONS, true))
@@ -37,9 +38,11 @@ class JobDiscoveryService
         $scope->orderBy('id');
 
         // Gate before pagination; only this lightweight projection spans the whole scope.
-        $ids = (clone $scope)->get(['id', 'region', 'source_url'])
-            ->filter(fn (JobPosting $job) => $this->validSource($job->source_url))
-            ->values()->slice($offset, $limit)->pluck('id')->all();
+        $eligible = (clone $scope)->get(['id', 'region', 'source_url'])
+            ->filter(fn (JobPosting $job) => $this->validSource($job->source_url));
+        // Display-only metadata from the already-loaded, gated population. No extra SQL.
+        $total = $eligible->count();
+        $ids = $eligible->values()->slice($offset, $limit)->pluck('id')->all();
         if ($ids === []) {
             return new Collection;
         }

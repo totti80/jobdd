@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\JobPosting;
 use App\Services\DailyDiscoveryImporter;
 use App\Services\DirectLookup\CompanyUrlEvidence;
+use App\Support\JobEyecatchResolver;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -226,6 +227,10 @@ class ImportMeitecNextJobs extends Command
                                     'unavailable_at' => null,
                                 ]
                             );
+
+                        if ($image = JobEyecatchResolver::importedUrl('meitec_next', $jobData)) {
+                            $jobPosting->eyecatch_image_url = $image;
+                        }
 
                         $jobPosting->update([
                             'provider_key' => 'meitec_next',

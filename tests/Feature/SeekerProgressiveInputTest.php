@@ -120,7 +120,7 @@ test('v2 pairs preferences with approved content without attaching Fit labels an
     $context = ['page' => 2, 'tools' => ['autocad'], 'return_job' => $job->id];
     $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
     $target = route('query.jobs.show', ['userQuery' => $query->public_id, 'job' => $job->id, 'page' => 2, 'tools' => ['autocad']]);
-    $this->get($target)->assertOk()->assertDontSee('data-preference-comparison', false)->assertSee('もっと詳しく比較する');
+    $this->get($target)->assertOk()->assertDontSee('data-preference-comparison', false)->assertSee('詳細条件');
     $this->patch(preferenceUrl($query, $context), progressiveInput(['work_style' => '<script>alert(1)</script>相談したい']))->assertRedirect($target);
     $response = $this->get($target)->assertOk()->assertSee('あなたの詳細希望と、この求人の仕事')->assertSee('あなたの希望')->assertSee('この求人の公開情報')->assertSee('関わりは少なめがよい')->assertSee('積極的に関わりたい')->assertSee('特に希望なし')->assertSee('月に数回')->assertSee('仕様の確認')->assertSee('ほぼ毎日')->assertSee('チームで設計')->assertSee('詳細希望を変更する')->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)->assertDontSee('<script>alert(1)</script>', false)->assertDontSee('want_less');
     $rows = $response->viewData('decision_view')['preference_rows'];

@@ -37,6 +37,7 @@ class JobPosting extends Model
         'application_requirements',
         'employment_type',
         'source_url',
+        'eyecatch_image_url',
         'provider_key',
         'external_id',
         'first_seen_at',

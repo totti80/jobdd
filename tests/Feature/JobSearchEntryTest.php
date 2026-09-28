@@ -224,7 +224,7 @@ test('new entry connects list detail comparison and application routes with tool
     $xpath = new DOMXPath($doc);
     $detailUrl = $xpath->query('//article//a[contains(text(), "詳細を見る")]')->item(0)->getAttribute('href');
     $detail = $this->get($detailUrl)->assertOk()->assertSee('https://careers.sample-company.jp/apply')
-        ->assertSee('一覧で比較する求人を選ぶ')->assertSee(route('jobs.start'));
+        ->assertSee('比較に追加')->assertSee(route('jobs.start'));
     $compareUrl = $xpath->query('//form[@id="compare-selection"]')->item(0)->getAttribute('action');
     $compare = $this->get($compareUrl.'?'.http_build_query(['jobs' => $jobs->take(2)->pluck('id')->all(), 'tools' => ['solidworks', 'autocad'], 'page' => 1]))
         ->assertOk()->assertSee('どれが一番かをJobDDが決めるのではなく')->assertSee('詳細を見る');

@@ -3,7 +3,7 @@
     <p>情報提供元：{{ $source['provider_key'] ?? '未確認' }}</p>
     <p>{{ $scopeLabel ?? 'この求人の掲載元' }}：
         @if ($sourceLink)
-            <a href="{{ $sourceLink }}" target="_blank" rel="noopener noreferrer" class="jobdd-link">{{ $sourceLink }}<span class="sr-only">（新しいタブ）</span></a>
+            <a href="{{ $sourceLink }}" target="_blank" rel="noopener noreferrer" class="jobdd-link">{{ ($compactSource ?? false) ? '掲載元求人ページ' : $sourceLink }}<span class="sr-only">（新しいタブ）</span></a>
         @else
             求人元URL未確認
         @endif

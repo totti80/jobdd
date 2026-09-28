@@ -3,120 +3,66 @@
     $fit = $items[0]['fit'];
     $view = $decision_view;
     $backUrl = route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]);
-    $compareUrl = route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools, 'select_job' => $job->id]).'#compare-selection';
-    $routesUrl = route('routes.show', ['jobPosting' => $job->id]);
 @endphp
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex, nofollow"><meta name="referrer" content="no-referrer">
     <title>{{ $view['title'] }} | JobDD</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="jobdd min-h-screen" data-jobdd-root>
-@include('query.partials.selection-header', ['heading' => '仕事の中身と根拠', 'containerClass' => 'max-w-6xl'])
-<main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:space-y-8 lg:py-8" data-decision-view="v2">
-    <article data-job-id="{{ $job->id }}" class="jobdd-card min-w-0">
-        <p class="break-words font-semibold text-slate-600"><x-company-name :name="$view['company']" /></p>
-        <h2 class="mt-2 break-words text-2xl font-bold leading-8 text-blue-950">{{ $view['title'] }}</h2>
-        <p class="mt-3 text-sm leading-6 text-slate-600">企業提供情報 · JobDD公開確認済み</p>
-        <div class="mt-5"><x-decision-fields :fields="$view['basic']" /></div>
-        <p class="mt-4 text-sm leading-6 text-slate-600">掲載年収・保存上の掲載状態は、提示年収や現在の募集を保証しません。情報を比較し、最終的な判断はご自身で行ってください。</p>
-        <div class="mt-5 flex flex-col gap-3 sm:flex-row">
-            <a class="jobdd-button" href="{{ $compareUrl }}" data-compare-add="{{ $job->id }}" data-query-id="{{ $query['public_id'] }}" data-job-label="{{ $view['company'] }} {{ $job->title }}">比較に追加</a>
-            <a class="jobdd-button" href="{{ $routesUrl }}">応募方法を見る</a>
+<x-site-header />
+<main class="jobdd-detail site-container space-y-6 py-6 lg:space-y-8 lg:py-10" data-decision-view="v2">
+    @include('query.partials.detail-hero')
+    @php($sections = collect($view['sections'])->keyBy('id'))
+    <x-decision-section id="fit" title="あなたの希望条件との確認">
+        @include('query.partials.published-section-content', ['section' => $sections['fit']])
+    </x-decision-section>
+    <section aria-labelledby="job-information" class="jobdd-card">
+        <h2 id="job-information" class="text-xl font-bold text-blue-950">この仕事について分かること</h2>
+        <p class="mt-3 text-sm leading-6 text-slate-600">企業が公開した情報です。未確認は、合わないという意味ではありません。</p>
+        <div class="jobdd-information-grid">
+            @foreach (['design' => '設計対象', 'phases' => '担当工程', 'tools' => 'CAD / Tool', 'collaboration' => '関係者', 'typical-day' => 'Typical Day'] as $key => $label)
+                <section id="{{ $key }}" class="min-w-0">
+                    <h3 class="mb-4 text-lg font-bold text-blue-950">{{ $label }}</h3>
+                    @include('query.partials.published-section-content', ['section' => $sections[$key]])
+                </section>
+            @endforeach
         </div>
-        <p class="mt-3 text-sm leading-6 text-slate-600">比較は一覧で2〜3件を選びます。この求人を選択した状態で一覧へ戻ります。</p>
-        @include('query.partials.preference-link', ['preferencePage' => $page, 'returnJob' => $job->id])
-        <noscript><p class="mt-2 text-sm">JavaScriptが無効な場合は、一覧でこの求人を選択してください。</p></noscript>
-    </article>
-    @if ($view['preference_rows'])
-        <x-decision-section id="detailed-preferences" title="あなたの詳細希望と、この求人の仕事">
-            <p class="mb-5 leading-7 text-slate-600">希望と企業提供の公開情報を並べています。一致・不一致の自動判定はしません。違いを確かめ、判断するための比較材料です。</p>
-            <div class="divide-y divide-slate-200" data-preference-comparison>
-                @foreach ($view['preference_rows'] as $row)
-                    <section class="min-w-0 py-5">
-                        <h3 class="mb-4 font-bold text-blue-950">{{ $row['label'] }}</h3>
-                        <x-decision-fields :fields="['あなたの希望' => $row['preference'], 'この求人の公開情報' => $row['job']]" />
-                    </section>
-                @endforeach
-            </div>
-            @include('query.partials.preference-link', ['preferencePage' => $page, 'returnJob' => $job->id, 'preferenceLinkLabel' => '詳細希望を変更する'])
-        </x-decision-section>
-    @endif
-    @foreach ($view['sections'] as $section)
-        <x-decision-section :id="$section['id']" :title="$section['title']">
-            @switch($section['type'] ?? 'fields')
-                @case('points')
-                    <p class="mb-3 text-sm leading-6 text-slate-600">企業の公開情報を整理した要点です。推薦や適性の評価ではありません。</p>
-                    <ul class="list-disc space-y-3 break-words pl-5 leading-7">
-                        @forelse ($section['points'] as $point)<li>{{ $point }}</li>
-                        @empty<li>{{ \App\Support\PublishedJobDecisionPresenter::MISSING }}</li>@endforelse
-                    </ul>
-                    @break
-                @case('fit')
-                    <p class="leading-7 text-slate-600">未確認は、条件に合わないという意味ではありません。照合対象は職種・勤務地・年収・希望したCAD / Toolです。</p>
-                    <p class="mt-2 text-sm leading-6 text-slate-600">企業申告のツール情報だけでは、現在のルールで使用を確認できた扱いにはしません。工程・経験・働き方などは、ご自身で比較するための情報です。</p>
-                    @include('query.partials.fit', ['fit' => $fit, 'idPrefix' => 'published-job-'.$job->id, 'summaryOnly' => false])
-                    @break
-                @case('tools')
-                    <p class="mb-4 leading-7 text-slate-600">仕事で使うことと、応募時点で経験が必要なことを分けて表示しています。</p>
-                    <div class="space-y-5">
-                        @forelse ($section['tools'] as $tool)
-                            <section class="min-w-0 rounded-xl border border-slate-200 p-4">
-                                <h3 class="mb-4 break-words text-lg font-bold">{{ $tool['name'] }}</h3>
-                                <x-decision-fields :fields="$tool['fields']" />
-                                <div class="mt-4 flex flex-wrap items-center gap-3"><p class="text-sm font-semibold">あなたとの照合</p>@include('query.partials.status-badge', ['status' => $tool['status']])</div>
-                                <p class="mt-2 text-sm leading-6 text-slate-600">{{ $tool['fit_note'] }}</p>
+    </section>
+    <details class="jobdd-card jobdd-detail-disclosure">
+        <summary>仕事の詳細情報 <span>詳細を開く</span></summary>
+        <div class="mt-5 space-y-6">
+            @if ($view['preference_rows'])
+                <x-decision-section id="detailed-preferences" title="あなたの詳細希望と、この求人の仕事">
+                    <p class="mb-5 leading-7 text-slate-600">希望と企業提供の公開情報を並べています。一致・不一致の自動判定はしません。違いを確かめ、判断するための比較材料です。</p>
+                    <div class="divide-y divide-slate-200" data-preference-comparison>
+                        @foreach ($view['preference_rows'] as $row)
+                            <section class="min-w-0 py-5">
+                                <h3 class="mb-4 font-bold text-blue-950">{{ $row['label'] }}</h3>
+                                <x-decision-fields :fields="['あなたの希望' => $row['preference'], 'この求人の公開情報' => $row['job']]" />
                             </section>
-                        @empty<p>{{ \App\Support\PublishedJobDecisionPresenter::MISSING }}</p>@endforelse
+                        @endforeach
                     </div>
-                    @break
-                @case('day')
-                    <p class="mb-5 leading-7 text-slate-600">代表的な1日の例です。毎日同じ業務内容を保証するものではありません。</p>
-                    <ol class="ml-2 space-y-5 border-l-2 border-blue-200 pl-5" aria-label="代表的な1日の流れ">
-                        @forelse ($section['items'] as $entry)
-                            <li class="min-w-0"><h3 class="break-words font-bold text-blue-950">{{ $entry['time'] }}</h3><p class="mt-1 whitespace-pre-wrap break-words leading-7">{{ $entry['activity'] }}</p></li>
-                        @empty<li>{{ \App\Support\PublishedJobDecisionPresenter::MISSING }}</li>@endforelse
-                    </ol>
-                    @break
-                @case('evidence')
-                    <p class="font-semibold">企業提供情報 · JobDD公開確認済み</p>
-                    <p class="mt-3 leading-7 text-slate-600">JobDDは公開可能な状態を確認しています。企業申告内容の真実性を保証するものではありません。</p>
-                    <details class="jobdd-details mt-4">
-                        <summary>情報源を見る</summary>
-                        <div class="space-y-4 p-4 pt-2">
-                            <p class="break-words">情報源：{{ $view['source_title'] }}</p>
-                            <p>情報の種類：企業による申告情報</p>
-                            <p>公開確認・公開日時：{{ $view['published_at'] }}</p>
-                            <p class="text-sm leading-6">対象情報：このページの企業提供の仕事内容・応募条件。以下の根拠は公開時に記録された情報です。</p>
-                            @include('query.partials.provenance', ['source' => $view['source']])
-                        </div>
-                    </details>
-                    <details class="jobdd-details mt-4">
-                        <summary>項目別の根拠を見る（{{ count($view['evidence']) }}件）</summary>
-                        <div class="space-y-6 p-4 pt-2">
-                            @forelse ($view['evidence'] as $fact)
-                                <section><h3 class="mb-2 break-words font-semibold">{{ $fact['label'] }}</h3><p class="mb-3 text-sm text-slate-600">{{ $fact['kind_label'] }}</p>
-                                    @include('query.partials.evidence-block', ['evidence' => $fact['evidence'], 'source' => $fact['source'], 'evidenceLabel' => $fact['label'], 'evidenceTextLabel' => $fact['text_label']])
-                                </section>
-                            @empty<p>{{ \App\Support\PublishedJobDecisionPresenter::MISSING }}</p>@endforelse
-                        </div>
-                    </details>
-                    @break
-                @case('routes')
-                    <p class="leading-7 text-slate-600">{{ $section['count'] }}件の応募経路が保存されています。利用条件と現在の募集状況は応募方法の画面とリンク先で確認してください。</p>
-                    <div class="mt-5 flex flex-col gap-3 sm:flex-row">
-                        <a class="jobdd-button" href="{{ $routesUrl }}">応募方法を見る</a>
-                        <a class="jobdd-button" href="{{ $compareUrl }}" data-compare-add="{{ $job->id }}" data-query-id="{{ $query['public_id'] }}" data-job-label="{{ $view['company'] }} {{ $job->title }}">比較に追加</a>
-                    </div>
-                    @break
-                @default
-                    <x-decision-fields :fields="$section['fields']" />
-            @endswitch
-        </x-decision-section>
-    @endforeach
+                    @include('query.partials.preference-link', ['preferencePage' => $page, 'returnJob' => $job->id, 'preferenceLinkLabel' => '詳細希望を変更する'])
+                </x-decision-section>
+            @endif
+        @foreach ($view['sections'] as $section)
+            @if (!in_array($section['id'], ['fit', 'design', 'phases', 'tools', 'collaboration', 'typical-day', 'evidence', 'routes']))
+                <x-decision-section :id="$section['id']" :title="$section['title']">
+                    @include('query.partials.published-section-content')
+                </x-decision-section>
+            @endif
+        @endforeach
+        </div>
+    </details>
+    <x-decision-section id="evidence" title="根拠と掲載元">
+        @include('query.partials.published-section-content', ['section' => $sections['evidence']])
+    </x-decision-section>
+    @include('query.partials.detail-application')
     <a href="{{ $backUrl }}" class="jobdd-link inline-flex min-h-12 items-center">求人一覧へ戻る</a>
 </main>
 <x-site-footer />

@@ -9,3 +9,5 @@ import './company-authoring';
 import './public-navigation';
 
 import './homepage-jobs';
+
+import './job-detail';

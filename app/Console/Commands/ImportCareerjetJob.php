@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\DailyDiscoveryImporter;
 use App\Services\DirectLookup\CompanyUrlEvidence;
 use App\Services\OccupationNormalizer;
+use App\Support\JobEyecatchResolver;
 use App\Support\ProviderCapabilities;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -166,6 +167,10 @@ class ImportCareerjetJob extends Command
                             'unavailable_at' => null,
                             'updated_at' => now(),
                         ];
+
+                        if ($image = JobEyecatchResolver::importedUrl('careerjet', $job)) {
+                            $jobPostingData['eyecatch_image_url'] = $image;
+                        }
 
                         $jobPostingData['occupation'] = $occupationNormalizer->normalize(
                             $title,

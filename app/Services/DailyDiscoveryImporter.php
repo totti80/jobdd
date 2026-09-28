@@ -10,6 +10,7 @@ use App\Models\Source;
 use App\Services\DirectLookup\CompanyUrlEvidence;
 use App\Support\AnonymousCompany;
 use App\Support\JobDecisionPresenter;
+use App\Support\JobEyecatchResolver;
 use App\Support\ProviderCapabilities;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -81,6 +82,9 @@ class DailyDiscoveryImporter
             'salary_min' => $salary($raw['salary_min'] ?? null), 'salary_max' => $salary($raw['salary_max'] ?? null),
             'description' => $description, 'employment_type' => $string($raw['employment_type'] ?? null) ?? ($provider === 'careerjet' ? '正社員' : null),
             'source_url' => $url, 'provider_key' => $provider, 'external_id' => $id, 'unavailable_at' => null];
+        if ($image = JobEyecatchResolver::importedUrl($provider, $raw)) {
+            $data['eyecatch_image_url'] = $image;
+        }
         $raw['published_at'] ??= $raw['date_posted'] ?? null;
         foreach (['published_at', 'provider_updated_at'] as $field) {
             if (isset($raw[$field])) {

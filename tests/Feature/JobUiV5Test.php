@@ -175,7 +175,7 @@ test('v5 detail separates presence evidence and stored route availability withou
         ->and($dom->query('//*[@id="presence-title"]/following-sibling::*//details')->length)->toBeGreaterThan(0);
     $response->assertSee('他部署の業務として記載')->assertSee('記録上の検証状態')
         ->assertSee('利用可能として記録')->assertSee('利用状況未確認')->assertSee('利用不可として記録')
-        ->assertSeeInOrder(['希望条件との確認結果', '求人本文で確認できた技術・工程', '根拠と求人元の情報', 'この求人で確認できた応募方法'])
+        ->assertSeeInOrder(['あなたの希望条件との確認', '求人本文で確認できた技術・工程', '根拠と掲載元', 'この求人への応募方法'])
         ->assertDontSee('href="https://apply.ui-v5.jp/unknown"', false)
         ->assertDontSee('href="https://apply.ui-v5.jp/unavailable"', false);
 });

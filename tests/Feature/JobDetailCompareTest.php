@@ -82,10 +82,10 @@ test('job detail exposes escaped Facts context and stored application routes wit
     try {
         $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
             ->get(detailCompareUrl($query, $jobs[0]->id, ['tools' => ['autocad'], 'page' => 2]));
-        $response->assertOk()->assertSee('求人詳細と根拠')->assertSee('確認できた')->assertSee('未確認')
+        $response->assertOk()->assertSee('この仕事について分かること')->assertSee('確認できた')->assertSee('未確認')
             ->assertSee('求人本文で確認できた技術・工程')->assertSee('応募条件に記載')->assertSee('根拠を見る')
-            ->assertSee('この求人で確認できた応募方法')->assertSeeInOrder(['Direct（', 'Agent（', 'Platform（'])
-            ->assertSeeInOrder(['この求人で確認できた応募方法', '人材紹介会社へ相談する選択肢', '相談先候補を見る'])
+            ->assertSee('この求人への応募方法')->assertSeeInOrder(['Direct（', 'Agent（', 'Platform（'])
+            ->assertSeeInOrder(['この求人への応募方法', '人材紹介会社へ相談する選択肢', '相談先候補を見る'])
             ->assertSee('/agencies?page=2', false)
             ->assertSee('https://apply.sample-company.jp/direct', false)->assertSee('rel="noopener noreferrer"', false)
             ->assertSee('page=2', false)->assertSee('tools%5B0%5D=autocad', false)

@@ -45,7 +45,7 @@ test('approved snapshot renders decision sections provenance and existing route 
     $query = decisionQuery();
     $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])->get(decisionUrl($query, $job));
     $response->assertOk()->assertViewIs('query.job-show-v2')->assertSee('data-decision-view="v2"', false);
-    foreach (['この求人の要点', 'あなたの希望との照合', '何を設計する仕事か', 'どの工程を担当するか', '入社直後 → 将来', 'CAD / Tool', '誰と仕事をするか', '仕事の進め方', '代表的な1日', 'この仕事の難しいところ', '合いやすい働き方', '合いにくい可能性がある働き方', '代表的な案件', '情報源と根拠', '応募方法',
+    foreach (['この求人の要点', 'あなたの希望条件との確認', 'この仕事について分かること', '設計対象', '担当工程', '入社直後 → 将来', 'CAD / Tool', '関係者', '仕事の進め方', 'Typical Day', 'この仕事の難しいところ', '合いやすい働き方', '合いにくい可能性がある働き方', '代表的な案件', '根拠と掲載元', '応募方法',
         '公開テスト株式会社', '生産設備', '工場向け', '構想', '詳細設計', '部品設計', '将来的な担当可能性（確約ではありません）', 'AutoCAD', '主に使う', '必須経験', '製図', '同じ設計チーム', '製造', '月に数回', 'ほぼ毎日', 'ほとんどない', '仕様の確認', '組立調整', '現場は別担当', 'チームで設計', '設計打合せ', '精度を保つ', '製品知識', '相談しながら進める', '単独完結を希望', '搬送装置', '半年', '3名', '図面を読めること', '設計経験', '解析経験', '調整の多さ',
         '代表的な1日の例です。毎日同じ業務内容を保証するものではありません。', '企業提供情報', 'JobDD公開確認済み', '企業申告内容の真実性を保証するものではありません。', '公開確認・公開日時', '日本時間', '情報源を見る', '項目別の根拠を見る', '保存された根拠（日本語表示）', '比較に追加', '応募方法を見る'] as $text) {
         $response->assertSee($text);
@@ -189,7 +189,7 @@ test('legacy detail evidence routes and mixed comparison remain compatible', fun
     $legacy->applicationRoutes()->create(['route_type' => 'direct', 'availability_status' => 'available', 'application_url' => 'https://careers.legacy-company.jp/apply']);
     $query = decisionQuery();
     $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
-    $this->get(decisionUrl($query, $legacy))->assertOk()->assertViewIs('query.job-show')->assertSee('求人詳細と根拠')->assertSee('従来の本文')->assertSee('AutoCADで設計します。')->assertSee('https://careers.legacy-company.jp/apply', false)->assertDontSee('data-decision-view="v2"', false);
+    $this->get(decisionUrl($query, $legacy))->assertOk()->assertViewIs('query.job-show')->assertSee('この仕事について分かること')->assertSee('従来の本文')->assertSee('AutoCADで設計します。')->assertSee('https://careers.legacy-company.jp/apply', false)->assertDontSee('data-decision-view="v2"', false);
     $this->get(route('query.jobs.compare', ['userQuery' => $query->public_id, 'jobs' => [$job->id, $legacy->id], 'tools' => ['autocad']]))->assertOk()->assertSee('機械設計エンジニア')->assertSee('既存の求人');
     $this->get(route('query.jobs', ['userQuery' => $query->public_id, 'select_job' => $job->id]))->assertOk()->assertSee('form="compare-selection"', false)->assertSee('比較に追加');
 });

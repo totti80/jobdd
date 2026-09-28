@@ -1,4 +1,6 @@
 import json
+import os
+from eyecatch import extract_eyecatch
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -778,6 +780,14 @@ def fetch_job_detail(
         )
 
         return None
+
+    job["eyecatch_image_url"] = None
+    if "meitec_next" in os.getenv("JOBDD_EYECATCH_APPROVED_PROVIDERS", "").split(","):
+        try:
+            job["eyecatch_image_url"] = extract_eyecatch(soup, url)
+        except Exception:
+            # Optional metadata must never fail a job import.
+            pass
 
     job["company_url_evidence"] = extract_company_url_evidence(
         data, job.get("company_name"), url, "meitec_next", html=html

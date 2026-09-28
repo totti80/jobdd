@@ -26,7 +26,8 @@ class DiscoveryProviderAdapter
         }
         $process = new Process([config('crawler.python'), base_path('crawler/fetch_daily_cell.py'),
             $provider, $cell['occupation'], $cell['region'], $url], base_path(),
-            ['CAREERJET_API_KEY' => config('discovery.careerjet_api_key')]);
+            ['CAREERJET_API_KEY' => config('discovery.careerjet_api_key'),
+                'JOBDD_EYECATCH_APPROVED_PROVIDERS' => implode(',', config('eyecatch.approved_providers', []))]);
         $process->setTimeout(config('discovery.fetch_timeout'));
         $process->run();
         if (! $process->isSuccessful()) {

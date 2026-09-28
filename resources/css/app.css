@@ -398,3 +398,10 @@ select:focus[data-flux-control] {
         .jobdd-sort-form select { flex: 1; min-width: 0; }
     }
 }
+
+    /* The existing single header and row labels share the same scroll container. */
+    .jobdd-comparison { isolation: isolate; }
+    .jobdd-comparison .jobdd-comparison-header th { box-shadow: 0 1px 0 #cbd5e1; }
+    .jobdd-comparison .jobdd-comparison-unknown { color: #64748b; font-weight: 400; }
+    .jobdd-comparison [data-status-badge="unknown"],
+    .jobdd-comparison [data-fit-unknown-count] { color: #64748b; background-color: #f8fafc; font-weight: 400; --tw-ring-color: #e2e8f0; }

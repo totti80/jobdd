@@ -7,7 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="jobdd min-h-screen" data-jobdd-root>
-@include('query.partials.selection-header', ['heading' => '選んだ求人を比較する'])
+@include('query.partials.selection-header', ['heading' => '選んだ求人を比較する', 'compactConditions' => true])
 <main class="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:py-8">
     <p class="leading-7 text-slate-600">どれが一番かをJobDDが決めるのではなく、確認できた情報を横に並べています。表示順は選択した順です。</p>
     <p class="leading-7 text-slate-600">未確認：保存済み情報から確認できない情報です。合わないという意味ではありません。</p>
@@ -27,7 +27,7 @@
         <table>
             <caption class="sr-only">{{ count($items) }}求人の掲載情報と希望条件との比較</caption>
             <colgroup><col class="jobdd-axis-column">@foreach ($items as $item)<col>@endforeach</colgroup>
-            <thead>
+            <thead class="jobdd-comparison-header">
                 <tr>
                     <th scope="col" class="jobdd-corner">比較項目</th>
                     @foreach ($items as $item)
@@ -47,9 +47,9 @@
                         @foreach ($items as $item)
                             <td>
                                 @if ($field === 'salary')
-                                    {{ $item['job']->salary_min !== null ? $item['job']->salary_min.'万円' : '下限未確認' }} 〜 {{ $item['job']->salary_max !== null ? $item['job']->salary_max.'万円' : '上限未確認' }}
+                                    <span @class(['jobdd-comparison-unknown' => $item['job']->salary_min === null])>{{ $item['job']->salary_min !== null ? $item['job']->salary_min.'万円' : '下限未確認' }}</span> 〜 <span @class(['jobdd-comparison-unknown' => $item['job']->salary_max === null])>{{ $item['job']->salary_max !== null ? $item['job']->salary_max.'万円' : '上限未確認' }}</span>
                                 @else
-                                    {{ $item['job']->getAttribute($field) ?? '未確認' }}
+                                    <span @class(['jobdd-comparison-unknown' => $item['job']->getAttribute($field) === null])>{{ $item['job']->getAttribute($field) ?? '未確認' }}</span>
                                 @endif
                             </td>
                         @endforeach
@@ -63,7 +63,7 @@
                         @foreach ($items as $item)
                             <td>
                                 <div @class(['flex flex-wrap gap-2' => $key === 'design_phases'])>
-                                    @forelse ($item['comparison']['rows'][$key]['values'] as $value)<p @class(['jobdd-scope-badge' => $key === 'design_phases', 'mb-2 break-words' => $key !== 'design_phases', 'line-clamp-2' => !in_array($key, ['design_phases', 'tools'])])>{{ $value }}</p>@empty<p class="text-slate-600">未確認</p>@endforelse
+                                    @forelse ($item['comparison']['rows'][$key]['values'] as $value)<p @class(['jobdd-scope-badge' => $key === 'design_phases', 'mb-2 break-words' => $key !== 'design_phases', 'line-clamp-2' => !in_array($key, ['design_phases', 'tools'])])>{{ $value }}</p>@empty<p class="jobdd-comparison-unknown">未確認</p>@endforelse
                                 </div>
                                 <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']) }}#{{ $item['comparison']['rows'][$key]['anchor'] }}">詳細を見る</a>
                             </td>
@@ -86,7 +86,7 @@
                 </tr>
                 <tr><th scope="row">応募方法</th>
                     @foreach ($items as $item)<td>
-                        @forelse ($item['comparison']['routes'] as $label)<p>{{ $label }}</p>@empty<p>利用可能な応募方法は未確認</p>@endforelse
+                        @forelse ($item['comparison']['routes'] as $label)<p>{{ $label }}</p>@empty<p class="jobdd-comparison-unknown">利用可能な応募方法は未確認</p>@endforelse
                         <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('routes.show', $item['job']->id) }}">応募方法を見る</a>
                     </td>@endforeach
                 </tr>
@@ -111,7 +111,7 @@
                                 @if (($item['fit']['axes'][$axisIndex]['key'] ?? null) === $axis['key'])
                                     @include('query.partials.axis', ['axis' => $item['fit']['axes'][$axisIndex], 'fit' => $item['fit'], 'showHeading' => false, 'idPrefix' => 'compare-job-'.$item['job']->id, 'jobLabel' => \App\Support\AnonymousCompany::display($item['company_name']).' '.$item['job']->title])
                                 @else
-                                    <p>この項目の確認結果は未確認です。</p>
+                                    <p class="jobdd-comparison-unknown">この項目の確認結果は未確認です。</p>
                                 @endif
                             </td>
                         @endforeach

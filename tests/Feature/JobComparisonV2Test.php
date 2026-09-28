@@ -142,3 +142,35 @@ test('legacy tool mentions reuse saved Facts without asserting responsibility', 
     JobFact::create(['job_posting_id' => $jobs[0]->id, 'fact_category' => 'tool', 'fact_key' => 'autocad', 'fact_value' => 'AutoCAD', 'normalized_value' => 'AutoCAD', 'extraction_method' => 'rule', 'verification_status' => 'unverified', 'evidence_text' => '他部署がAutoCADを使用します。']);
     $this->withSession(['jobdd_query_token_'.$query->public_id => 'private'])->get(compareV2Url($query, $jobs))->assertOk()->assertSee('記載：AutoCAD（用途は詳細で確認）')->assertSee('#presence-title', false);
 });
+
+test('comparison polish keeps one header selected order rows and detail links', function (int $count) {
+    [$query, $jobs] = compareV2Fixture(1, $count - 1);
+    $jobs = array_reverse($jobs);
+    $url = route('query.jobs.compare', ['userQuery' => $query->public_id, 'jobs' => array_column($jobs, 'id'), 'tools' => ['autocad'], 'page' => 2, 'sort' => 'salary_desc']);
+    $response = $this->withSession(['jobdd_query_token_'.$query->public_id => 'private'])->get($url)->assertOk();
+    $document = new DOMDocument;
+    @$document->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $dom = new DOMXPath($document);
+    expect($dom->query('//thead')->length)->toBe(1)
+        ->and($dom->query('//thead[@class="jobdd-comparison-header"]')->length)->toBe(1)
+        ->and($dom->query('//thead/th')->length)->toBe(0)
+        ->and($dom->query('//thead/tr/th[@scope="col"]')->length)->toBe($count + 1)
+        ->and($dom->query('//dl[contains(@class,"jobdd-condition-summary-compact")]')->length)->toBe(1)
+        ->and($dom->query('//*[@data-status-badge="unknown"]')->length)->toBeGreaterThan(0)
+        ->and($dom->query('//*[@data-fit-unknown-count]')->length)->toBe($count);
+    $headers = $dom->query('//thead/tr/th[@data-job-id]');
+    foreach ($headers as $i => $header) {
+        expect((int) $header->getAttribute('data-job-id'))->toBe($jobs[$i]->id);
+        $link = $dom->query('.//a', $header);
+        expect($link->length)->toBe(1)->and($link->item(0)->getAttribute('href'))->toContain('/jobs/'.$jobs[$i]->id, 'sort=salary_desc');
+    }
+    $response->assertSee('基本情報')->assertSee('仕事の中身（比較材料）')->assertSee('CAD / Tool')
+        ->assertSee('未確認')->assertSee('詳細を見る')->assertSee('比較対象を追加・解除する')
+        ->assertSee('条件を変更')->assertSee('詳細条件')->assertSee('表示順は選択した順です。');
+    if ($directory = getenv('JOBDD_COMPARE_CAPTURE_DIR')) {
+        if (! is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+        file_put_contents($directory.'/compare-'.$count.'.html', $response->getContent());
+    }
+})->with([2, 3]);

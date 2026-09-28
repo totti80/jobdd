@@ -39,7 +39,7 @@ class JobMapLocation
         ];
     }
 
-    public static function viewModel(array $items, array $query, int $page, array $tools): array
+    public static function viewModel(array $items, array $query, int $page, array $tools, ?string $sort = null): array
     {
         $jobs = [];
         $markers = [];
@@ -58,7 +58,7 @@ class JobMapLocation
                 'region' => $job->region,
                 'location_label' => ($job->region ?? '勤務地未確認').($point['point_key'] ? '（都道府県代表点）' : '（地図上の位置表示未設定）'),
                 'location_evidence' => ['field' => 'region', 'value' => $job->region],
-                'detail_url' => route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $job->id, 'page' => $page, 'tools' => $tools]),
+                'detail_url' => route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $job->id, 'page' => $page, 'tools' => $tools, ...($sort !== null ? ['sort' => $sort] : [])]),
             ];
             if ($point['point_key']) {
                 $markers[$point['point_key']]['count']++;

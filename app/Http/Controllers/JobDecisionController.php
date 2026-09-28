@@ -7,6 +7,7 @@ use App\Models\UserQuery;
 use App\Services\JobComparisonUseCaseService;
 use App\Services\JobDecisionUseCaseService;
 use App\Services\JobDetailUseCaseService;
+use App\Services\JobListSort;
 use App\Support\AgencyDecisionPresenter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class JobDecisionController extends Controller
     {
         [$input, $requirements] = $this->input($request, $userQuery);
         try {
-            $data = $useCase->run($userQuery, (int) ($input['page'] ?? 1), $requirements);
+            $data = $useCase->run($userQuery, (int) ($input['page'] ?? 1), $requirements, $input['sort']);
         } catch (InvalidArgumentException $e) {
             abort(422, '比較条件を確認してください。職種は機械設計・電気設計、地域は近畿6府県に対応しています。');
         }
@@ -39,7 +40,7 @@ class JobDecisionController extends Controller
             abort(422, '比較条件を確認してください。');
         }
 
-        return response()->view(isset($data['decision_view']) ? 'query.job-show-v2' : 'query.job-show', [...$data, 'page' => (int) ($input['page'] ?? 1)])
+        return response()->view(isset($data['decision_view']) ? 'query.job-show-v2' : 'query.job-show', [...$data, 'sort' => $input['sort'], 'page' => (int) ($input['page'] ?? 1)])
             ->header('Cache-Control', 'private, no-store');
     }
 
@@ -52,7 +53,7 @@ class JobDecisionController extends Controller
             abort(422, '比較条件を確認してください。');
         }
 
-        return response()->view('query.job-compare', [...$data, 'page' => (int) ($input['page'] ?? 1)])
+        return response()->view('query.job-compare', [...$data, 'sort' => $input['sort'], 'page' => (int) ($input['page'] ?? 1)])
             ->header('Cache-Control', 'private, no-store');
     }
 
@@ -67,7 +68,7 @@ class JobDecisionController extends Controller
         return response()->view('query.agencies', [
             'query' => $userQuery->only(['public_id', 'occupation', 'region', 'salary_min', 'salary_max']),
             'selected_tools' => array_column($requirements['desired'], 'fact_key'),
-            'page' => (int) ($input['page'] ?? 1),
+            'sort' => $input['sort'], 'page' => (int) ($input['page'] ?? 1),
             'items' => $items,
         ])->header('Cache-Control', 'private, no-store');
     }
@@ -96,6 +97,7 @@ class JobDecisionController extends Controller
             ], 422)->header('Cache-Control', 'private, no-store'));
         }
         $input = $validator->validated();
+        $input['sort'] = JobListSort::normalize($request->query('sort'));
         $requirements = ['desired' => array_map(fn ($key) => ['fact_key' => $key, 'action' => 'use'], $input['tools'] ?? []), 'hard_axes' => []];
 
         return [$input, $requirements];

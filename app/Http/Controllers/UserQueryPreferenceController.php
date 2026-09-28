@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserQuery;
 use App\Services\JobDecisionUseCaseService;
+use App\Services\JobListSort;
 use App\Support\SeekerPreferences;
 use App\Support\StructuredJobOptions;
 use Illuminate\Http\Request;
@@ -71,13 +72,14 @@ class UserQueryPreferenceController extends Controller
         ]);
         abort_if($validator->fails(), 422, '戻り先のページ・ツール指定を確認してください。');
 
-        return $validator->validated();
+        return $validator->validated() + ($request->query->has('sort') ? ['sort' => JobListSort::normalize($request->query('sort'))] : []);
     }
 
     private function returnUrl(UserQuery $query, array $context): string
     {
         return route(isset($context['return_job']) ? 'query.jobs.show' : 'query.jobs', [
             'userQuery' => $query->public_id, 'page' => $context['page'] ?? 1, 'tools' => $context['tools'] ?? [],
+            ...(isset($context['sort']) ? ['sort' => $context['sort']] : []),
             ...(isset($context['return_job']) ? ['job' => $context['return_job']] : []),
         ]);
     }

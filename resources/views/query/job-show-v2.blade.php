@@ -2,7 +2,7 @@
     $job = $items[0]['job'];
     $fit = $items[0]['fit'];
     $view = $decision_view;
-    $backUrl = route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]);
+    $backUrl = route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']);
 @endphp
 <!DOCTYPE html>
 <html lang="ja">

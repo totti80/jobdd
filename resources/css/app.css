@@ -385,3 +385,16 @@ select:focus[data-flux-control] {
         .jobdd-primary-application { width: 75%; min-width: 360px; }
     }
 }
+
+@layer components {
+    .jobdd-sort-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .jobdd-sort-row .jobdd-result-range { margin-bottom: 0; }
+    .jobdd-sort-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; }
+    .jobdd-sort-form select { min-height: 44px; max-width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; background-color: white; padding: 8px 12px; }
+    @media (max-width: 599px) {
+        .jobdd-sort-row { display: block; }
+        .jobdd-sort-form { margin-top: 12px; }
+        .jobdd-sort-form label { width: 100%; }
+        .jobdd-sort-form select { flex: 1; min-width: 0; }
+    }
+}

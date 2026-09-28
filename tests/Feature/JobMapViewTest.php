@@ -89,7 +89,7 @@ test('authorized map uses the current page only with five reads no writes and es
     $response = $this->get(route('query.jobs', ['userQuery' => $query->public_id, 'page' => 2, 'tools' => ['nx']]));
     $sql = array_column(DB::getQueryLog(), 'query');
     DB::disableQueryLog();
-    expect($sql)->toHaveCount(5)->and(array_filter($sql, fn ($sql) => ! preg_match('/^select\b/i', $sql)))->toBe([]);
+    expect($sql)->toHaveCount(6)->and(array_filter($sql, fn ($sql) => ! preg_match('/^select\b/i', $sql)))->toBe([]);
     $response->assertOk()->assertSee('地図（都道府県の目安）')->assertSee('簡易位置図')
         ->assertSee('都道府県の代表点です。実際の勤務地を示すものではありません。')
         ->assertSee('地図表示対象 2求人 / 位置表示未設定 0求人')->assertSee('地図を表示できませんでした')

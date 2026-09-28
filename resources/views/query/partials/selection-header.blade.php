@@ -5,7 +5,7 @@
         @include('query.partials.condition-summary', ['query' => $query, 'selected_tools' => $selected_tools])
         <nav aria-label="求人比較のナビゲーション" class="flex flex-wrap gap-x-6 gap-y-2">
             <a href="{{ route('jobs.start') }}" class="jobdd-link inline-flex min-h-11 items-center">新しい条件を入力する</a>
-            <a href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]) }}" class="jobdd-link inline-flex min-h-11 items-center">求人一覧へ戻る（{{ $page }}ページ目）</a>
+            <a href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']) }}" class="jobdd-link inline-flex min-h-11 items-center">求人一覧へ戻る（{{ $page }}ページ目）</a>
         </nav>
     </div>
 </section>

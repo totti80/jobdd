@@ -18,11 +18,11 @@ class JobDiscoveryService
 
     /**
      * @param  int|null  $total  Output-only count after the source gate, before slicing.
-     * @return Collection<int, JobPosting> Full models with all jobFacts loaded in ID order.
+     * @return Collection<int, JobPosting> Full page models with jobFacts loaded; optional display order is applied before slicing.
      *
      * A caller-owned consistent snapshot is needed for repeatability across concurrent updates.
      */
-    public function discover(UserQuery $query, int $limit = 20, int $offset = 0, ?int &$total = null): Collection
+    public function discover(UserQuery $query, int $limit = 20, int $offset = 0, ?int &$total = null, ?string $sort = null, array $requirements = []): Collection
     {
         if (! in_array($query->occupation, self::OCCUPATIONS, true)
             || ($query->region !== null && ! in_array($query->region, self::REGIONS, true))
@@ -38,17 +38,28 @@ class JobDiscoveryService
         $scope->orderBy('id');
 
         // Gate before pagination; only this lightweight projection spans the whole scope.
-        $eligible = (clone $scope)->get(['id', 'region', 'source_url'])
+        $columns = $sort === null ? ['id', 'region', 'source_url'] : [
+            'id', 'region', 'source_url', 'salary_min', 'salary_max',
+            ...($sort === 'fit' ? ['occupation', 'title', 'description'] : []),
+            'published_at', 'first_seen_at',
+        ];
+        $eligible = (clone $scope)->get($columns)
             ->filter(fn (JobPosting $job) => $this->validSource($job->source_url));
         // Display-only metadata from the already-loaded, gated population. No extra SQL.
         $total = $eligible->count();
+        if ($sort !== null) {
+            $eligible = app(JobListSort::class)->order($eligible, $query, $sort, $requirements);
+        }
         $ids = $eligible->values()->slice($offset, $limit)->pluck('id')->all();
         if ($ids === []) {
             return new Collection;
         }
 
-        return $scope->whereIn('id', $ids)
+        $result = $scope->whereIn('id', $ids)
             ->with(['jobFacts' => fn ($facts) => $facts->orderBy('id')])->get();
+        $positions = array_flip($ids);
+
+        return $result->sortBy(fn ($job) => $positions[$job->id])->values();
     }
 
     private function validSource(mixed $url): bool

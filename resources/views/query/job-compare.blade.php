@@ -21,7 +21,7 @@
     @endif
     <p class="text-sm font-semibold">比較中 {{ count($items) }}求人</p>
     <ol class="flex flex-wrap gap-3">@foreach ($items as $item)<li class="max-w-full break-words rounded-lg bg-blue-50 px-3 py-2 text-sm">{{ $loop->iteration }}. {{ $item['job']->title }}</li>@endforeach</ol>
-    <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]) }}#compare-selection">比較対象を追加・解除する</a>
+    <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']) }}#compare-selection">比較対象を追加・解除する</a>
     <p id="comparison-scroll-help" class="text-sm font-semibold text-blue-950">左右にスクロールできます。表の中を上下にもスクロールできます。</p>
     <div class="jobdd-comparison rounded-2xl border border-slate-200 bg-white shadow-sm" style="--job-count: {{ count($items) }}" tabindex="0" role="region" aria-label="選んだ求人の比較表" aria-describedby="comparison-scroll-help">
         <table>
@@ -34,7 +34,7 @@
                         <th scope="col" data-job-id="{{ $item['job']->id }}">
                             <p class="line-clamp-2 text-sm font-semibold text-slate-600"><x-company-name :name="$item['company_name']" /></p>
                             <h2 class="mt-2 line-clamp-2 text-xl font-bold leading-7 text-blue-950">{{ $item['job']->title }}</h2>
-                            <a href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools]) }}" class="jobdd-link mt-2 inline-flex min-h-11 items-center">詳細を見る</a>
+                            <a href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']) }}" class="jobdd-link mt-2 inline-flex min-h-11 items-center">詳細を見る</a>
                         </th>
                     @endforeach
                 </tr>
@@ -65,7 +65,7 @@
                                 <div @class(['flex flex-wrap gap-2' => $key === 'design_phases'])>
                                     @forelse ($item['comparison']['rows'][$key]['values'] as $value)<p @class(['jobdd-scope-badge' => $key === 'design_phases', 'mb-2 break-words' => $key !== 'design_phases', 'line-clamp-2' => !in_array($key, ['design_phases', 'tools'])])>{{ $value }}</p>@empty<p class="text-slate-600">未確認</p>@endforelse
                                 </div>
-                                <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools]) }}#{{ $item['comparison']['rows'][$key]['anchor'] }}">詳細を見る</a>
+                                <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']) }}#{{ $item['comparison']['rows'][$key]['anchor'] }}">詳細を見る</a>
                             </td>
                         @endforeach
                     </tr>
@@ -80,7 +80,7 @@
                             @else
                                 <p>外部情報</p><p>{{ $item['job']->provider_key ?? '情報提供元未確認' }}</p>
                             @endif
-                            <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools]) }}#{{ $item['comparison']['snapshot'] ? 'evidence-title' : 'source-title' }}">Evidenceを見る</a>
+                            <a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']) }}#{{ $item['comparison']['snapshot'] ? 'evidence-title' : 'source-title' }}">Evidenceを見る</a>
                         </td>
                     @endforeach
                 </tr>
@@ -91,7 +91,7 @@
                     </td>@endforeach
                 </tr>
                 <tr><th scope="row">ある一日・代表的な案件</th>
-                    @foreach ($items as $item)<td><a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools]) }}#{{ $item['comparison']['snapshot'] ? 'typical-day-title' : 'presence-title' }}">求人詳細で確認する</a></td>@endforeach
+                    @foreach ($items as $item)<td><a class="jobdd-link inline-flex min-h-11 items-center" href="{{ route('query.jobs.show', ['userQuery' => $query['public_id'], 'job' => $item['job']->id, 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']) }}#{{ $item['comparison']['snapshot'] ? 'typical-day-title' : 'presence-title' }}">求人詳細で確認する</a></td>@endforeach
                 </tr>
             </tbody>
             <tbody>

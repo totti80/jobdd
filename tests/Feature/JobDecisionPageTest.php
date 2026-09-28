@@ -7,6 +7,7 @@ use App\Models\JobPublishedProfile;
 use App\Models\UserQuery;
 use App\Services\JobDecisionUseCaseService;
 use App\Services\JobDiscoveryService;
+use App\Services\JobFitService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -38,9 +39,22 @@ function decisionPageUrl(UserQuery $query, array $parameters = []): string
     return route('query.jobs', ['userQuery' => $query->public_id, ...$parameters]);
 }
 
-test('decision page renders the authorized pipeline with five reads and no writes', function () {
+// Expected order comes from the existing full Fit results, independently of the lightweight sorter.
+function decisionFitOrder(UserQuery $query, array $tools = [], ?array $ids = null): array
+{
+    $jobs = JobPosting::forPublic()->when($ids !== null, fn ($q) => $q->whereIn('id', $ids))->with('jobFacts')->get();
+    $requirements = ['desired' => array_map(fn ($key) => ['fact_key' => $key, 'action' => 'use'], $tools)];
+
+    return $jobs->sortBy(function ($job) use ($query, $requirements) {
+        $summary = app(JobFitService::class)->evaluate($query, $job, $job->jobFacts->all(), $requirements)['summary'];
+
+        return [$summary['confirmed_mismatches'], -$summary['confirmed_matches'], $summary['unknowns'], $job->id];
+    })->modelKeys();
+}
+
+test('decision page renders the authorized sorted pipeline with six reads and no writes', function () {
     $query = decisionPageFixture();
-    $expected = (new JobDiscoveryService)->discover($query, 21)->take(20)->modelKeys();
+    $expected = array_slice(decisionFitOrder($query, ['autocad']), 0, 20);
     $sql = [];
     $record = true;
     DB::listen(function ($event) use (&$sql, &$record) {
@@ -59,7 +73,7 @@ test('decision page renders the authorized pipeline with five reads and no write
     } finally {
         $record = false;
     }
-    expect($sql)->toHaveCount(5)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
+    expect($sql)->toHaveCount(6)->and(array_filter($sql, fn ($s) => ! preg_match('/^select\b/i', $s)))->toBe([]);
     $data = $response->viewData('items');
     expect(array_map(fn ($item) => $item['job']->id, $data))->toBe($expected)->and($data)->toHaveCount(20)
         ->and($response->viewData('total'))->toBe(23);
@@ -86,7 +100,7 @@ test('decision page renders the authorized pipeline with five reads and no write
 
 test('decision pagination keeps tools and evaluates only twenty jobs', function () {
     $query = decisionPageFixture();
-    $expected = (new JobDiscoveryService)->discover($query, 21, 20)->modelKeys();
+    $expected = array_slice(decisionFitOrder($query, ['solidworks', 'autocad']), 20);
     $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
         ->get(decisionPageUrl($query, ['page' => 2, 'tools' => ['solidworks', 'autocad']]));
     $response->assertOk()->assertSee('前へ')->assertDontSee('次の求人を見る（')->assertSee('tools%5B0%5D=solidworks', false);
@@ -205,7 +219,7 @@ test('display total counts only eligible public candidates before slicing with u
             ->and($withMetadata->modelKeys())->toBe(array_slice($expected, $offset, 21));
         $result = app(JobDecisionUseCaseService::class)->run($query, intdiv($offset, 20) + 1);
         expect($result['total'])->toBe(25)
-            ->and(array_column(array_column($result['items'], 'job'), 'id'))->toBe(array_slice($expected, $offset, 20))
+            ->and(array_column(array_column($result['items'], 'job'), 'id'))->toBe(array_slice(decisionFitOrder($query, [], $expected), $offset, 20))
             ->and(array_keys($result['pagination']))->toBe(['page', 'has_previous', 'has_next']);
     }
     expect($query->getAttributes())->toBe($before);
@@ -227,7 +241,7 @@ test('compact result cards preserve Fit values detail routes and twenty item fal
     foreach ($jobs as $i => $job) {
         $job->update(['title' => ['産業機械の機械設計・製品開発', '生産設備の設計エンジニア', '精密機器の設計・開発担当'][$i % 3].'（'.($i + 1).'）']);
     }
-    $expected = $jobs->filter(fn ($job) => $job->region === '兵庫県')->merge($jobs->filter(fn ($job) => $job->region !== '兵庫県'))->modelKeys();
+    $expected = decisionFitOrder($query, ['autocad']);
     $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
     $capture = getenv('JOBDD_UI_CAPTURE_DIR');
     if ($capture && ! is_dir($capture)) {

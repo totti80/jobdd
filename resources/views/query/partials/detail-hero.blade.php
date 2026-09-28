@@ -31,7 +31,7 @@
         <figcaption data-eyecatch-caption>JobDDイメージ画像</figcaption>
     </figure>
     <div class="jobdd-detail-actions">
-        <a class="site-button-secondary" href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools, 'select_job' => $job->id]) }}#compare-selection" data-compare-add="{{ $job->id }}" data-query-id="{{ $query['public_id'] }}" data-job-label="{{ $heroCompany }} {{ $heroTitle }}">比較に追加</a>
+        <a class="site-button-secondary" href="{{ route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit', 'select_job' => $job->id]) }}#compare-selection" data-compare-add="{{ $job->id }}" data-query-id="{{ $query['public_id'] }}" data-job-label="{{ $heroCompany }} {{ $heroTitle }}">比較に追加</a>
         <a class="jobdd-link" href="#application-title">応募方法を見る</a>
         <a class="jobdd-link" href="{{ $backUrl }}">求人一覧へ戻る</a>
     </div>

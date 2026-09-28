@@ -14,13 +14,14 @@ class JobDecisionUseCaseService
 
     public function __construct(private JobDiscoveryService $discovery, private JobFitRunnerService $runner) {}
 
-    public function run(UserQuery $query, int $page = 1, array $confirmedRequirements = []): array
+    public function run(UserQuery $query, int $page = 1, array $confirmedRequirements = [], string $sort = 'fit'): array
     {
         if ($page < 1 || $page > intdiv(PHP_INT_MAX, 20)) {
             throw new InvalidArgumentException('Invalid page.');
         }
+        $sort = JobListSort::normalize($sort);
         $total = 0;
-        $candidates = $this->discovery->discover($query, 21, ($page - 1) * 20, $total);
+        $candidates = $this->discovery->discover($query, 21, ($page - 1) * 20, $total, $sort, $confirmedRequirements);
         $jobs = $candidates->take(20)->values();
         $facts = [];
         foreach ($jobs as $job) {
@@ -40,6 +41,7 @@ class JobDecisionUseCaseService
             'selected_tools' => array_column($confirmedRequirements['desired'] ?? [], 'fact_key'),
             'items' => $items,
             'total' => $total,
+            'sort' => $sort,
             'pagination' => ['page' => $page, 'has_previous' => $page > 1, 'has_next' => $candidates->count() > 20],
         ];
     }

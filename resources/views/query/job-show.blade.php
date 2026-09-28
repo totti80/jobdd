@@ -1,7 +1,7 @@
 @php
     $item = $items[0]; $job = $item['job']; $fit = $item['fit'];
     $roles = \App\Support\JobDecisionPresenter::ROLES;
-    $backUrl = route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools]);
+    $backUrl = route('query.jobs', ['userQuery' => $query['public_id'], 'page' => $page, 'tools' => $selected_tools, 'sort' => $sort ?? 'fit']);
 @endphp
 <!DOCTYPE html>
 <html lang="ja">

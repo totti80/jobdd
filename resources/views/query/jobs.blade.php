@@ -1,7 +1,7 @@
 @php
     $tools = \App\Services\JobDecisionUseCaseService::TOOLS;
     $url = route('query.jobs', ['userQuery' => $query['public_id']]);
-    $nextUrl = $pagination['has_next'] ? $url.'?'.http_build_query(['page' => $pagination['page'] + 1, 'tools' => $selected_tools]) : '';
+    $nextUrl = $pagination['has_next'] ? $url.'?'.http_build_query(['page' => $pagination['page'] + 1, 'tools' => $selected_tools, 'sort' => $sort]) : '';
     $offset = ($pagination['page'] - 1) * 20;
     $nextLabel = $pagination['has_next'] ? '次の求人を見る（'.($offset + 21).'〜'.min($offset + 40, $total).'件）' : '';
 @endphp
@@ -31,6 +31,7 @@
             <details class="jobdd-details mt-2">
                 <summary>比較に使うツールを変更</summary>
                 <form method="GET" action="{{ $url }}" class="space-y-4 p-4 pt-2">
+                    <input type="hidden" name="sort" value="{{ $sort }}">
                     <p class="text-sm leading-6 text-slate-600">この画面だけの比較条件です。求人の絞り込みや保存は行いません。更新すると1ページ目に戻ります。</p>
                     @include('query.partials.tool-selector', ['tools' => $tools, 'selected' => $selected_tools, 'idPrefix' => 'list-tools', 'toolErrors' => []])
                     <button type="submit" class="jobdd-button">比較条件を更新</button>
@@ -50,12 +51,23 @@
         <button type="button" data-jobdd-view="map" aria-pressed="false" aria-controls="jobdd-map-view" class="jobdd-view-button"><x-jobdd-icon name="map" />地図（都道府県の目安）</button>
     </div>
     <div data-discovery-layout class="jobdd-results-layout">
-        @include('query.partials.map-view', ['map' => \App\Support\JobMapLocation::viewModel($items, $query, $pagination['page'], $selected_tools)])
+        @include('query.partials.map-view', ['map' => \App\Support\JobMapLocation::viewModel($items, $query, $pagination['page'], $selected_tools, $sort)])
         <section id="jobdd-list-view" data-list-view data-result-window data-offset="{{ $offset }}" data-next-url="{{ $nextUrl }}" data-next-label="{{ $nextLabel }}" aria-label="求人候補" class="min-w-0">
+            <div class="jobdd-sort-row">
             <p id="result-range" data-result-range tabindex="-1" role="status" aria-live="polite" aria-atomic="true" class="jobdd-result-range">{{ count($items) ? ($offset + 1).'〜'.($offset + count($items)).'件を表示' : '表示できる求人はありません' }}</p>
+            <form method="GET" action="{{ $url }}" class="jobdd-sort-form">
+                @foreach ($selected_tools as $tool)<input type="hidden" name="tools[]" value="{{ $tool }}">@endforeach
+                <label for="job-sort" class="font-semibold text-sm">表示順</label>
+                <select id="job-sort" name="sort" aria-describedby="sort-help" class="rounded-lg border-slate-300 text-sm">
+                    @foreach (\App\Services\JobListSort::OPTIONS as $value => $label)<option value="{{ $value }}" @selected($sort === $value)>{{ $label }}</option>@endforeach
+                </select>
+                <button type="submit" class="site-button-secondary">適用</button>
+            </form>
+            </div>
+            <p id="sort-help" class="mb-4 text-xs leading-6 text-slate-600">「希望条件に近い順」は職種・勤務地・年収・CAD / Toolの確認結果を使用します。新着順は掲載日時、不明なら初回確認日時を使用します。</p>
             <div class="jobdd-result-cards">
                 @forelse ($items as $item)
-                    <x-job-result-card :item="$item" :query="$query" :page="$pagination['page']" :selected-tools="$selected_tools" />
+                    <x-job-result-card :sort="$sort" :item="$item" :query="$query" :page="$pagination['page']" :selected-tools="$selected_tools" />
                 @empty
                     <p class="jobdd-card">このページに表示できる求人候補はありません。</p>
                 @endforelse
@@ -70,14 +82,14 @@
     </div>
     <nav data-result-pagination aria-label="ページ送り" class="jobdd-result-pagination">
         @if ($pagination['has_previous'])
-            <a rel="prev" href="{{ $url.'?'.http_build_query(['page' => $pagination['page'] - 1, 'tools' => $selected_tools]) }}" class="jobdd-link inline-flex min-h-12 items-center">前へ</a>
+            <a rel="prev" href="{{ $url.'?'.http_build_query(['page' => $pagination['page'] - 1, 'tools' => $selected_tools, 'sort' => $sort]) }}" class="jobdd-link inline-flex min-h-12 items-center">前へ</a>
         @else<span></span>@endif
         <span>{{ $pagination['page'] }}ページ目</span>
         @if ($pagination['has_next'])
             <a rel="next" href="{{ $nextUrl }}" class="jobdd-link inline-flex min-h-12 items-center">{{ $nextLabel }}</a>
         @else<span></span>@endif
     </nav>
-    <p class="text-xs leading-6 text-slate-600">希望地域を先に、同じ地域グループ内は登録順で表示。掲載年収・募集状況は保証されません。根拠・掲載元は求人詳細で確認できます。最終判断はあなた自身で。</p>
+    <p class="text-xs leading-6 text-slate-600">掲載年収・募集状況は保証されません。根拠・掲載元は求人詳細で確認できます。最終判断はあなた自身で。</p>
 </main>
 <x-site-footer />
 </body>

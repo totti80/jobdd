@@ -1,5 +1,6 @@
 <aside class="jobdd-selection-panel min-w-0 lg:sticky lg:top-6" aria-labelledby="comparison-title">
     <form id="compare-selection" data-query-id="{{ $query['public_id'] }}" method="GET" action="{{ route('query.jobs.compare', ['userQuery' => $query['public_id']]) }}" class="jobdd-card jobdd-compare-panel">
+        <input type="hidden" name="sort" value="{{ $sort ?? 'fit' }}">
         <input type="hidden" name="page" value="{{ $pagination['page'] }}">
         @foreach ($selected_tools as $tool)<input type="hidden" name="tools[]" value="{{ $tool }}">@endforeach
         <h2 id="comparison-title" tabindex="-1" class="text-xl font-bold text-blue-950"><x-jobdd-icon name="compare" /> 比較する求人</h2>

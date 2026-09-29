@@ -6,9 +6,9 @@ use App\Models\JobPosting;
 use App\Models\UserQuery;
 use App\Services\JobDecisionUseCaseService;
 use App\Services\JobSelectionUseCaseService;
+use App\Support\PublicQueryNavigation;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /** Public entry points reuse existing query authorization and candidate boundaries. */
@@ -97,31 +97,7 @@ class PublicPageController extends Controller
 
     private function query(Request $request): ?UserQuery
     {
-        $tokens = [];
-        foreach ($request->session()->all() as $key => $token) {
-            if (str_starts_with($key, 'jobdd_query_token_') && Str::isUuid($id = substr($key, 18)) && is_string($token) && $token !== '') {
-                $tokens[$id] = $token;
-            }
-        }
-        $preferred = $request->query('query');
-        if ($preferred !== null) {
-            if (! is_string($preferred) || ! isset($tokens[$preferred])) {
-                return null;
-            }
-            $tokens = [$preferred => $tokens[$preferred]];
-        }
-        if (! $tokens) {
-            return null;
-        }
-        foreach (UserQuery::whereIn('public_id', array_keys($tokens))->orderByDesc('id')->get() as $query) {
-            if (is_string($query->session_token) && $query->session_token !== '' && hash_equals($query->session_token, $tokens[$query->public_id])
-                && in_array($query->occupation, JobSearchController::OCCUPATIONS, true)
-                && ($query->region === null || in_array($query->region, JobSearchController::REGIONS, true))) {
-                return $query;
-            }
-        }
-
-        return null;
+        return PublicQueryNavigation::query($request);
     }
 
     private function context(Request $request): array

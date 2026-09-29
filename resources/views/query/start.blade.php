@@ -18,7 +18,7 @@
     @elseif (request()->query('guide') === 'compare')
         <div class="jobdd-decision-note mb-6"><p>比較したい求人を選んでください。まず条件を入力して求人一覧へ進みます。</p></div>
     @elseif (request()->query('guide') === 'preferences')
-        <div class="jobdd-decision-note mb-6"><p>詳細条件は、かんたん入力のあとで追加できます。まずは希望する職種と地域から始めましょう。</p></div>
+        <div class="jobdd-decision-note mb-6"><p>詳細条件を追加するには、まず4つの基本条件（希望職種・希望勤務地・希望年収・CAD / Tool）を入力してください。</p></div>
     @elseif (request()->query('guide') === 'unavailable')
         <div class="jobdd-decision-note mb-6"><p>この求人は現在確認できません。条件を入力して公開中の求人をご覧ください。</p></div>
     @endif

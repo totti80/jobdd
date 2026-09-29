@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Services\DirectLookup\CompanyWebsiteSearchProviderInterface;
 use App\Services\DirectLookup\DisabledCompanyWebsiteSearchProvider;
+use App\Support\PublicQueryNavigation;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -26,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        View::composer(['components.site-header', 'components.site-footer'], function ($view): void {
+            $view->with(PublicQueryNavigation::context(request()));
+        });
     }
 
     /**

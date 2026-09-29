@@ -130,3 +130,113 @@ test('public entries use the existing read-only session path without database wr
     expect($writes)->toBeEmpty();
     DB::disableQueryLog();
 });
+
+test('header preferences without a query opens basic guidance and keeps simple entry active', function () {
+    $response = $this->get(route('jobs.start'))->assertOk();
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    $link = $xpath->query('//header//nav/a')->item(2);
+    expect($link->getAttribute('href'))->toBe(route('jobs.start', ['guide' => 'preferences']));
+    $response = $this->get($link->getAttribute('href'))->assertOk()
+        ->assertSee('詳細条件を追加するには、まず4つの基本条件');
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    expect(trim($xpath->query('//header//nav/a[@aria-current="page"]')->item(0)->textContent))->toBe('かんたん入力');
+});
+
+test('header directly edits the current query and retains list context through save cancel and clear', function () {
+    $query = navigationQuery();
+    $newer = navigationQuery();
+    $this->withSession([
+        'jobdd_query_token_'.$query->public_id => $query->session_token,
+        'jobdd_query_token_'.$newer->public_id => $newer->session_token,
+    ]);
+    $context = ['userQuery' => $query->public_id, 'page' => 2, 'tools' => ['autocad'], 'sort' => 'salary_desc'];
+    $list = route('query.jobs', $context);
+    $response = $this->get($list)->assertOk();
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    $edit = $xpath->query('//header//nav/a')->item(2)->getAttribute('href');
+    expect($edit)->toBe(route('query.preferences.edit', $context));
+    $response = $this->get($edit)->assertOk()->assertSee('仕事の中身を、もう少し詳しく比較する');
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    expect($xpath->query('//header//nav/a[@aria-current="page"]')->length)->toBe(1);
+    expect(trim($xpath->query('//header//nav/a[@aria-current="page"]')->item(0)->textContent))->toBe('詳細条件');
+    expect($xpath->query('//a[contains(text(), "保存せず求人へ戻る")]')->item(0)->getAttribute('href'))->toBe($list);
+    $save = $xpath->query('//form')->item(0)->getAttribute('action');
+    $this->patch($save, ['work_style' => '相談しながら進めたい'])->assertRedirect($list);
+    expect($query->fresh()->detailed_skills['seeker_preferences']['work_style'])->toBe('相談しながら進めたい');
+    $this->get($list)->assertOk();
+    expect($query->fresh()->detailed_skills['seeker_preferences']['work_style'])->toBe('相談しながら進めたい');
+    $this->patch($save, ['work_style' => ''])->assertRedirect($list);
+    expect($query->fresh()->detailed_skills)->toBeNull();
+    expect($newer->fresh()->detailed_skills)->toBeNull();
+});
+
+test('header on public pages reuses the authorized session query directly', function () {
+    $query = navigationQuery();
+    $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
+        ->get(route('jobs.start'))->assertOk();
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    expect($xpath->query('//header//nav/a')->item(2)->getAttribute('href'))
+        ->toBe(route('query.preferences.edit', $query->public_id));
+});
+
+test('header from job detail retains the job return context', function () {
+    $query = navigationQuery();
+    $job = navigationJob();
+    $context = ['userQuery' => $query->public_id, 'page' => 2, 'tools' => ['autocad'], 'sort' => 'newest'];
+    $detail = route('query.jobs.show', [...$context, 'job' => $job->id]);
+    $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])->get($detail)->assertOk();
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    $edit = $xpath->query('//header//nav/a')->item(2)->getAttribute('href');
+    parse_str(parse_url($edit, PHP_URL_QUERY), $params);
+    expect($params)->toMatchArray(['page' => '2', 'sort' => 'newest', 'tools' => ['autocad'], 'return_job' => (string) $job->id]);
+    $this->get($edit)->assertOk()->assertSee(e($detail), false);
+    $this->patch(route('query.preferences.update', [...$context, 'return_job' => $job->id]), ['work_style' => '相談したい'])->assertRedirect($detail);
+});
+
+test('navigation reuses bound or controller resolved queries and shares one lookup between header and footer', function (string $name) {
+    $query = navigationQuery();
+    $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
+    $selects = [];
+    $record = true;
+    DB::listen(function ($event) use (&$selects, &$record) {
+        if ($record && preg_match('/^select\b.*\bfrom `user_queries`/i', $event->sql)) {
+            $selects[] = $event->sql;
+        }
+    });
+    try {
+        $response = $this->get(route($name, str_starts_with($name, 'query.') ? ['userQuery' => $query->public_id] : []))->assertOk();
+    } finally {
+        $record = false;
+    }
+    // Includes the route binding or public controller lookup, not just view rendering.
+    expect($selects)->toHaveCount(1);
+    $dom = new DOMDocument;
+    @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+    $xpath = new DOMXPath($dom);
+    foreach (['header', 'footer'] as $area) {
+        expect($xpath->query('//'.$area.'//nav/a')->item(2)->getAttribute('href'))
+            ->toBe(route('query.preferences.edit', $query->public_id));
+    }
+})->with(['jobs.start', 'public.resources', 'public.compare', 'query.preferences.edit', 'query.agencies', 'query.jobs']);
+
+test('navigation resolution including an absent query never leaks into another request', function () {
+    $query = navigationQuery();
+    $target = route('public.resources');
+    $edit = route('query.preferences.edit', $query->public_id);
+    $guide = route('jobs.start', ['guide' => 'preferences']);
+    $this->get($target)->assertOk()->assertSee($guide, false)->assertDontSee($edit, false);
+    $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
+        ->get($target)->assertOk()->assertSee($edit, false)->assertDontSee($guide, false);
+    $this->withSession(['jobdd_query_token_'.$query->public_id => 'wrong'])
+        ->get($target)->assertOk()->assertSee($guide, false)->assertDontSee($edit, false);
+});

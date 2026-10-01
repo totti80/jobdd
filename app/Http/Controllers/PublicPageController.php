@@ -30,7 +30,11 @@ class PublicPageController extends Controller
     {
         $query = $this->query($request);
 
-        return $this->redirect($query ? route('query.preferences.edit', ['userQuery' => $query->public_id, ...$this->context($request)]) : route('jobs.start', ['guide' => 'preferences']));
+        if ($query) {
+            return $this->redirect(route('query.preferences.edit', ['userQuery' => $query->public_id, ...$this->context($request)]));
+        }
+
+        return response()->view('public.preferences')->header('Cache-Control', 'private, no-store');
     }
 
     public function compare(Request $request, JobSelectionUseCaseService $selection)

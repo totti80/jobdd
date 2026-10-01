@@ -37,7 +37,7 @@ test('public navigation renders six matching header and footer links', function 
         ->assertSee('根拠とともに、仕事を選ぶ。')->assertDontSee('あなた専用 転職コンシェルジュ');
     expect($xpath->query('//header//nav/a[@aria-current="page"]')->length)->toBe(1);
     expect($xpath->query('//header//span[@class="site-tagline"]')->length)->toBe(1);
-})->with(['home', 'jobs.start', 'public.resources', 'public.contact']);
+})->with(['home', 'jobs.start', 'public.preferences', 'public.resources', 'public.contact']);
 
 test('coming soon pages neither expose operations email nor provide inquiry forms', function () {
     foreach (['public.resources', 'public.contact'] as $route) {
@@ -45,8 +45,8 @@ test('coming soon pages neither expose operations email nor provide inquiry form
     }
 });
 
-test('resolvers without query lead to the input form with useful guidance', function () {
-    $this->get(route('public.preferences'))->assertRedirect(route('jobs.start', ['guide' => 'preferences']));
+test('resolvers without query show preferences guidance or the comparison input entry', function () {
+    $this->get(route('public.preferences'))->assertOk()->assertViewIs('public.preferences');
     $this->get(route('public.compare'))->assertRedirect(route('jobs.start', ['guide' => 'compare']));
     $this->get(route('jobs.start', ['guide' => 'compare']))->assertSee('比較したい求人を選んでください');
 });
@@ -61,8 +61,10 @@ test('query resolver uses valid session ownership and preserves safe page and to
 
 test('resolver rejects foreign and malformed query references without leaking tokens', function () {
     $query = navigationQuery();
-    $this->withSession(['jobdd_query_token_'.$query->public_id => 'wrong'])->get(route('public.preferences'))->assertRedirect(route('jobs.start', ['guide' => 'preferences']));
+    $this->withSession(['jobdd_query_token_'.$query->public_id => 'wrong'])->get(route('public.preferences'))->assertOk()->assertViewIs('public.preferences')->assertDontSee($query->session_token);
     foreach ([$query->public_id, ['invalid']] as $reference) {
+        $this->get(route('public.preferences', ['query' => $reference]))->assertOk()
+            ->assertViewIs('public.preferences')->assertDontSee('<form', false)->assertDontSee($query->session_token);
         $this->get(route('public.compare', ['query' => $reference]))->assertRedirect(route('jobs.start', ['guide' => 'compare']))->assertDontSee($query->session_token);
     }
 });
@@ -131,18 +133,27 @@ test('public entries use the existing read-only session path without database wr
     DB::disableQueryLog();
 });
 
-test('header preferences without a query opens basic guidance and keeps simple entry active', function () {
+test('header and footer preferences without a query open the detailed conditions guide', function () {
     $response = $this->get(route('jobs.start'))->assertOk();
     $dom = new DOMDocument;
     @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
     $xpath = new DOMXPath($dom);
     $link = $xpath->query('//header//nav/a')->item(2);
-    expect($link->getAttribute('href'))->toBe(route('jobs.start', ['guide' => 'preferences']));
+    expect($link->getAttribute('href'))->toBe(route('public.preferences'));
+    expect($xpath->query('//footer//nav/a')->item(2)->getAttribute('href'))->toBe($link->getAttribute('href'));
     $response = $this->get($link->getAttribute('href'))->assertOk()
-        ->assertSee('詳細条件を追加するには、まず4つの基本条件');
+        ->assertViewIs('public.preferences')->assertSee('<title>詳細条件入力 | JobDD</title>', false)
+        ->assertSee('詳細条件を入力するには、まず4つの基本条件')->assertDontSee('<form', false);
+    $response->assertHeader('Cache-Control', 'no-store, private');
+    $this->assertDatabaseCount('user_queries', 0);
     @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
     $xpath = new DOMXPath($dom);
-    expect(trim($xpath->query('//header//nav/a[@aria-current="page"]')->item(0)->textContent))->toBe('かんたん入力');
+    expect(trim($xpath->query('//header//nav/a[@aria-current="page"]')->item(0)->textContent))->toBe('詳細条件');
+    expect(trim($xpath->query('//main//h1')->item(0)->textContent))->toBe('詳細条件入力');
+    $cta = $xpath->query('//main//a')->item(0);
+    expect(trim($cta->textContent))->toBe('かんたん入力をする');
+    expect($cta->getAttribute('href'))->toBe(route('jobs.start'));
+    $this->get($cta->getAttribute('href'))->assertOk();
 });
 
 test('header directly edits the current query and retains list context through save cancel and clear', function () {
@@ -160,7 +171,8 @@ test('header directly edits the current query and retains list context through s
     $xpath = new DOMXPath($dom);
     $edit = $xpath->query('//header//nav/a')->item(2)->getAttribute('href');
     expect($edit)->toBe(route('query.preferences.edit', $context));
-    $response = $this->get($edit)->assertOk()->assertSee('仕事の中身を、もう少し詳しく比較する');
+    expect($xpath->query('//footer//nav/a')->item(2)->getAttribute('href'))->toBe($edit);
+    $response = $this->get($edit)->assertOk()->assertSee('<title>詳細条件入力 | JobDD</title>', false)->assertSee('詳細条件入力');
     @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
     $xpath = new DOMXPath($dom);
     expect($xpath->query('//header//nav/a[@aria-current="page"]')->length)->toBe(1);
@@ -233,10 +245,18 @@ test('navigation resolution including an absent query never leaks into another r
     $query = navigationQuery();
     $target = route('public.resources');
     $edit = route('query.preferences.edit', $query->public_id);
-    $guide = route('jobs.start', ['guide' => 'preferences']);
+    $guide = route('public.preferences');
     $this->get($target)->assertOk()->assertSee($guide, false)->assertDontSee($edit, false);
     $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
         ->get($target)->assertOk()->assertSee($edit, false)->assertDontSee($guide, false);
     $this->withSession(['jobdd_query_token_'.$query->public_id => 'wrong'])
         ->get($target)->assertOk()->assertSee($guide, false)->assertDontSee($edit, false);
+});
+
+test('preferences cannot be edited or saved without an existing query', function () {
+    $id = (string) Str::uuid();
+    $this->get(route('public.preferences'))->assertOk()->assertDontSee('<form', false);
+    $this->get(route('query.preferences.edit', $id))->assertNotFound();
+    $this->patch(route('query.preferences.update', $id), ['work_style' => '相談したい'])->assertNotFound();
+    $this->assertDatabaseCount('user_queries', 0);
 });

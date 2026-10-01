@@ -25,7 +25,7 @@ class PublicQueryNavigation
     public static function preferencesUrl(Request $request, ?UserQuery $query): string
     {
         if (! $query) {
-            return route('jobs.start', ['guide' => 'preferences']);
+            return route('public.preferences');
         }
 
         $context = $request->only(['page', 'tools', 'sort', 'return_job']);

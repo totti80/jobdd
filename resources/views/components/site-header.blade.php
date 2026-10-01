@@ -2,7 +2,7 @@
     $links = [
         ['トップ', route('home'), request()->routeIs('home')],
         ['かんたん入力', route('jobs.start'), request()->routeIs('jobs.start')],
-        ['詳細条件', $preferencesUrl, request()->routeIs('query.preferences.*')],
+        ['詳細条件', $preferencesUrl, request()->routeIs('public.preferences', 'query.preferences.*')],
         ['お役立ち情報', route('public.resources'), request()->routeIs('public.resources')],
         ['企業向け', route('public.company'), request()->routeIs('public.company')],
         ['お問い合わせ', route('public.contact'), request()->routeIs('public.contact')],

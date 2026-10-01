@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow"><meta name="referrer" content="no-referrer">
-    <title>比較材料となる詳細希望 | JobDD</title>
+    <title>詳細条件入力 | JobDD</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="jobdd min-h-screen" data-jobdd-root>
-@include('query.partials.selection-header', ['heading' => '仕事の中身を、もう少し詳しく比較する', 'containerClass' => 'max-w-6xl'])
+@include('query.partials.selection-header', ['heading' => '詳細条件入力', 'containerClass' => 'max-w-6xl'])
 <main class="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:py-8">
     <p id="preferences-help" class="leading-7 text-slate-600">すべて任意です。気になる項目だけ追加できます。求人詳細で仕事の中身と並べて表示し、一致・不一致の判定や求人の並べ替えには使いません。</p>
     @if ($inputErrors)

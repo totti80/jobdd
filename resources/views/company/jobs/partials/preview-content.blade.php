@@ -6,7 +6,7 @@
 <div class="space-y-6">
     <x-company-card>
         <p class="break-words text-slate-600">{{ $data['company']['name'] }}</p>
-        <h1 class="mt-2 break-words text-2xl font-bold text-blue-950">{{ $basic['title'] ?: '求人タイトル未入力' }}</h1>
+        <h2 class="mt-2 break-words text-2xl font-bold text-blue-950">{{ $basic['title'] ?: '求人タイトル未入力' }}</h2>
         <dl class="mt-6 grid min-w-0 gap-5 sm:grid-cols-2">
             @foreach(['occupation'=>'職種','region'=>'勤務地','employment_type'=>'雇用形態'] as $field=>$label)
                 <div><dt class="text-sm text-slate-500">{{ $label }}</dt><dd class="mt-1 break-words">{{ $basic[$field] ?: '未入力' }}</dd></div>

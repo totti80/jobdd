@@ -13,6 +13,11 @@ class JobDecisionSession extends StartSession
 
     public function handle($request, Closure $next)
     {
+        // Contact forms need persisted CSRF tokens, old input and one-time flash messages.
+        if ($request->routeIs('public.contact', 'public.contact.store')) {
+            return parent::handle($request, $next);
+        }
+
         $entry = $request->routeIs('home', 'jobs.start', 'jobs.store');
         if (! $entry && ! $request->routeIs('home', 'public.*', 'query.jobs', 'query.jobs.show', 'query.jobs.compare', 'query.agencies', 'query.preferences.*')) {
             return parent::handle($request, $next);

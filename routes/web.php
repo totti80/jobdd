@@ -7,6 +7,7 @@ use App\Http\Controllers\CompanyJobLifecycleController;
 use App\Http\Controllers\CompanyJobPreviewController;
 use App\Http\Controllers\CompanyRegistrationController;
 use App\Http\Controllers\CompanyStructuredJobController;
+use App\Http\Controllers\ContactInquiryController;
 use App\Http\Controllers\IconController;
 use App\Http\Controllers\JobDecisionController;
 use App\Http\Controllers\JobReviewController;
@@ -150,7 +151,8 @@ Route::get('/compare', [PublicPageController::class, 'compare'])->name('public.c
 Route::get('/new-jobs/{job}', [PublicPageController::class, 'job'])->whereNumber('job')->name('public.job');
 Route::get('/for-companies', [PublicPageController::class, 'company'])->name('public.company');
 Route::view('/resources', 'public.coming-soon', ['title' => 'お役立ち情報', 'description' => 'お役立ち情報は現在準備中です。'])->name('public.resources');
-Route::view('/contact', 'public.coming-soon', ['title' => 'お問い合わせ', 'description' => 'お問い合わせ窓口は現在準備中です。'])->name('public.contact');
+Route::get('/contact', [ContactInquiryController::class, 'create'])->name('public.contact');
+Route::post('/contact', [ContactInquiryController::class, 'store'])->middleware('throttle:3,1')->name('public.contact.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [IconController::class, 'index'])

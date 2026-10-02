@@ -39,8 +39,8 @@ test('public navigation renders six matching header and footer links', function 
     expect($xpath->query('//header//span[@class="site-tagline"]')->length)->toBe(1);
 })->with(['home', 'jobs.start', 'public.preferences', 'public.resources', 'public.contact']);
 
-test('coming soon pages neither expose operations email nor provide inquiry forms', function () {
-    foreach (['public.resources', 'public.contact'] as $route) {
+test('resources coming soon page neither exposes operations email nor provides inquiry forms', function () {
+    foreach (['public.resources'] as $route) {
         $this->get(route($route))->assertOk()->assertSee('現在準備中')->assertDontSee('postmaster@')->assertDontSee('<form', false);
     }
 });
@@ -125,7 +125,7 @@ test('public entries use the existing read-only session path without database wr
     $query = navigationQuery();
     $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token]);
     DB::enableQueryLog();
-    foreach (['home', 'public.resources', 'public.contact', 'public.preferences', 'public.compare', 'public.company', 'jobs.start'] as $route) {
+    foreach (['home', 'public.resources', 'public.preferences', 'public.compare', 'public.company', 'jobs.start'] as $route) {
         $this->get(route($route))->assertStatus(in_array($route, ['public.preferences', 'public.company']) ? 302 : 200);
     }
     $writes = collect(DB::getQueryLog())->filter(fn ($entry) => preg_match('/^\s*(insert|update|delete|replace|alter|create|drop)\b/i', $entry['query']));

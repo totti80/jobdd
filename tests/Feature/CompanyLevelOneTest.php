@@ -41,7 +41,7 @@ test('dashboard scopes jobs and counts to a single membership for owners and edi
         ->assertDontSee('他社秘密')->assertSee('求人を作成')
         ->assertViewHas('counts', fn ($counts) => (int) $counts['published'] === 1 && (int) $counts['draft'] === 3)
         ->assertViewHas('jobs', fn ($jobs) => $jobs->total() === 4 && $jobs->every(fn ($job) => $job->company_id === $company->id))
-        ->assertSee('未申請')->assertSee('審査中')->assertSee('差戻し')->assertSee('承認済み');
+        ->assertSee('未申請')->assertSee('審査中')->assertSee('修正をお願いします')->assertSee('承認済み');
     foreach (array_filter($queries, fn ($sql) => str_contains($sql, 'from `job_postings`')) as $sql) {
         expect($sql)->toContain('`job_postings`.`company_id` = ?');
     }
@@ -83,7 +83,7 @@ test('platform owner without membership is never assigned an arbitrary company',
 test('owner and editor create a draft only on valid first save with fixed server ownership', function (string $role) {
     [$user, $company] = levelOneMember($role);
     $other = Company::create(['name' => '他社']);
-    $this->actingAs($user)->get(route('company.jobs.create'))->assertOk()->assertSee('最低限の応募条件')->assertSee('保存してSTEP 1へ進む');
+    $this->actingAs($user)->get(route('company.jobs.create'))->assertOk()->assertSee('最低限の応募条件')->assertSee('保存してLevel 2へ');
     $this->assertDatabaseCount('job_postings', 0);
     $this->post(route('company.jobs.store'), levelOneInput([
         'company_id' => $other->id, 'status' => 'published', 'review_status' => 'approved',
@@ -189,7 +189,7 @@ test('company pages render labelled responsive forms for desktop and mobile clie
     $this->actingAs($user)->withHeader('User-Agent', $agent);
     $this->get(route('company.dashboard'))->assertOk()->assertSee('name="viewport"', false)->assertSee('求人はまだありません');
     $response = $this->get(route('company.jobs.create'))->assertOk()->assertSee('name="viewport"', false)
-        ->assertSee('sm:grid-cols-2', false)->assertSee('下書き保存')->assertSee('保存してSTEP 1へ進む');
+        ->assertSee('sm:grid-cols-2', false)->assertSee('下書き保存')->assertSee('保存してLevel 2へ');
     foreach (array_keys(levelOneInput()) as $field) {
         $response->assertSee('for="'.$field.'"', false)->assertSee('name="'.$field.'"', false);
     }

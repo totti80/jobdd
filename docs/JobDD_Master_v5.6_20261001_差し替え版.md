@@ -1,8 +1,8 @@
 # JobDD Master Context
 
-**Version:** 5.5  
+**Version:** 5.6  
 **初版:** 2026-08-13  
-**更新:** 2026-09-23  
+**更新:** 2026-10-01  
 **Project:** JobDD  
 **Owner:** 池田 徹
 
@@ -392,6 +392,163 @@ Production Smokeで公開承認するCompany / 求人は未決定。
 
 ---
 
+# 2.5 v5.6で確定した企業Dashboard UI / Review State表示仕様
+
+## DECISION
+
+企業向けUIは、既存の `JobDD_画面設計案_V5_PC版` を親デザインとして維持しつつ、現行v5.5のControlled Publish仕様へ合わせて更新する。
+
+企業側Phase Aの画面導線は以下を基本とする。
+
+```text
+企業ログイン / 新規企業登録
+↓
+企業Dashboard
+↓
+Level 1 Basic
+↓
+Level 2 Structured Job Profile
+↓
+Preview
+↓
+公開申請
+↓
+審査状況
+↓
+Platform Owner / Admin審査
+↓
+承認時のみPublish
+```
+
+企業Dashboardの役割は、高度な採用Analyticsではなく、
+
+**「自社求人が現在どの状態にあり、次に何をすれば公開・更新まで進められるかを一目で理解できること」**
+
+とする。
+
+### 企業向け表示文言
+
+内部値を企業画面へそのまま表示せず、以下の日本語表示へ変換する。
+
+| 内部値 | 企業向け表示 |
+|---|---|
+| `draft` | 未公開 |
+| `published` | 公開中 |
+| `not_submitted` | 未申請 |
+| `pending_review` | 審査中 |
+| `changes_requested` | 修正をお願いします |
+| `approved` | 承認済み |
+
+Admin側では `changes_requested` を「差戻し」と表現してよいが、企業側では「修正をお願いします」を基本とする。
+
+### Dashboard KPI
+
+Phase AのDashboard上部は、原則として以下4状態を表示する。
+
+- 公開中
+- 作成中
+- 審査中
+- 修正依頼
+
+Structured Profile平均完成度は主要KPIとせず、Completion %は求人単位で表示する。
+
+### Dashboard求人一覧
+
+基本列は以下を候補とする。
+
+- 求人タイトル / 職種
+- 入力状況
+- 公開状況
+- 審査状況
+- 最終更新
+- 操作
+
+公開状態 `status` と審査状態 `review_status` は意味が異なるため、企業UIでも分離して表示する。
+
+### 状態別Primary CTA
+
+| 状態 | 公開状況 | 審査状況 | Primary CTA |
+|---|---|---|---|
+| 新規・入力途中 | 未公開 | 未申請 | 入力を再開 |
+| 入力完了・未申請 | 未公開 | 未申請 | Preview |
+| 初回申請・審査中 | 未公開 | 審査中 | 審査状況を見る |
+| 初回申請・修正依頼 | 未公開 | 修正をお願いします | 修正する |
+| 初回承認・公開済み | 公開中 | 承認済み | 編集 |
+| 公開済み・編集中 | 公開中 | 承認済み + 更新作業中 | 編集を続ける |
+| 更新申請・審査中 | 公開中 | 更新内容を審査中 | 審査状況を見る |
+| 更新申請・修正依頼 | 公開中 | 更新内容の修正をお願いします | 修正する |
+| 更新承認後 | 公開中 | 承認済み | 編集 |
+
+公開済み求人の編集中を示すために、新しいDB status / review_statusは追加しない。
+
+**Authoring ModelとPublished Snapshotに差分がある場合に限り、UI上で「更新作業中」を導出表示する。**
+
+これにより、公開状態・審査状態の既存モデルを増やさずに、企業へ編集中であることを伝える。
+
+### 審査中の編集
+
+Phase Aでは `pending_review` 中の申請対象Authoring内容を企業側から編集不可とする。
+
+理由：
+
+- Adminが確認している申請内容と企業側の編集内容が途中でずれることを防ぐ
+- 審査対象を固定し、承認 / 差戻し判断を再現可能にする
+- 卒業制作Phase Aで複雑な申請version管理を追加しない
+
+審査中はPreviewと審査状況確認を可能とし、差戻し後に編集を再開する。
+
+### 公開済み求人の再審査
+
+公開済み求人の更新申請中は、既存仕様どおり、
+
+```text
+status = published
+review_status = pending_review
+```
+
+を許容する。
+
+この間、求職者側には最後に承認・PublishされたPublished Snapshotを維持する。
+
+企業側には、
+
+> 現在公開中の内容はそのまま表示されています。
+
+等の補足を表示する。
+
+### 無効 / 異常状態
+
+以下は通常フローでは成立させない。
+
+- `draft + approved`
+- Publish Validatorを満たしていない `draft + pending_review`
+
+発生した場合は通常状態として表示せず、状態不整合として管理者確認・ログ対象とする。
+
+`published + not_submitted` は公開済み求人の編集開始状態として正式利用しない。
+公開済み・編集中は、DB状態を増やさずAuthoring / Published Snapshot差分からUI表示を導出する。
+
+## 判断理由
+
+- 企業担当者が内部statusを知らなくても現在地と次アクションを理解できるようにするため
+- 公開状態と審査状態を混同しないため
+- Published Snapshotによる安全な公開境界をUIでも明確にするため
+- Controlled Publishの審査対象を途中編集で変化させないため
+- 新しい状態カラムやversion管理をPhase Aへ安易に追加しないため
+
+## HYPOTHESIS
+
+このDashboard UIによって、企業担当者が「求人を書く」ではなく、
+
+**仕事の中身を構造化し、Previewし、公開確認を経て求職者へ届ける**
+
+というJobDD独自の流れを迷わず理解できる可能性がある。
+
+これは企業実利用で検証する。
+
+
+---
+
 # 3. JobDDとは
 
 ## DECISION
@@ -759,7 +916,11 @@ Level 2 Structured Job Profile
 ↓
 Preview
 ↓
-Publish
+公開申請
+↓
+Platform Owner / Admin審査
+↓
+承認時のみPublish
 ↓
 JobDD Decision Support Core
 ↓
@@ -1892,6 +2053,48 @@ COMMIT
 
 ---
 
+# 23.4 Company Dashboard State / CTA
+
+## DECISION
+
+Company Dashboardでは、内部の `status` / `review_status` を直接操作させるのではなく、現在状態から「次に行うべき操作」をPrimary CTAとして提示する。
+
+状態判定の優先順位は概念的に以下とする。
+
+```text
+1. review_status = pending_review
+   → 審査状況を見る
+
+2. review_status = changes_requested
+   → 修正する
+
+3. status = published かつ Authoring != Published Snapshot
+   → 編集を続ける（更新作業中）
+
+4. status = published
+   → 編集
+
+5. status = draft かつ Publish Validator未達
+   → 入力を再開
+
+6. status = draft かつ Publish Validator達成
+   → Preview
+```
+
+Secondary Action候補：
+
+- Preview
+- 現在の公開ページを見る
+- 審査内容を見る
+- 修正内容を見る
+
+審査中は企業側から申請対象Authoringを編集不可とし、Preview / 審査状況確認のみ許可する。
+
+公開済み求人の更新申請が審査中または差戻し中でも、求職者側の表示は最後に承認されたPublished Snapshotを正本とする。
+
+
+---
+
 # 24. 卒業制作MVP v5.3
 
 ## DECISION
@@ -2540,7 +2743,7 @@ Codexは、
 
 ---
 
-# 42. v5.5で絶対に戻らない原則
+# 42. v5.6で絶対に戻らない原則
 
 1. HYPOTHESISをFACTとして扱わない
 2. HM型業務効率化SaaSへ根拠なく戻らない
@@ -2573,7 +2776,7 @@ Codexは、
 
 # 44. 現在の最重要問い
 
-JobDD v5.3で最も重要なのは、
+JobDD v5.6で最も重要なのは、
 
 > **機械設計・電気設計の仕事について、企業が仕事内容をより深く構造化して伝え、求職者が応募前にそれを比較できることに、企業・求職者双方が本当に価値を感じるのか？**
 

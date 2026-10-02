@@ -1,14 +1,13 @@
-@php($readOnly = $job->exists && ! $job->authoringEditable())
+@php($readOnly = $job->exists && (! $job->authoringEditable() || $job->review_status === 'pending_review'))
 <x-company-layout :title="$job->exists ? 'Level 1 基本情報' : '求人新規作成'">
     <a href="{{ route('company.dashboard') }}" class="inline-flex min-h-11 items-center text-sm text-blue-800 underline">企業ダッシュボードへ戻る</a>
-    <h1 class="mt-3 text-2xl font-bold text-blue-950 sm:text-3xl">{{ $job->exists ? 'Level 1 基本情報' : '求人新規作成' }}</h1>
-    <p class="mt-2 break-words text-slate-600">{{ $company->name }}</p>
-    <p class="mt-3 text-sm text-slate-600">基本情報を入力して下書き保存できます。保存だけでは公開されません。</p>
+    <x-company-hero title="基本情報" eyebrow="Level 1">まず、この求人の基本情報を入力してください。<br>仕事の詳しい中身は、次のLevel 2で登録します。<p class="mt-2 break-words text-sm">{{ $company->name }}</p></x-company-hero>
+    <ol class="mt-5 flex flex-wrap gap-3 text-sm" aria-label="入力の流れ"><li aria-current="step" class="rounded-full bg-blue-700 px-5 py-2 font-semibold text-white">1 基本情報</li><li class="rounded-full bg-blue-100 px-5 py-2 text-blue-950">2 仕事の中身</li></ol>
     @if ($job->exists)
-        <p class="mt-3 text-sm">公開状態：{{ \App\Models\JobPosting::STATUS_LABELS[$job->status] ?? $job->status }} ／ 公開審査：{{ \App\Models\JobPosting::REVIEW_STATUS_LABELS[$job->review_status] ?? $job->review_status }}</p>
+        <p class="mt-3 text-sm">公開状態：{{ ['draft' => '未公開', 'published' => '公開中'][$job->status] ?? '公開状況を確認してください' }} ／ 公開審査：{{ ['not_submitted' => '未申請', 'pending_review' => '審査中', 'changes_requested' => '修正をお願いします', 'approved' => '承認済み'][$job->review_status] ?? '審査状況を確認してください' }}</p>
     @endif
     @if ($readOnly)
-        <p role="status" class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">この既存求人には公開Snapshotがないため、現在は確認のみ可能です。</p>
+        <p role="status" class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">{{ $job->review_status === 'pending_review' && $job->authoringEditable() ? '審査中は編集できません。差戻し後に編集を再開できます。' : 'この既存求人には公開Snapshotがないため、現在は確認のみ可能です。' }}</p>
     @endif
     @if ($errors->any())
         <section role="alert" class="mt-5 rounded-xl border border-red-300 bg-red-50 p-4 text-red-900">
@@ -25,8 +24,9 @@
                 <p class="text-sm text-slate-600">下書き保存には求人タイトルが必要です。他の項目はあとから追記できます。</p>
                 <div>
                     <label for="title" class="block font-semibold">求人タイトル <span class="text-sm text-red-800">必須</span></label>
-                    <input id="title" name="title" type="text" value="{{ old('title', $job->title) }}" required maxlength="255" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3" @if($errors->has('title')) aria-invalid="true" @endif>
+                    <input aria-describedby="title-help" id="title" name="title" type="text" value="{{ old('title', $job->title) }}" required maxlength="255" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3" @if($errors->has('title')) aria-invalid="true" @endif>
                 </div>
+                <p id="title-help" class="text-sm leading-6 text-slate-500">求職者に表示される求人名です。職種だけでなく、担当する製品や設備が分かる名称がおすすめです。</p>
                 <div class="grid min-w-0 gap-5 sm:grid-cols-2">
                     <div>
                         <label for="occupation" class="block font-semibold">職種</label>
@@ -48,31 +48,25 @@
                     <p class="mt-2 text-sm text-slate-500">未確定の場合は空欄にしてください。</p>
                 </fieldset>
                 <div><label for="employment_type" class="block font-semibold">雇用形態</label><input id="employment_type" name="employment_type" type="text" value="{{ old('employment_type', $job->employment_type) }}" maxlength="255" placeholder="例：正社員" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3"></div>
-                @foreach(['description' => '仕事内容（概要）', 'application_requirements' => '最低限の応募条件'] as $field => $label)
-                    <div><label for="{{ $field }}" class="block font-semibold">{{ $label }}</label><textarea id="{{ $field }}" name="{{ $field }}" rows="5" maxlength="10000" class="mt-2 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3">{{ old($field, $job->$field) }}</textarea></div>
+                @foreach(['description' => '仕事内容', 'application_requirements' => '最低限の応募条件'] as $field => $label)
+                    <div><label for="{{ $field }}" class="block font-semibold">{{ $label }}</label><textarea aria-describedby="{{ $field }}-help" id="{{ $field }}" name="{{ $field }}" rows="5" maxlength="10000" class="mt-2 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3">{{ old($field, $job->$field) }}</textarea><p id="{{ $field }}-help" class="mt-2 text-sm leading-6 text-slate-500">{{ $field === 'description' ? '一般的な求人情報として、仕事内容の概要を入力してください。詳しい工程・ツール・仕事の進め方は次のLevel 2で登録します。' : '応募を検討するために必要な最低条件を入力してください。' }}</p></div>
                 @endforeach
                 <div>
                     <label for="source_url" class="block font-semibold">応募URL</label>
                     <input id="source_url" name="source_url" type="url" value="{{ old('source_url', $job->source_url) }}" maxlength="2048" placeholder="https://" aria-describedby="application-url-help" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3">
-                    <p id="application-url-help" class="mt-2 text-sm text-slate-500">自社の採用ページや応募フォームのURLを入力してください。</p>
+                    <p id="application-url-help" class="mt-2 text-sm text-slate-500">求職者が応募時に遷移する企業公式ページを入力してください。</p>
                 </div>
                 @if (!$readOnly)
                     <div class="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row">
-                        <button type="submit" class="min-h-12 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800">下書き保存</button>
-                        <button type="submit" name="navigation" value="next" class="min-h-12 rounded-lg border border-blue-700 bg-white px-6 py-3 text-blue-800">保存してSTEP 1へ進む</button>
+                        <button type="submit" class="min-h-12 rounded-lg border border-blue-700 px-6 py-3 font-semibold text-blue-800">下書き保存</button>
+                        <button type="submit" name="navigation" value="next" class="min-h-12 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800">保存してLevel 2へ</button>
                     </div>
                 @endif
             </fieldset>
         </form>
         <aside class="min-w-0 space-y-5">
-            <section class="rounded-xl border border-blue-100 bg-blue-50 p-5">
-                <h2 class="font-bold text-blue-950">まずは基本情報から</h2>
-                <p class="mt-3 text-sm leading-7 text-slate-700">求人の概要や応募条件を整理しましょう。下書きは何度でも保存・再編集できます。</p>
-            </section>
-            <section class="rounded-xl border border-slate-200 bg-white p-5">
-                <h2 class="font-bold text-blue-950">公開までの流れ</h2>
-                <p class="mt-3 text-sm leading-7 text-slate-700">求職者向け公開には、情報の入力後に公開申請と運営の承認が必要です。Level 2の5STEPまで下書き保存できます。入力後、Previewから公開申請できます。</p>
-            </section>
+            <section class="rounded-xl border border-blue-100 bg-white p-5"><h2 class="font-bold text-blue-950">Level 1｜基本情報</h2><ul class="mt-4 list-inside list-disc space-y-2 text-sm text-slate-600">@foreach(['求人タイトル', '職種', '勤務地', '年収', '雇用形態', '仕事内容', '応募条件', '応募URL'] as $item)<li>{{ $item }}</li>@endforeach</ul></section>
+            <section class="rounded-xl border border-blue-100 bg-blue-50 p-5"><p class="text-sm font-semibold text-blue-700">次のLevel 2では</p><h2 class="mt-2 font-bold text-blue-950">仕事の中身を詳しく登録します</h2><ul class="mt-4 list-inside list-disc space-y-2 text-sm leading-6 text-slate-600">@foreach(['何を設計するか', 'どの工程を担当するか', 'CAD / Tool', '誰と仕事をするか', '仕事の進め方', '仕事の難しさ', '代表的な1日'] as $item)<li>{{ $item }}</li>@endforeach</ul><p class="mt-4 text-sm leading-6 text-slate-600">基本情報が入力途中でもLevel 2へ進めます。公開申請時に必要な入力を確認します。</p></section>
         </aside>
     </div>
 </x-company-layout>

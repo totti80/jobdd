@@ -45,6 +45,7 @@ class CompanyJobBasicController extends Controller
         DB::transaction(function () use ($request, $jobPosting) {
             $job = JobPosting::query()->lockForUpdate()->findOrFail($jobPosting->id);
             Gate::authorize('update', $job);
+            abort_if($job->review_status === 'pending_review', 409, '審査中は編集できません。差戻し後に編集を再開できます。');
             abort_unless($job->authoringEditable(), 409, '公開Snapshotのない既存求人は編集できません。');
             $job->update($request->safe()->except('navigation'));
         });

@@ -1,7 +1,7 @@
 # JobDD Decision Log
 
-**Version:** 4.3  
-**更新:** 2026-09-23  
+**Version:** 4.4  
+**更新:** 2026-10-01  
 
 **目的：**  
 JobDDにおける重要な意思決定と、その理由を記録する。
@@ -4634,4 +4634,138 @@ Production DBへの接続は禁止する。
 6. v1表示検証
 
 各段階で結果を確認し、一気に次工程へ進めない。
+
+---
+
+# D-105｜Company Dashboardの公開状態・審査状態・CTA表示ルールを固定する
+
+**日付：** 2026-10-01  
+**Status：** 現在採用中
+
+## それまでの状態
+
+企業Dashboardでは求人一覧を表示していたが、現行v5.3では公開状態 `status` と公開審査状態 `review_status` が分離され、公開済み求人の再申請中も旧Published Snapshotを維持する仕様になっている。
+
+そのため、単一の「公開ステータス」だけでは、企業担当者が現在地と次アクションを理解しにくい。
+
+## 意思決定
+
+企業Dashboardでは、
+
+- 入力状況
+- 公開状況
+- 審査状況
+- 最終更新
+- 操作
+
+を分けて表示する。
+
+企業向け表示文言は以下を基本とする。
+
+| 内部値 | 企業向け表示 |
+|---|---|
+| `draft` | 未公開 |
+| `published` | 公開中 |
+| `not_submitted` | 未申請 |
+| `pending_review` | 審査中 |
+| `changes_requested` | 修正をお願いします |
+| `approved` | 承認済み |
+
+Primary CTAは状態ごとに、
+
+- 入力を再開
+- Preview
+- 審査状況を見る
+- 修正する
+- 編集
+- 編集を続ける
+
+を切り替える。
+
+公開済み求人の編集中は新しいDB statusを追加せず、Authoring ModelとPublished Snapshotに差分がある場合にUI上で「更新作業中」を導出表示する。
+
+Dashboard上部の主要集計は、
+
+- 公開中
+- 作成中
+- 審査中
+- 修正依頼
+
+の4区分とする。
+
+Structured Profile平均完成度は主要KPIとせず、Completion %は求人単位で表示する。
+
+## 判断理由
+
+- 企業担当者に内部状態を理解させるのではなく、現在地と次行動を理解してもらうため
+- 公開状態と審査状態を混同しないため
+- Published Snapshotによる公開境界を企業UIでも分かりやすくするため
+- Phase Aで不要な状態追加を避けるため
+
+## 影響範囲
+
+- Company Dashboard
+- 求人一覧
+- ステータスBadge
+- CTA
+- Preview
+- 審査状況画面
+- Admin Review
+- UI Test
+
+## HYPOTHESIS
+
+企業担当者がDashboardだけで現在地と次アクションを理解できれば、Level 1 / Level 2入力から公開までの離脱・迷いを減らせる可能性がある。
+
+---
+
+# D-106｜公開申請の審査中は申請対象Authoringを企業側から編集不可とする
+
+**日付：** 2026-10-01  
+**Status：** 現在採用中
+
+## 背景
+
+Controlled Publishでは、企業がPreview後に公開申請し、Platform Owner / Adminがその内容を確認して承認または差戻しする。
+
+申請後も同じAuthoring内容を企業が自由に編集できる場合、Adminが確認した内容と承認時点の内容が変わる可能性がある。
+
+## 意思決定
+
+Phase Aでは、`review_status = pending_review` の間、申請対象Authoring内容を企業側から編集不可とする。
+
+審査中に企業ができること：
+
+- Preview確認
+- 審査状況確認
+- 現在公開中求人の場合は、現在の公開ページ確認
+
+審査中に企業ができないこと：
+
+- Level 1 / Level 2の申請対象内容の変更
+- 申請対象内容を変える操作
+
+差戻し時は `changes_requested` とし、`review_note` を確認したうえで編集を再開できる。
+
+公開済み求人の更新申請中も、求職者側には最後に承認されたPublished Snapshotを維持する。
+
+## 判断理由
+
+- Adminの審査対象を固定するため
+- 承認時の内容を再現可能にするため
+- 審査中の競合編集を避けるため
+- Phase Aで申請version管理や複雑な差分管理を追加しないため
+
+## 影響範囲
+
+- Company Policy / Authorization
+- Level 1 / Level 2編集画面
+- Preview
+- 審査状況画面
+- Admin Review
+- Feature Test
+
+## OPEN
+
+将来、審査中でも次版Draftを並行編集できるようにする場合は、申請version / draft versionの分離をPhase B以降で再設計する。
 

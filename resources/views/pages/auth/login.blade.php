@@ -1,6 +1,8 @@
-<x-layouts::auth :title="__('Log in')">
-    <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
+<x-company-layout title="企業ログイン">
+    <x-company-hero title="企業ログイン">仕事の中身を構造化して、<br class="hidden sm:block">求職者に正しく伝えましょう。</x-company-hero>
+    <div class="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div class="min-w-0 rounded-xl border border-blue-100 bg-white p-5 sm:p-7 flex flex-col gap-6">
+
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
@@ -13,7 +15,7 @@
             <!-- Email Address -->
             <flux:input
                 name="email"
-                :label="__('Email address')"
+                label="メールアドレス"
                 :value="old('email')"
                 type="email"
                 required
@@ -26,34 +28,33 @@
             <div class="relative">
                 <flux:input
                     name="password"
-                    :label="__('Password')"
+                    label="パスワード"
                     type="password"
                     required
                     autocomplete="current-password"
-                    :placeholder="__('Password')"
+                    placeholder="パスワード"
                     viewable
                 />
 
                 @if (Route::has('password.request'))
-                    <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
-                        {{ __('Forgot your password?') }}
+                    <flux:link class="mt-2 inline-flex min-h-11 items-center text-sm" :href="route('password.request')">
+                        パスワードを忘れた方
                     </flux:link>
                 @endif
             </div>
 
             <!-- Remember Me -->
-            <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
+            <flux:checkbox name="remember" label="ログイン状態を保持" :checked="old('remember')" />
 
             <div class="flex items-center justify-end">
-                <flux:button variant="primary" type="submit" class="w-full" data-test="login-button">
-                    {{ __('Log in') }}
+                <flux:button variant="primary" type="submit" class="w-full bg-blue-700! hover:bg-blue-800! text-white!" data-test="login-button">
+                    ログイン
                 </flux:button>
             </div>
         </form>
 
-        <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
-            <span>{{ __('Don\'t have an account?') }}</span>
-            <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
-        </div>
+        <div class="border-t border-blue-100 pt-5 text-sm text-slate-600"><p>はじめてJobDDをご利用の企業はこちら</p><a href="{{ route('company.register') }}" class="mt-2 inline-flex min-h-11 items-center font-semibold text-blue-800 underline">新規企業登録</a></div>
     </div>
-</x-layouts::auth>
+    <aside class="min-w-0"><x-company-guide title="JobDDでできること" /></aside>
+    </div>
+</x-company-layout>

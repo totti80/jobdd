@@ -1,6 +1,6 @@
 @php
     use App\Support\StructuredJobOptions as Options;
-    $readOnly = ! $job->authoringEditable();
+    $readOnly = (! $job->authoringEditable() || $job->review_status === 'pending_review');
     $profile = $job->structuredProfile;
 @endphp
 <x-company-layout :title="'Level 2 STEP '.$step">
@@ -10,7 +10,7 @@
     <ol class="mt-5 grid grid-cols-5 gap-1 text-center text-sm" aria-label="入力ステップ">
         @foreach(Options::TITLES as $number => $title)<li class="rounded-lg border p-3 {{ $step === $number ? 'border-blue-700 bg-blue-700 text-white' : 'border-slate-300 bg-white' }}" @if($step === $number) aria-current="step" @endif>STEP {{ $number }}</li>@endforeach
     </ol>
-    @if($readOnly)<p role="status" class="mt-5 rounded-xl bg-amber-50 p-4">公開Snapshotのない既存求人は閲覧のみ可能です。</p>@endif
+    @if($readOnly)<p role="status" class="mt-5 rounded-xl bg-amber-50 p-4">{{ $job->review_status === 'pending_review' && $job->authoringEditable() ? '審査中は編集できません。差戻し後に編集を再開できます。' : '公開Snapshotのない既存求人は閲覧のみ可能です。' }}</p>@endif
     @if($errors->any())<div role="alert" class="mt-5 rounded-xl bg-red-50 p-4 text-red-900"><p class="font-bold">入力内容を確認してください</p><ul class="list-inside list-disc">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
     <div class="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <form method="POST" action="{{ route('company.jobs.structured.update', [$job, $step]) }}" class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 sm:p-7">

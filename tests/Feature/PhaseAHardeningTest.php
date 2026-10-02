@@ -261,5 +261,6 @@ test('dashboard and review queue reads stay bounded as visible jobs grow', funct
     }
     $after = [$measure($owner, 'company.dashboard'), $measure($admin, 'admin.job-reviews.index')];
     expect($after)->toBe($before);
-    expect($after[0])->toBeLessThanOrEqual(8)->and($after[1])->toBeLessThanOrEqual(4);
+    // Four eager-loaded authoring/snapshot relations support completion and CTA states.
+    expect($after[0])->toBeLessThanOrEqual(10)->and($after[1])->toBeLessThanOrEqual(4);
 });

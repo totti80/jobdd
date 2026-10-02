@@ -151,11 +151,12 @@ test('approval atomically publishes source facts snapshot route and explicit rol
     $this->get(route('jobs.provenance', $job))->assertOk()->assertSee('真偽を保証するものではありません');
 });
 
-test('stale admin preview is rejected when company edits pending content', function () {
+test('stale admin preview is rejected when pending content changes outside company editing', function () {
     [$owner,$job,$admin] = publishFixture();
     app(CompanyJobReviewService::class)->request($job, $owner);
     $token = reviewToken($job);
-    $this->actingAs($owner)->patch(route('company.jobs.structured.update', [$job, 4]), ['difficult_points' => '更新された難しさ'])->assertRedirect();
+    $this->actingAs($owner)->patch(route('company.jobs.structured.update', [$job, 4]), ['difficult_points' => '更新された難しさ'])->assertStatus(409);
+    $job->structuredProfile()->update(['difficult_points' => '管理処理による内容変更']);
     expect($job->fresh()->review_status)->toBe('pending_review');
     $this->actingAs($admin)->post(route('admin.job-reviews.approve', $job), ['review_token' => $token])->assertStatus(409);
     $this->post(route('admin.job-reviews.changes-requested', $job), ['review_token' => $token, 'review_note' => '古い確認'])->assertStatus(409);

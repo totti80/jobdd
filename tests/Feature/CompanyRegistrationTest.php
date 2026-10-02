@@ -48,7 +48,7 @@ test('company registration creates user company and ownership then authenticates
     $this->assertDatabaseCount('company_user', 1);
     $this->assertDatabaseCount('job_postings', 0);
     Event::assertDispatched(Registered::class, fn ($event) => $event->user->is($user));
-    $this->get(route('company.dashboard'))->assertOk()->assertSee('企業マイページ');
+    $this->get(route('company.dashboard'))->assertOk()->assertSee('アカウント設定');
 });
 
 test('company registration rejects invalid input without leaving records', function (array $overrides, string $field) {

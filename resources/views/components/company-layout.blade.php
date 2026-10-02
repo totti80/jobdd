@@ -14,7 +14,7 @@
             <a href="{{ auth()->check() ? route('company.dashboard') : route('home') }}" class="flex items-center gap-3"><img src="{{ asset('images/jobdd/jobdd-logo.png') }}" alt="JobDD" class="h-10 w-auto"><span class="text-sm text-blue-950">企業向け</span></a>
             @auth
             <div class="flex flex-wrap items-center gap-4 text-sm">
-                <a href="{{ route('company.dashboard') }}" class="inline-flex min-h-11 items-center font-semibold text-blue-800 underline">企業マイページ</a>
+                <a href="{{ route('company.account-settings') }}" class="inline-flex min-h-11 items-center font-semibold text-blue-800 underline">アカウント設定</a>
                 <form method="POST" action="{{ route('logout') }}">@csrf<button class="min-h-11 rounded-lg border border-slate-400 px-4" type="submit">ログアウト</button></form>
             </div>
             @else
@@ -28,9 +28,9 @@
         {{ $slot }}
     </main>
     <footer class="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-600 sm:px-6">JobDD — 仕事の中身を伝え、求職者の判断を支えます。</footer>
-    @guest
+    @if(auth()->guest() || request()->routeIs('company.account-settings'))
         @fluxScripts
         @livewireScripts
-    @endguest
+    @endif
 </body>
 </html>

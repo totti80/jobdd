@@ -1,5 +1,13 @@
 <x-company-layout title="企業ダッシュボード">
-    <x-company-hero title="企業ダッシュボード">求人の作成・構造化・公開状況を管理します。<p class="mt-2 text-sm">Level 2 Structured Job Profileを入力すると、求職者に仕事の中身をより具体的に伝えられます。</p></x-company-hero>
+    <section class="grid overflow-hidden rounded-2xl bg-blue-50 md:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div class="min-w-0 p-6 sm:p-8 md:px-6 xl:px-8">
+            <h1 class="mt-2 text-2xl font-bold text-blue-950 sm:text-3xl">企業ダッシュボード</h1>
+            <div class="mt-3 max-w-2xl leading-7 text-slate-600">求人の作成・構造化・公開状況を管理します。<p class="mt-2 text-sm">Level 2 Structured Job Profileを入力すると、求職者に仕事の中身をより具体的に伝えられます。</p></div>
+        </div>
+        <div class="flex min-w-0 items-center justify-end md:min-w-80">
+            <img src="{{ asset('images/jobdd/jobdd-hero-kinki.png') }}" alt="" aria-hidden="true" class="pointer-events-none block h-auto w-full object-contain opacity-100 md:h-full md:object-cover">
+        </div>
+    </section>
     <div class="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]"><div class="min-w-0">
     @if (!$company)
         <section class="mt-6 rounded-xl border border-slate-200 bg-white p-6">

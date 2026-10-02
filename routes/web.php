@@ -46,6 +46,7 @@ Route::prefix('company')->name('company.')->group(function () {
     });
 
     Route::middleware(['auth', EnsureCompanyMember::class])->group(function () {
+        Route::livewire('/account-settings', 'pages::company.account-settings')->name('account-settings');
         Route::get('/jobs/{jobPosting}/structured/step-{step}', [CompanyStructuredJobController::class, 'edit'])->where('step', '[1-5]')->name('jobs.structured.edit');
         Route::patch('/jobs/{jobPosting}/structured/step-{step}', [CompanyStructuredJobController::class, 'update'])->where('step', '[1-5]')->name('jobs.structured.update');
         Route::get('/jobs/{jobPosting}/preview', [CompanyJobPreviewController::class, 'show'])->name('jobs.preview');

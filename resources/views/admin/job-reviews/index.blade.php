@@ -1,5 +1,14 @@
 <x-company-layout title="求人の公開審査">
-    <x-company-hero title="求人の公開審査" eyebrow="ADMIN">企業からの公開申請を確認し、承認または修正を依頼します。<p class="mt-2 text-sm">審査待ちの申請を古い順に表示しています。</p></x-company-hero>
+    <section class="grid overflow-hidden rounded-2xl bg-blue-50 md:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div class="min-w-0 p-6 sm:p-8 md:px-6 xl:px-8">
+            <p class="text-sm font-bold text-blue-700">ADMIN</p>
+            <h1 class="mt-2 text-2xl font-bold text-blue-950 sm:text-3xl">求人の公開審査</h1>
+            <div class="mt-3 max-w-2xl leading-7 text-slate-600">企業からの公開申請を確認し、承認または修正を依頼します。<p class="mt-2 text-sm">審査待ちの申請を古い順に表示しています。</p></div>
+        </div>
+        <div class="flex min-w-0 items-center justify-end md:min-w-80">
+            <img src="{{ asset('images/jobdd/jobdd-hero-kinki.png') }}" alt="" aria-hidden="true" class="pointer-events-none block h-auto w-full object-contain opacity-100 md:h-full md:object-cover">
+        </div>
+    </section>
     <div class="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div class="min-w-0">
             <h2 class="text-xl font-bold text-blue-950">審査待ちの申請</h2>

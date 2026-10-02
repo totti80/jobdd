@@ -1,0 +1,3 @@
+<x-resource-teaser title="CAD・設計職" description="機械設計の転職で、CAD経験をどう伝える？ ― ソフト名だけでは伝わらない5つのポイント" image="cad_eyecatch_1200x675.jpg" alt="CADを使った機械設計のイメージ" :href="route('public.resources.cad-experience')" />
+<x-resource-teaser title="転職ノウハウ" description="転職活動を始める前に整理しておきたい5つの条件" image="career_eyecatch_1200x675.jpg" alt="転職条件を整理するビジネスパーソンのイメージ" :href="route('public.resources.job-change-preparation')" />
+<x-resource-teaser title="求人の読み方" description="求人票の「仕事内容」だけでは分からない5つのポイント" image="job-reading_eyecatch_1200x675.jpg" alt="パソコンとメモを使って情報を確認するイメージ" :href="route('public.resources.how-to-read-job-postings')" />

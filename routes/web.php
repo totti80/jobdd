@@ -150,7 +150,10 @@ Route::get('/preferences', [PublicPageController::class, 'preferences'])->name('
 Route::get('/compare', [PublicPageController::class, 'compare'])->name('public.compare');
 Route::get('/new-jobs/{job}', [PublicPageController::class, 'job'])->whereNumber('job')->name('public.job');
 Route::get('/for-companies', [PublicPageController::class, 'company'])->name('public.company');
-Route::view('/resources', 'public.coming-soon', ['title' => 'お役立ち情報', 'description' => 'お役立ち情報は現在準備中です。'])->name('public.resources');
+Route::view('/resources', 'public.resources')->name('public.resources');
+Route::view('/helpful/cad-experience', 'public.helpful.cad-experience')->name('public.resources.cad-experience');
+Route::view('/helpful/job-change-preparation', 'public.helpful.job-change-preparation')->name('public.resources.job-change-preparation');
+Route::view('/helpful/how-to-read-job-postings', 'public.helpful.how-to-read-job-postings')->name('public.resources.how-to-read-job-postings');
 Route::get('/contact', [ContactInquiryController::class, 'create'])->name('public.contact');
 Route::post('/contact', [ContactInquiryController::class, 'store'])->middleware('throttle:3,1')->name('public.contact.store');
 

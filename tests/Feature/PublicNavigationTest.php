@@ -39,9 +39,9 @@ test('public navigation renders six matching header and footer links', function 
     expect($xpath->query('//header//span[@class="site-tagline"]')->length)->toBe(1);
 })->with(['home', 'jobs.start', 'public.preferences', 'public.resources', 'public.contact']);
 
-test('resources coming soon page neither exposes operations email nor provides inquiry forms', function () {
+test('resources article listing neither exposes operations email nor provides inquiry forms', function () {
     foreach (['public.resources'] as $route) {
-        $this->get(route($route))->assertOk()->assertSee('現在準備中')->assertDontSee('postmaster@')->assertDontSee('<form', false);
+        $this->get(route($route))->assertOk()->assertSee('記事を読む')->assertDontSee('準備中')->assertDontSee('postmaster@')->assertDontSee('<form', false);
     }
 });
 

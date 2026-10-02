@@ -51,7 +51,7 @@ test('homepage presents final sections and removes redundant editorial samples',
     expect($xpath->query('//section[@aria-labelledby="features-title"]//article')->length)->toBe(6);
     expect($xpath->query('//section[@aria-labelledby="views-title"]//article')->length)->toBe(3);
     expect($xpath->query('//section[@aria-labelledby="resources-title"]//article')->length)->toBe(3);
-    expect($xpath->query('//section[@aria-labelledby="resources-title"]//a')->length)->toBe(0);
+    expect($xpath->query('//section[@aria-labelledby="resources-title"]//a')->length)->toBe(6);
     expect($xpath->query('//section[@aria-labelledby="preview-title"]//table')->length)->toBe(0);
     expect($xpath->query('//dl[@class="home-normalized-facts"]/div')->length)->toBe(7);
     expect($xpath->query('//h1')->length)->toBe(1);

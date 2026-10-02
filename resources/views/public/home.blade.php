@@ -83,9 +83,7 @@
         <p class="site-eyebrow">仕事選びのヒント</p>
         <h2 id="resources-title" class="site-section-title">お役立ち情報</h2>
         <div class="home-resource-grid">
-            <x-resource-teaser title="CAD・設計職" description="経験やツールの使い方を、仕事選びにつなげる。" icon="tools" />
-            <x-resource-teaser title="転職ノウハウ" description="希望を整理し、自分のペースで次の一歩へ。" icon="agent" />
-            <x-resource-teaser title="求人の読み方" description="仕事内容の違いと、確認したい点を見つける。" icon="evidence" />
+            @include('public.helpful.article-cards')
         </div>
     </section>
     <section class="home-company home-section" aria-labelledby="company-cta-title">

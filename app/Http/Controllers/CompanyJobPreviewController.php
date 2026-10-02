@@ -23,6 +23,6 @@ class CompanyJobPreviewController extends Controller
     {
         $created = $review->request($jobPosting, $request->user());
 
-        return redirect()->route('company.jobs.preview', $jobPosting)->with('status', $created ? '公開申請を受け付けました。現在、JobDD運営が確認中です。' : 'この求人はすでに審査中です。');
+        return redirect()->route('company.jobs.preview', $jobPosting)->with('status', $created ? ($jobPosting->status === 'paused' ? '再公開申請を受け付けました。現在、JobDD運営が確認中です。' : '公開申請を受け付けました。現在、JobDD運営が確認中です。') : 'この求人はすでに審査中です。');
     }
 }

@@ -1,8 +1,8 @@
 @php
     $editable = $job->authoringEditable() && $job->review_status !== 'pending_review' && ! $state['invalid'];
-    $canRequest = $editable && ! ($job->status === 'published' && $job->review_status === 'approved' && ! $state['changed']);
+    $canRequest = $editable && ! (in_array($job->status, ['published', 'paused']) && $job->review_status === 'approved' && ! $state['changed']);
     $editPrimary = $editable && $job->status === 'published' && ($job->review_status === 'changes_requested' || ($job->review_status === 'approved' && ! $state['changed']));
-    $nextLabel = $editPrimary ? ($job->review_status === 'changes_requested' ? '修正する' : '編集') : ($canRequest ? ($job->status === 'published' ? '更新内容の公開申請へ進む' : '公開申請へ進む') : '審査状況を見る');
+    $nextLabel = $state['can_resume'] ? '公開を再開' : ($editPrimary ? ($job->review_status === 'changes_requested' ? '修正する' : '編集') : ($canRequest ? ($job->status === 'paused' ? '再公開申請へ進む' : ($job->status === 'published' ? '更新内容の公開申請へ進む' : '公開申請へ進む')) : '審査状況を見る'));
     $nextUrl = $editPrimary ? route('company.jobs.basic.edit', $job) : ($canRequest ? '#publish-actions' : '#review-status');
 @endphp
 <x-company-layout title="求人Preview・公開審査状況">
@@ -21,7 +21,9 @@
                 @include('company.jobs.partials.publish-requirements')
                 @if($canRequest)
                     <p id="publish-explanation" class="mt-5 rounded-lg bg-blue-50 p-4 text-sm leading-7 text-blue-950">公開申請後、JobDD運営が公開内容を確認します。承認後に求職者向けへ公開されます。</p>
-                    <form method="POST" action="{{ route('company.jobs.review-request', $job) }}" class="mt-4">@csrf<x-company-action type="submit" class="{{ $editPrimary ? 'border border-blue-700 bg-white! text-blue-800!' : '' }}" aria-describedby="publish-explanation" :disabled="count($publishErrors) > 0">{{ $job->status === 'published' ? '更新内容を公開申請する' : '公開申請する' }}</x-company-action></form>
+                    <form method="POST" action="{{ route('company.jobs.review-request', $job) }}" class="mt-4">@csrf<x-company-action type="submit" class="{{ $editPrimary ? 'border border-blue-700 bg-white! text-blue-800!' : '' }}" aria-describedby="publish-explanation" :disabled="count($publishErrors) > 0">{{ $job->status === 'paused' ? '再公開申請する' : ($job->status === 'published' ? '更新内容を公開申請する' : '公開申請する') }}</x-company-action></form>
+                @elseif($state['can_resume'])
+                    <form method="POST" action="{{ route('company.jobs.resume', $job) }}" class="mt-4">@csrf<x-company-action type="submit">公開を再開</x-company-action></form>
                 @elseif($editPrimary)
                     <x-company-action class="mt-4 bg-blue-700! text-white!" :href="$nextUrl">{{ $nextLabel }}</x-company-action>
                 @else
@@ -34,7 +36,7 @@
             @endif
         </div>
         <aside class="min-w-0 space-y-5">
-            <x-company-card><h2 class="font-bold text-blue-950">{{ $job->review_status === 'pending_review' ? '公開審査中' : '確認後の次の操作' }}</h2><p class="mt-3 text-sm leading-7 text-slate-600">{{ $job->review_status === 'pending_review' ? '運営が確認中です。Previewと審査状況を確認できます。' : ($editPrimary && $job->review_status === 'approved' ? '現在公開中です。内容を更新する場合は編集へ進んでください。' : '仕事内容と応募条件を確認し、必要な修正を保存してから公開申請してください。') }}</p><a href="{{ $nextUrl }}" class="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white">{{ $nextLabel }}</a>@if($job->status === 'published')<a href="{{ route('public.job', $job) }}" class="mt-3 inline-flex min-h-11 items-center text-sm text-blue-800 underline">現在の公開ページを見る</a>@endif</x-company-card>
+            <x-company-card><h2 class="font-bold text-blue-950">{{ $job->review_status === 'pending_review' ? '公開審査中' : '確認後の次の操作' }}</h2><p class="mt-3 text-sm leading-7 text-slate-600">{{ $job->review_status === 'pending_review' ? '運営が確認中です。Previewと審査状況を確認できます。' : ($state['can_resume'] ? '前回承認された内容をそのまま再表示できます。再審査は不要です。' : ($editPrimary && $job->review_status === 'approved' ? '現在公開中です。内容を更新する場合は編集へ進んでください。' : '仕事内容と応募条件を確認し、必要な修正を保存してから公開申請してください。')) }}</p>@if($state['can_resume'])<form method="POST" action="{{ route('company.jobs.resume', $job) }}" class="mt-4">@csrf<x-company-action type="submit" class="w-full">公開を再開</x-company-action></form>@else<a href="{{ $nextUrl }}" class="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white">{{ $nextLabel }}</a>@endif @if($job->status === 'published')<a href="{{ route('public.job', $job) }}" class="mt-3 inline-flex min-h-11 items-center text-sm text-blue-800 underline">現在の公開ページを見る</a>@endif</x-company-card>
             <x-company-guide />
         </aside>
     </div>

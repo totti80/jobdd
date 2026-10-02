@@ -25,4 +25,16 @@ class CompanyJobAuthoringData
     {
         return hash_hmac('sha256', json_encode([$job->id, $job->review_requested_at?->toISOString(), $this->read($job)], JSON_THROW_ON_ERROR), config('app.key'));
     }
+
+    public function matchesPublishedSnapshot(JobPosting $job): bool
+    {
+        $snapshot = $job->publishedProfile?->profile_data;
+        if (($snapshot['schema_version'] ?? null) !== 1) {
+            return false;
+        }
+        // Provenance is publish metadata, not employer authoring content.
+        unset($snapshot['provenance']);
+
+        return $this->read($job) == $snapshot;
+    }
 }

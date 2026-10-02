@@ -20,7 +20,8 @@ class CompanyJobReviewService
         return DB::transaction(function () use ($posting, $user) {
             $job = JobPosting::query()->lockForUpdate()->findOrFail($posting->id);
             Gate::forUser($user)->authorize('publish', $job);
-            abort_unless(in_array($job->status, ['draft', 'published']), 409);
+            abort_unless(in_array($job->status, ['draft', 'published', 'paused']), 409);
+            abort_if($job->status === 'paused' && ! $job->authoringEditable(), 409);
             if ($job->review_status === 'pending_review') {
                 return false;
             }

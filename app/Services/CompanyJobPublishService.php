@@ -18,7 +18,8 @@ class CompanyJobPublishService
             $job = JobPosting::query()->lockForUpdate()->findOrFail($posting->id);
             abort_unless($job->review_status === 'pending_review', 409, 'この申請は審査待ちではありません。');
             abort_unless(hash_equals($this->authoring->token($job), $token), 409, '確認後に内容が更新されました。再読み込みして確認してください。');
-            abort_unless(in_array($job->status, ['draft', 'published']), 409);
+            abort_unless(in_array($job->status, ['draft', 'published', 'paused']), 409);
+            abort_if($job->status === 'paused' && ! $job->authoringEditable(), 409);
             $this->validator->validate($job);
             $data = $this->authoring->read($job);
             $now = now();

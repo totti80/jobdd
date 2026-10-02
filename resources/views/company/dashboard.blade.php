@@ -27,15 +27,20 @@
                         <dl class="mt-4 grid min-w-0 grid-cols-2 gap-4 text-sm sm:grid-cols-4">
                             <div><dt class="text-slate-500">入力状況</dt><dd class="mt-1">{{ $state['completion'] }}%<span class="block text-xs text-slate-500">基本情報・仕事の中身</span></dd></div>
                             <div><dt class="text-slate-500">公開状況</dt><dd class="mt-1 font-semibold text-blue-950">{{ $state['publication'] }}</dd></div>
-                            <div><dt class="text-slate-500">審査状況</dt><dd class="mt-1">{{ $state['review'] }}</dd>@if($state['changed'] && $job->review_status === 'approved')<p class="mt-1 text-amber-900">更新作業中</p>@endif</div>
+                            <div><dt class="text-slate-500">審査状況</dt><dd class="mt-1">{{ $state['review'] }}</dd>@if($job->status === 'published' && $state['changed'] && $job->review_status === 'approved')<p class="mt-1 text-amber-900">更新作業中</p>@endif</div>
                             <div><dt class="text-slate-500">最終更新</dt><dd class="mt-1">{{ $job->updated_at?->format('Y/m/d H:i') ?? '―' }}</dd></div>
                         </dl>
                         @if($state['invalid'])<p role="status" class="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-950">状態不整合があります。JobDD運営による確認が必要です。</p>@endif
                         @if($job->status === 'published' && ($state['changed'] || in_array($job->review_status, ['pending_review', 'changes_requested'])))<p class="mt-4 text-sm text-slate-600">現在公開中の内容はそのまま表示されています。</p>@endif
                         @if($job->review_note)<p class="mt-4 whitespace-pre-wrap break-words rounded-lg bg-amber-50 p-3 text-sm text-amber-900">修正内容：{{ $job->review_note }}</p>@endif
                         <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center" aria-label="操作">
+                            @if($state['primary_method'] === 'POST')
+                            <form method="POST" action="{{ $state['url'] }}">@csrf<button type="submit" class="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800">{{ $state['primary'] }}<span class="sr-only">：{{ $job->title }}</span></button></form>
+                            @else
                             <a href="{{ $state['url'] }}" class="inline-flex min-h-12 items-center justify-center rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white hover:bg-blue-800">{{ $state['primary'] }}<span class="sr-only">：{{ $job->title }}</span></a>
+                            @endif
                             @foreach($state['secondary'] as $action)<a href="{{ $action['url'] }}" class="inline-flex min-h-11 items-center justify-center text-sm text-blue-800 underline">{{ $action['label'] }}</a>@endforeach
+                            @if($job->status === 'published')@include('company.jobs.partials.pause-action')@endif
                         </div>
                     </article>
                 @empty

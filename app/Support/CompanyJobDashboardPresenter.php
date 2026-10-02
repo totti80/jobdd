@@ -16,20 +16,21 @@ class CompanyJobDashboardPresenter
     {
         $ready = $this->validator->errors($job) === [];
         $published = $job->status === 'published';
+        $paused = $job->status === 'paused';
         $snapshot = $job->publishedProfile?->profile_data;
         $changed = false;
-        if ($published && ($snapshot['schema_version'] ?? null) === 1) {
-            // Provenance is publish metadata, not employer authoring content.
-            unset($snapshot['provenance']);
-            $changed = $this->authoring->read($job) != $snapshot;
+        if (($published || $paused) && ($snapshot['schema_version'] ?? null) === 1) {
+            $changed = ! $this->authoring->matchesPublishedSnapshot($job);
         }
         $invalid = ($job->status === 'draft' && ($job->review_status === 'approved' || ($job->review_status === 'pending_review' && ! $ready)))
             || ($published && $job->review_status === 'not_submitted')
-            || ! in_array($job->status, ['draft', 'published'])
+            || ($paused && ($snapshot['schema_version'] ?? null) !== 1)
+            || ! in_array($job->status, ['draft', 'published', 'paused'])
             || ! in_array($job->review_status, ['not_submitted', 'pending_review', 'changes_requested', 'approved']);
         $preview = route('company.jobs.preview', $job);
         $edit = route('company.jobs.basic.edit', $job);
-        $review = ['not_submitted' => '未申請', 'pending_review' => $published ? '更新内容を審査中' : '審査中', 'changes_requested' => $published ? '更新内容の修正をお願いします' : '修正をお願いします', 'approved' => '承認済み'][$job->review_status] ?? '状態を確認してください';
+        $review = ['not_submitted' => '未申請', 'pending_review' => $paused ? '再公開審査中' : ($published ? '更新内容を審査中' : '審査中'), 'changes_requested' => $published ? '更新内容の修正をお願いします' : '修正をお願いします', 'approved' => $paused && $changed ? '更新作業中' : '承認済み'][$job->review_status] ?? '状態を確認してください';
+        $canResume = $paused && ! $invalid && $job->review_status === 'approved' && ! $changed;
         $secondary = [];
         if ($invalid) {
             Log::warning('Company dashboard lifecycle inconsistency', ['job_posting_id' => $job->id, 'status' => $job->status, 'review_status' => $job->review_status]);
@@ -46,9 +47,19 @@ class CompanyJobDashboardPresenter
         } elseif ($published) {
             $primary = $changed ? '編集を続ける' : '編集';
             $url = $edit;
+        } elseif ($paused && $job->review_status === 'approved') {
+            $primary = $canResume ? '公開を再開' : '編集を続ける';
+            $url = $canResume ? route('company.jobs.resume', $job) : $edit;
+            if ($canResume) {
+                $secondary[] = ['label' => '編集', 'url' => $edit];
+            }
+            $secondary[] = ['label' => 'Preview', 'url' => $preview];
         } else {
             $primary = $ready ? 'Preview' : '入力を再開';
             $url = $ready ? $preview : $edit;
+        }
+        if ($paused && ($job->review_status === 'changes_requested' || ($job->review_status === 'not_submitted' && $primary !== 'Preview'))) {
+            $secondary[] = ['label' => 'Preview', 'url' => $preview];
         }
         if ($published) {
             $secondary[] = ['label' => $changed || $job->review_status !== 'approved' ? '現在の公開ページを見る' : '公開ページを見る', 'url' => route('public.job', $job)];
@@ -58,6 +69,6 @@ class CompanyJobDashboardPresenter
             $url = $preview;
         }
 
-        return ['publication' => $published ? '公開中' : ($job->status === 'draft' ? '未公開' : '公開状況を確認してください'), 'review' => $review, 'changed' => $changed, 'invalid' => $invalid, 'primary' => $primary, 'url' => $url, 'secondary' => $secondary, 'completion' => $this->completion->calculate($job)['percentage']];
+        return ['publication' => $published ? '公開中' : ($paused ? '公開停止中' : ($job->status === 'draft' ? '未公開' : '公開状況を確認してください')), 'review' => $review, 'changed' => $changed, 'invalid' => $invalid, 'primary' => $primary, 'url' => $url, 'primary_method' => $canResume ? 'POST' : 'GET', 'can_resume' => $canResume, 'secondary' => $secondary, 'completion' => $this->completion->calculate($job)['percentage']];
     }
 }

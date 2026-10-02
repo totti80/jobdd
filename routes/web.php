@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgencyFactReviewController;
 use App\Http\Controllers\CompanyDashboardController;
 use App\Http\Controllers\CompanyJobBasicController;
+use App\Http\Controllers\CompanyJobLifecycleController;
 use App\Http\Controllers\CompanyJobPreviewController;
 use App\Http\Controllers\CompanyRegistrationController;
 use App\Http\Controllers\CompanyStructuredJobController;
@@ -48,6 +49,8 @@ Route::prefix('company')->name('company.')->group(function () {
         Route::patch('/jobs/{jobPosting}/structured/step-{step}', [CompanyStructuredJobController::class, 'update'])->where('step', '[1-5]')->name('jobs.structured.update');
         Route::get('/jobs/{jobPosting}/preview', [CompanyJobPreviewController::class, 'show'])->name('jobs.preview');
         Route::post('/jobs/{jobPosting}/review-request', [CompanyJobPreviewController::class, 'requestReview'])->name('jobs.review-request');
+        Route::post('/jobs/{jobPosting}/pause', [CompanyJobLifecycleController::class, 'pause'])->name('jobs.pause');
+        Route::post('/jobs/{jobPosting}/resume', [CompanyJobLifecycleController::class, 'resume'])->name('jobs.resume');
         Route::get('/dashboard', CompanyDashboardController::class)->name('dashboard');
         Route::get('/jobs/create', [CompanyJobBasicController::class, 'create'])->name('jobs.create');
         Route::post('/jobs', [CompanyJobBasicController::class, 'store'])->name('jobs.store');

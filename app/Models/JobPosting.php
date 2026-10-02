@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class JobPosting extends Model
 {
-    public const STATUS_LABELS = ['draft' => '下書き', 'published' => '公開中', 'paused' => '公開停止', 'closed' => '募集終了'];
+    public const STATUS_LABELS = ['draft' => '下書き', 'published' => '公開中', 'paused' => '公開停止中', 'closed' => '募集終了'];
 
     public const REVIEW_STATUS_LABELS = [
         'not_submitted' => '未申請', 'pending_review' => '審査中',
@@ -65,7 +65,7 @@ class JobPosting extends Model
 
     public function authoringEditable(): bool
     {
-        return $this->status === 'draft' || ($this->status === 'published' && ($this->publishedProfile?->profile_data['schema_version'] ?? null) === 1);
+        return $this->status === 'draft' || (in_array($this->status, ['published', 'paused']) && ($this->publishedProfile?->profile_data['schema_version'] ?? null) === 1);
     }
 
     public function reviewedBy(): BelongsTo

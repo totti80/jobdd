@@ -13,11 +13,14 @@ class LoginResponse extends \Laravel\Fortify\Http\Responses\LoginResponse
         }
 
         $user = $request->user(config('fortify.guard'));
-        $isCompanyUser = $user && ! $user->isPlatformOwner() && $user->companies()
-            ->wherePivotIn('role', ['company_owner', 'company_editor'])->exists();
+        $destination = Fortify::redirects('login');
+        if ($user?->isPlatformOwner()) {
+            $destination = route('admin.job-reviews.index', absolute: false);
+        } elseif ($user && $user->companies()
+            ->wherePivotIn('role', ['company_owner', 'company_editor'])->exists()) {
+            $destination = route('company.dashboard', absolute: false);
+        }
 
-        return redirect()->intended($isCompanyUser
-            ? route('company.dashboard', absolute: false)
-            : Fortify::redirects('login'));
+        return redirect()->intended($destination);
     }
 }

@@ -18,8 +18,9 @@ test('login preserves system role destinations and routes company members to the
     ['user', 'company_editor', '/company/dashboard'],
     ['user', null, '/dashboard'],
     ['user', 'unknown', '/dashboard'],
-    ['platform_owner', null, '/dashboard'],
-    ['platform_owner', 'company_owner', '/dashboard'],
+    ['platform_owner', null, '/admin/job-reviews'],
+    ['platform_owner', 'company_owner', '/admin/job-reviews'],
+    ['platform_owner', 'company_editor', '/admin/job-reviews'],
 ]);
 
 test('login keeps intended URLs and their authorization checks', function (string $role, string $target) {
@@ -45,9 +46,11 @@ test('login keeps intended URLs and their authorization checks', function (strin
     }
 })->with(['company_owner', 'company_editor'])->with(['own', 'other', 'admin', 'dashboard']);
 
-test('two factor login uses the company destination and preserves intended URLs', function (string $role, ?string $intended) {
-    $user = User::factory()->withTwoFactor()->create();
-    $user->companies()->attach(Company::create(['name' => '企業']), ['role' => $role]);
+test('two factor login uses role destinations and preserves intended URLs', function (string $systemRole, ?string $role, string $destination, ?string $intended) {
+    $user = User::factory()->withTwoFactor()->create(['system_role' => $systemRole]);
+    if ($role !== null) {
+        $user->companies()->attach(Company::create(['name' => '企業']), ['role' => $role]);
+    }
     if ($intended !== null) {
         $this->withSession(['url.intended' => $intended]);
     }
@@ -56,9 +59,15 @@ test('two factor login uses the company destination and preserves intended URLs'
         ->assertRedirect(route('two-factor.login'));
     $this->assertGuest();
     $this->post(route('two-factor.login.store'), ['recovery_code' => 'recovery-code-1'])
-        ->assertRedirect($intended ?? '/company/dashboard');
+        ->assertRedirect($intended ?? $destination);
     $this->assertAuthenticatedAs($user);
-})->with(['company_owner', 'company_editor'])->with([null, '/company/jobs/create']);
+})->with([
+    ['user', 'company_owner', '/company/dashboard'],
+    ['user', 'company_editor', '/company/dashboard'],
+    ['user', null, '/dashboard'],
+    ['platform_owner', null, '/admin/job-reviews'],
+    ['platform_owner', 'company_owner', '/admin/job-reviews'],
+])->with([null, '/dashboard']);
 
 test('company login preserves the JSON response', function () {
     $user = User::factory()->create();
@@ -79,4 +88,5 @@ test('non company users retain their intended destination', function (string $sy
 })->with([
     ['user', '/settings/profile'],
     ['platform_owner', '/admin/job-reviews'],
+    ['platform_owner', '/dashboard'],
 ]);

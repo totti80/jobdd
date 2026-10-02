@@ -1,8 +1,8 @@
 # JobDD Master Context
 
-**Version:** 5.6  
+**Version:** 5.7  
 **初版:** 2026-08-13  
-**更新:** 2026-10-01  
+**更新:** 2026-10-02  
 **Project:** JobDD  
 **Owner:** 池田 徹
 
@@ -434,6 +434,7 @@ Platform Owner / Admin審査
 |---|---|
 | `draft` | 未公開 |
 | `published` | 公開中 |
+| `paused` | 公開停止中 |
 | `not_submitted` | 未申請 |
 | `pending_review` | 審査中 |
 | `changes_requested` | 修正をお願いします |
@@ -478,6 +479,10 @@ Structured Profile平均完成度は主要KPIとせず、Completion %は求人�
 | 更新申請・審査中 | 公開中 | 更新内容を審査中 | 審査状況を見る |
 | 更新申請・修正依頼 | 公開中 | 更新内容の修正をお願いします | 修正する |
 | 更新承認後 | 公開中 | 承認済み | 編集 |
+| 公開停止・変更なし | 公開停止中 | 承認済み | 公開を再開 |
+| 公開停止・編集中 | 公開停止中 | 更新作業中 | 編集を続ける |
+| 公開停止・再公開審査中 | 公開停止中 | 再公開審査中 | 審査状況を見る |
+| 公開停止・再公開修正依頼 | 公開停止中 | 修正をお願いします | 修正する |
 
 公開済み求人の編集中を示すために、新しいDB status / review_statusは追加しない。
 
@@ -545,6 +550,186 @@ review_status = pending_review
 というJobDD独自の流れを迷わず理解できる可能性がある。
 
 これは企業実利用で検証する。
+
+
+---
+
+# 2.6 v5.7で確定した求人公開停止（paused）仕様
+
+## DECISION
+
+企業が一度Publishした求人について、採用充足・一時停止・社内事情等により求職者向け表示を止められるよう、求人Lifecycleへ `paused` を正式追加する。
+
+`paused` は、
+
+**一度承認・Publishされた求人を、企業の判断で求職者向け表示から一時的に外した状態**
+
+とする。
+
+公開停止は物理削除ではない。
+
+- `job_postings`
+- Published Snapshot
+- Job Fact
+- Evidence / Provenance
+- Application Route
+- 過去の公開・審査情報
+
+は原則保持し、求職者向けの一覧・詳細・比較・応募導線から非表示にする。
+
+`closed` と物理DELETEは今回の必須実装に含めず、将来拡張とする。
+
+### 基本状態遷移
+
+```text
+draft
+  ↓ 公開申請 / Admin承認
+published
+  ↓ 企業が「公開を停止」
+paused
+```
+
+`paused` からは、以下の2経路を持つ。
+
+```text
+A. 承認済み公開内容に変更なし
+paused + approved
+Authoring == Published Snapshot
+  ↓
+公開を再開
+  ↓
+published + approved
+```
+
+```text
+B. 停止中にAuthoringを変更
+paused + approved
+Authoring != Published Snapshot
+  ↓
+Preview
+  ↓
+再公開申請
+  ↓
+paused + pending_review
+  ↓
+Admin承認
+  ↓
+published + approved
+```
+
+### 停止中の表示 / CTA
+
+| 状態 | 公開状況 | 審査状況 | Primary CTA | Secondary |
+|---|---|---|---|---|
+| `published + approved` | 公開中 | 承認済み | 編集 | 公開ページを見る / 公開を停止 |
+| `paused + approved`・差分なし | 公開停止中 | 承認済み | 公開を再開 | 編集 / Preview |
+| `paused + approved`・差分あり | 公開停止中 | 更新作業中 | 編集を続ける | Preview |
+| `paused + pending_review` | 公開停止中 | 再公開審査中 | 審査状況を見る | Preview |
+| `paused + changes_requested` | 公開停止中 | 修正をお願いします | 修正する | 審査内容を見る / Preview |
+| 再公開承認後 | 公開中 | 承認済み | 編集 | 公開ページを見る / 公開を停止 |
+
+### 公開停止操作
+
+公開中求人では、
+
+- 編集
+- 公開ページを見る
+- 公開を停止
+
+を利用可能とする。
+
+「公開を停止」は破壊的操作として強調しすぎず、Primary CTAにはしない。
+
+確認文言候補：
+
+> この求人の公開を停止しますか？  
+> 求職者向けの求人一覧・比較・応募導線から非表示になります。  
+> 求人データと過去に承認された公開内容は保持されます。
+
+公開停止成功時は、原則として、
+
+```text
+status = paused
+```
+
+へ変更し、Published Snapshotを削除しない。
+
+### 再公開
+
+`paused + approved` かつ AuthoringとPublished Snapshotに差分がない場合は、前回承認済み内容をそのまま再表示するだけなので、再審査なしで `published` へ戻せる。
+
+一方、停止中にAuthoringを変更した場合は、未承認内容を直接公開しない。
+
+その場合は、
+
+```text
+paused
+↓
+Preview
+↓
+再公開申請
+↓
+pending_review
+↓
+Admin承認
+↓
+published
+```
+
+のControlled Publishを必須とする。
+
+### 審査中の緊急公開停止
+
+公開済み求人の更新申請中でも、採用充足等により「今すぐ求職者向け表示を止めたい」ケースを想定する。
+
+そのため、公開停止は審査中でも実行可能とする。
+
+```text
+published + pending_review
+↓ 公開停止
+paused + not_submitted
+```
+
+この場合、
+
+- 現在公開中の求人を即時非表示
+- Published Snapshotは保持
+- 最新Authoringも保持
+- 進行中の公開申請は取り下げ扱い
+- `review_requested_at` 等の審査履歴情報は消去しない
+- 再公開する場合は、Previewから改めて公開申請する
+
+とする。
+
+### 削除の扱い
+
+Phase A / v5.7では、公開済み求人の物理DELETEを通常運用にしない。
+
+一度もPublishしていないDraftの削除は将来検討可能だが、一度Publishした求人は原則として、
+
+**公開停止 / 将来の募集終了**
+
+で扱い、履歴・Evidence・Provenanceを保持する。
+
+## 判断理由
+
+- 採用充足等で求人を即時非表示にできる必要がある
+- 公開済み求人を物理削除するとEvidence / Provenance / Snapshotの追跡性を損なう
+- 前回承認済み内容をそのまま再開する場合まで毎回審査すると企業負担が大きい
+- 未承認の編集内容を再公開する場合はControlled Publishを維持する必要がある
+- Phase Aで `closed`、version管理、アーカイブ等まで一度に広げないため
+
+## 影響範囲
+
+- `job_postings.status`
+- Company Dashboard
+- Dashboard CTA / Badge
+- 求職者側公開フィルタ
+- Preview
+- Review Lifecycle
+- Admin Review
+- Application Route公開境界
+- Feature Test / E2E
 
 
 ---
@@ -1898,16 +2083,16 @@ Phase AではCompany切替UI、複数担当者招待、role変更UI、Company Cl
 
 Previewは永続statusではなく表示Actionとする。
 
-Phase Aで実使用する求人statusは、
+Phase A / v5.7で実使用する求人statusは、
 
 - `draft`
 - `published`
+- `paused`
 
 を基本とする。
 
 将来拡張候補：
 
-- `paused`
 - `closed`
 
 既存求人はstatus導入時にpublished扱いとし、既存データを一括draft化しない。企業Self-service求人は作成時に明示的に `draft` を設定する。
@@ -2081,6 +2266,19 @@ Company Dashboardでは、内部の `status` / `review_status` を直接操作�
    → Preview
 ```
 
+
+7. status = paused かつ review_status = approved かつ Authoring == Published Snapshot
+   → 公開を再開
+
+8. status = paused かつ review_status = approved かつ Authoring != Published Snapshot
+   → 編集を続ける（更新作業中）
+
+9. status = paused かつ review_status = pending_review
+   → 審査状況を見る（再公開審査中）
+
+10. status = paused かつ review_status = changes_requested
+    → 修正する
+
 Secondary Action候補：
 
 - Preview
@@ -2177,7 +2375,7 @@ Phase Aが早く完成した場合は、そのままフルサービス版へ開�
 候補：
 
 - 求人複製
-- Pause / Close
+- Close
 - 企業プロフィール
 - Company Claim
 - Typical Day高度化
@@ -2743,7 +2941,7 @@ Codexは、
 
 ---
 
-# 42. v5.6で絶対に戻らない原則
+# 42. v5.7で絶対に戻らない原則
 
 1. HYPOTHESISをFACTとして扱わない
 2. HM型業務効率化SaaSへ根拠なく戻らない
@@ -2776,7 +2974,7 @@ Codexは、
 
 # 44. 現在の最重要問い
 
-JobDD v5.6で最も重要なのは、
+JobDD v5.7で最も重要なのは、
 
 > **機械設計・電気設計の仕事について、企業が仕事内容をより深く構造化して伝え、求職者が応募前にそれを比較できることに、企業・求職者双方が本当に価値を感じるのか？**
 

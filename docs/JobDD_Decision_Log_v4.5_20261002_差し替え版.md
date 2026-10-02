@@ -1,7 +1,7 @@
 # JobDD Decision Log
 
-**Version:** 4.4  
-**更新:** 2026-10-01  
+**Version:** 4.5  
+**更新:** 2026-10-02  
 
 **目的：**  
 JobDDにおける重要な意思決定と、その理由を記録する。
@@ -4768,4 +4768,167 @@ Phase Aでは、`review_status = pending_review` の間、申請対象Authoring�
 ## OPEN
 
 将来、審査中でも次版Draftを並行編集できるようにする場合は、申請version / draft versionの分離をPhase B以降で再設計する。
+
+---
+
+# D-107｜求人Lifecycleへ `paused` を追加し、公開停止 / 再公開ルールを固定する
+
+**日付：** 2026-10-02  
+**Status：** 現在採用中
+
+## それまでの状態
+
+Phase Aでは求人の公開状態を `draft / published` を基本とし、`paused / closed` は将来拡張候補としていた。
+
+企業側Controlled Publish実装後、実ブラウザE2Eで、
+
+- 公開後の編集
+- 差戻し
+- 再申請
+- Admin承認
+- 再Publish
+
+まで確認できた。
+
+一方、採用充足・一時停止等により、公開済み求人を企業が即時に求職者向けから非表示にする運用が必要であることが確認された。
+
+## 意思決定
+
+求人Lifecycleへ `paused` を正式追加する。
+
+`paused` は、
+
+**一度承認・Publishされた求人を、企業の判断で求職者向け表示から一時的に外した状態**
+
+とする。
+
+公開停止は物理削除ではなく、求人データ・Published Snapshot・Job Fact・Evidence / Provenance・Application Route・過去の公開 / 審査情報は原則保持する。
+
+求職者側では、`paused` 求人を一覧・詳細・比較・応募導線から非表示にする。
+
+`closed` と公開済み求人の物理DELETEは今回の必須実装に含めない。
+
+## 状態遷移
+
+### 公開中から停止
+
+```text
+published + approved
+↓ 公開を停止
+paused + approved
+```
+
+### 停止中・内容変更なしの再開
+
+```text
+paused + approved
+Authoring == Published Snapshot
+↓ 公開を再開
+published + approved
+```
+
+前回承認済みPublished Snapshotをそのまま再表示するため、再審査は不要とする。
+
+### 停止中に編集した場合
+
+```text
+paused + approved
+Authoring != Published Snapshot
+↓
+Preview
+↓
+再公開申請
+↓
+paused + pending_review
+↓
+Admin承認
+↓
+published + approved
+```
+
+未承認Authoringを直接公開しない。
+
+### 再公開申請の差戻し
+
+```text
+paused + pending_review
+↓ 差戻し
+paused + changes_requested
+```
+
+企業は `review_note` を確認して修正し、再申請する。
+
+### 更新審査中の緊急公開停止
+
+```text
+published + pending_review
+↓ 公開を停止
+paused + not_submitted
+```
+
+この場合、
+
+- 現在公開中の求人を即時非表示
+- Published Snapshotを保持
+- 最新Authoringを保持
+- 進行中の申請は取り下げ扱い
+- `review_requested_at` 等の履歴情報は消去しない
+- 再公開時はPreviewから改めて公開申請
+
+とする。
+
+## 企業Dashboard表示 / CTA
+
+| 状態 | 公開状況 | 審査状況 | Primary CTA | Secondary |
+|---|---|---|---|---|
+| `published + approved` | 公開中 | 承認済み | 編集 | 公開ページを見る / 公開を停止 |
+| `paused + approved`・差分なし | 公開停止中 | 承認済み | 公開を再開 | 編集 / Preview |
+| `paused + approved`・差分あり | 公開停止中 | 更新作業中 | 編集を続ける | Preview |
+| `paused + pending_review` | 公開停止中 | 再公開審査中 | 審査状況を見る | Preview |
+| `paused + changes_requested` | 公開停止中 | 修正をお願いします | 修正する | 審査内容を見る / Preview |
+| 再公開承認後 | 公開中 | 承認済み | 編集 | 公開ページを見る / 公開を停止 |
+
+## 公開停止確認
+
+企業が「公開を停止」を実行する際は、求職者向けから非表示になること、データと過去の公開内容は保持されることを明示する。
+
+確認文言候補：
+
+> この求人の公開を停止しますか？  
+> 求職者向けの求人一覧・比較・応募導線から非表示になります。  
+> 求人データと過去に承認された公開内容は保持されます。
+
+## 削除方針
+
+Phase A / v5.7では、公開済み求人の物理DELETEを通常運用にしない。
+
+一度もPublishしていないDraftの削除は将来検討可能だが、一度Publishした求人は原則として公開停止、将来の募集終了等で扱い、履歴・Evidence・Provenanceを保持する。
+
+## 判断理由
+
+- 採用充足等で求人を即時非表示にできる必要がある
+- Published Snapshot / Evidence / Provenanceの追跡性を維持するため
+- 前回承認済み内容をそのまま戻す場合まで再審査すると企業負担が大きい
+- 停止中に変更された未承認内容はControlled Publishを通す必要がある
+- `closed`、物理削除、version管理等まで同時に広げずMVPスコープを維持するため
+
+## 影響範囲
+
+- `job_postings.status`
+- Company Dashboard
+- Dashboard CTA / Badge
+- 求職者側公開フィルタ
+- Preview
+- Review Lifecycle
+- Admin Review
+- Application Route公開境界
+- Feature Test / E2E
+
+## OPEN
+
+- `closed` の正式意味
+- 掲載期限による自動停止
+- Draft削除
+- アーカイブUI
+- 停止 / 再開履歴の専用監査ログ
 

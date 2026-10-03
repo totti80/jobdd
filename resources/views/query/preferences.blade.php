@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    @include('partials.favicon')
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow"><meta name="referrer" content="no-referrer">
     <title>詳細条件入力 | JobDD</title>

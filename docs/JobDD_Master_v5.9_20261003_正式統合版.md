@@ -1,8 +1,8 @@
 # JobDD Master Context
 
-**Version:** 5.7  
+**Version:** 5.9  
 **初版:** 2026-08-13  
-**更新:** 2026-10-02  
+**更新:** 2026-10-03  
 **Project:** JobDD  
 **Owner:** 池田 徹
 
@@ -359,17 +359,30 @@ Phase A本番のPlatform Ownerは、Owner本人のアカウントを対象とす
 
 事前に汎用Seederや公開昇格APIは作らない。
 
-## OPEN｜Production Smoke用Company / 求人
+## DECISION｜卒業制作審査期間中のDemo Company / Demo求人
 
-Production Smokeで公開承認するCompany / 求人は未決定。
+卒業制作の審査・本番動作確認を目的として、**審査期間中に限り、Demoであることを明示した架空のCompany / 求人を公開可能とする。**
 
-架空求人は一般公開しない。
+これは通常運用における恒常的な架空求人公開を認めるものではなく、**卒業制作デモ用途に限定した例外ルール**とする。
+
+最低条件：
+
+- 求人タイトル等に「卒業制作デモ」「応募不可」等を明示する
+- 求人詳細冒頭に「実際の募集ではない」ことを明記する
+- 実在企業と誤認しにくいDemo Company名を用いる
+- 実在企業の社名・ロゴをDemo用途へ流用しない
+- 実応募へ接続しない
+- 審査期間終了後は `published → paused` として公開停止する
+
+詳細ルールは **2.7 v5.8で確定した卒業制作Demo求人公開仕様** を正本とする。
+
+将来の実サービス運用でProduction Smokeを行う場合は、
 
 - 実在Company
 - 公開して問題のない実在求人
 - Ownerが内容を確認し明示承認したもの
 
-だけを公開Smokeに利用する。
+を利用する方針を維持する。
 
 ## FACT｜Preflight判定
 
@@ -386,7 +399,7 @@ Production Smokeで公開承認するCompany / 求人は未決定。
 - cron停止 / 再開：Gate 1で実施・復帰済み。毎時00分へ意図的変更
 - release切替手順の最終確認
 - Platform Owner作成 / 本人確認 / 昇格
-- Production Smoke用の実在Company / 求人決定
+- 卒業制作審査用Demo Company / Demo求人の確定（通常運用のProduction Smokeは将来、実在Company / 実在求人で実施）
 - Production Smoke PASS
 - `graduation-submit-ready-v2` tag作成
 
@@ -730,6 +743,331 @@ Phase A / v5.7では、公開済み求人の物理DELETEを通常運用にしな
 - Admin Review
 - Application Route公開境界
 - Feature Test / E2E
+
+
+---
+
+# 2.7 v5.8で確定した卒業制作Demo求人公開仕様
+
+## DECISION
+
+卒業制作の審査・本番動作確認を目的として、**審査期間中に限り、Demoであることを明示した架空のCompany / 求人を本番環境で公開可能とする。**
+
+このDecisionは、
+
+**通常運用で架空求人を恒常公開してよい**
+
+という方針変更ではない。
+
+卒業制作審査中に、
+
+- Controlled Publish
+- 求職者向け求人表示
+- Decision View
+- 公開停止（paused）
+
+までを本番URL上で確認可能にするための、**期間限定Demo運用ルール**である。
+
+## Demo求人の表示ルール
+
+実在する求人と誤認されないことを最優先とする。
+
+必須条件：
+
+- 求人タイトルの先頭等、求職者が最初に認識できる位置へ **「卒業制作デモ」** または **「応募不可」** を明示する
+- 求人詳細の冒頭にも、**「この求人はJobDD卒業制作の動作確認用デモであり、実際の募集ではありません」** と明記する
+- Demo Company名は、実在企業と誤認しにくい名称とする
+  - 例：`JobDDデモ企業`
+  - 例：`JobDDテスト株式会社`
+- 実在企業の社名・ロゴをDemo用途へ流用しない
+- 実在求人の原稿を、実求人であるかのようにそのまま転載しない
+
+## 応募導線
+
+Demo求人では、**実際の応募が発生しない状態を必須**とする。
+
+v5.9では、卒業制作専用の `is_demo` フラグ、Demo専用Account Type、Demo専用Publish分岐等は追加しない。
+
+Demo求人も通常求人と同じControlled Publish / Publish Validator / Application Routeの仕組みを通す。
+
+既存Publish仕様上、応募URLが必要な場合は、
+
+**JobDD内の安全な非応募URL**
+
+を設定してよい。
+
+例：
+
+```text
+https://jobdd.jp/
+```
+
+重要なのは、
+
+- 実在企業の応募ページへ接続しない
+- 求人媒体・人材紹介会社等の実応募先へ接続しない
+- Demo求人のタイトル・本文で「卒業制作デモ」「応募不可」「実際の募集ではない」ことを明示する
+
+ことである。
+
+したがって、Demo求人では技術的にApplication Route / CTAが生成される場合があっても、**その遷移先は実応募先ではなくJobDD内の非応募URLとする。**
+
+Demo求人の目的は、
+
+**JobDDの表示・比較・公開Lifecycleを審査可能にすること**
+
+であり、応募獲得ではない。
+
+将来、Demo専用の案内ページやCTA非表示が必要になった場合は別途検討するが、卒業制作提出前の必須実装には含めない。
+
+## 公開期間 / paused
+
+Demo求人の公開は、卒業制作の審査・確認期間に限定する。
+
+審査期間終了後は、
+
+```text
+published
+↓
+paused
+```
+
+として求職者向け公開を停止する。
+
+物理削除は行わず、v5.7で確定した `paused` Lifecycleルールに従い、
+
+- `job_postings`
+- Published Snapshot
+- Job Fact
+- Evidence / Provenance
+- Application Route
+- 過去の公開・審査情報
+
+を原則保持する。
+
+## SEO / 外部露出
+
+Demo求人は卒業制作審査の確認用途であり、恒常的なSEO流入を目的とするコンテンツではない。
+
+## OPEN
+
+- Demo求人へ `noindex` 等のSEO制御を今回の提出前に追加するか
+- Demo求人の具体的な公開終了日
+- 審査終了後の `paused` 実行タイミング / 運用担当
+- 将来、実在Company / 実在求人を用いた正式なProduction Smokeを行う時期
+
+これらは未決定であり、勝手にFACTまたはDECISIONとして扱わない。
+
+## Production Smokeとの関係
+
+卒業制作審査用Demo求人は、
+
+- UI
+- Controlled Publish
+- Admin Review
+- Decision View
+- paused
+
+の本番動作確認には利用できる。
+
+ただし、**実在求人としての本番運用確認とは区別する。**
+
+将来の実サービス運用でProduction Smokeを行う場合は、
+
+- 実在Company
+- 公開して問題のない実在求人
+- Ownerが内容を確認し明示承認したもの
+
+を利用する。
+
+## 実装・運用前チェック
+
+卒業制作審査用Demo求人を本番公開する前に、最低限以下を確認する。
+
+- [ ] 求人タイトルにDemo / 応募不可表示がある
+- [ ] 求人詳細冒頭に実募集ではない旨を表示している
+- [ ] Demo Company名になっている
+- [ ] 応募URL / Application RouteがJobDD内の安全な非応募URLを指し、実応募先へ接続しない
+- [ ] 実在企業の社名・ロゴをDemo用途へ使用していない
+- [ ] Admin承認後の公開表示を確認する
+- [ ] 審査終了後に `paused` へ変更する運用を確認する
+
+## 情報分類
+
+### FACT
+
+- v5.7までのMasterでは「架空求人は一般公開しない」としていた
+- JobDDには `published / paused` のLifecycleが実装されている
+- 卒業制作では本番URL上での審査を予定している
+
+### DECISION
+
+- 卒業制作審査期間中に限り、Demoであることを明示した架空求人を公開可能とする
+- Demo求人から実応募へ接続しない
+- 審査期間終了後は `paused` とする
+- 通常運用の架空求人恒常公開は認めない
+
+### HYPOTHESIS
+
+なし。
+
+本変更は事業仮説ではなく、卒業制作審査時の運用ルールである。
+
+### OPEN
+
+- `noindex` 等のSEO制御
+- 具体的な公開終了日
+- 審査終了後の停止運用
+- 将来の実在求人Production Smoke実施時期
+
+
+---
+
+# 2.8 v5.9で確定した卒業制作Demoデータ運用仕様
+
+## DECISION
+
+卒業制作Demoのために、JobDD本体へDemo専用の状態・権限・Account Type・Publish分岐を追加しない。
+
+Demoであることは、**入力データの内容によって明示する。**
+
+卒業制作審査では、通常の企業アカウント / 通常の求人Lifecycleを利用し、
+
+```text
+企業登録 / Login
+↓
+Company Dashboard
+↓
+Level 1 / Level 2
+↓
+Preview
+↓
+公開申請
+↓
+Admin Review
+↓
+Publish
+↓
+Seeker Decision View
+↓
+paused
+```
+
+までを、本番と同じシステム挙動で確認できる状態を維持する。
+
+## Demo Company
+
+卒業制作審査用Companyとして、
+
+```text
+JobDDテスト株式会社
+```
+
+を利用する。
+
+このCompanyはシステム上の特殊Accountではない。
+
+通常の `Company` / `company_user` / Ownership / Company Dashboard / Controlled Publishを利用する。
+
+Demoであることは、
+
+- Company名
+- 求人タイトル
+- 求人本文
+
+等の入力内容から人間が明確に認識できるようにする。
+
+## Demo求人
+
+求人タイトルには、求職者が最初に認識できる位置へ、
+
+```text
+【卒業制作デモ・応募不可】
+```
+
+等を明示する。
+
+求人詳細の冒頭には、
+
+> この求人はJobDD卒業制作の動作確認用デモです。実際の募集ではありません。応募はできません。
+
+等の説明を表示内容として入力する。
+
+Demo求人の業務内容自体は、JobDDのLevel 1 / Level 2 / Decision Viewを確認できる具体性を持たせる。
+
+ただし、
+
+- 実在企業の求人であるように見せない
+- 実在企業の社名・ロゴを流用しない
+- 実在企業の求人原稿を実求人として転載しない
+
+ことを維持する。
+
+## 応募URL / Application Route
+
+通常求人のPublish仕様を変更しない。
+
+つまり、
+
+- Publish Validatorの応募URL必須ルールをDemoのために緩和しない
+- Demo専用のPublish分岐を追加しない
+- Demo専用の `is_demo` カラムを追加しない
+
+既存仕様上URLが必要なため、Demo求人には、
+
+**JobDD内の安全な非応募URL**
+
+を設定する。
+
+例：
+
+```text
+https://jobdd.jp/
+```
+
+このURLはPublish Validatorを満たすためのDemo用入力値であり、実応募先ではない。
+
+Application Route / CTAが表示される場合も、実在企業・求人媒体・人材紹介会社等の応募先へ接続してはならない。
+
+求人タイトル・本文のDemo / 応募不可表示と組み合わせて、実際の募集ではないことを明確にする。
+
+## 判断理由
+
+- 卒業制作専用の状態や分岐を本番コードへ残さないため
+- 通常のControlled Publishをそのまま審査員に体験してもらうため
+- Demo専用例外によって通常求人のPublish Validator / Application Routeを壊さないため
+- migrationや追加UIを増やさず、提出前の変更リスクを抑えるため
+- 「データはDemo、システム挙動は通常」とすることで、卒業制作の完成度を分かりやすく示せるため
+
+## 審査期間終了後
+
+審査終了後、Demo求人は既存のLifecycleに従って、
+
+```text
+published
+↓
+paused
+```
+
+とする。
+
+Demo Company / Demo求人を物理削除することを必須としない。
+
+Published Snapshot / Job Fact / Evidence / Provenance / Review履歴等は既存仕様どおり保持する。
+
+## HYPOTHESIS
+
+なし。
+
+これは事業仮説ではなく、卒業制作審査用の運用Decisionである。
+
+## OPEN
+
+- Demo求人の具体的な公開終了日時
+- 審査終了後に `paused` を実行する担当 / タイミング
+- Demo専用 `noindex` の採否
+- 将来、Demo専用案内ページ `/demo-info` 等を作るか
+- 将来の実在Company / 実在求人による正式なProduction Smoke実施時期
 
 
 ---
@@ -2941,7 +3279,7 @@ Codexは、
 
 ---
 
-# 42. v5.7で絶対に戻らない原則
+# 42. v5.9で絶対に戻らない原則
 
 1. HYPOTHESISをFACTとして扱わない
 2. HM型業務効率化SaaSへ根拠なく戻らない
@@ -2953,6 +3291,7 @@ Codexは、
 8. 企業入力機能そのものをJobDDの価値と勘違いしない
 9. Level 2情報は必ず求職者側Decision Supportへ還元する
 10. 卒業制作ではPhase Aを完成させてからPhase Bへ進む
+11. 卒業制作Demoは入力内容で明示し、Demo専用システム分岐を追加せず、実応募へ接続せず、審査終了後に `paused` とする
 
 ---
 
@@ -2974,7 +3313,7 @@ Codexは、
 
 # 44. 現在の最重要問い
 
-JobDD v5.7で最も重要なのは、
+JobDD v5.9で最も重要なのは、
 
 > **機械設計・電気設計の仕事について、企業が仕事内容をより深く構造化して伝え、求職者が応募前にそれを比較できることに、企業・求職者双方が本当に価値を感じるのか？**
 

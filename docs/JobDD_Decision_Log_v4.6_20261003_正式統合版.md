@@ -1,7 +1,7 @@
 # JobDD Decision Log
 
-**Version:** 4.5  
-**更新:** 2026-10-02  
+**Version:** 4.6  
+**更新:** 2026-10-03  
 
 **目的：**  
 JobDDにおける重要な意思決定と、その理由を記録する。
@@ -4931,4 +4931,249 @@ Phase A / v5.7では、公開済み求人の物理DELETEを通常運用にしな
 - Draft削除
 - アーカイブUI
 - 停止 / 再開履歴の専用監査ログ
+
+
+---
+
+# D-108｜卒業制作審査期間中に限り、明示付きDemo求人の本番公開を許可する
+
+**日付：** 2026-10-03  
+**Status：** 現在採用中
+
+## それまでの状態
+
+Production Smoke用求人について、
+
+- 架空求人は一般公開しない
+- 実在Company / 実在求人のみを公開Smokeへ利用する
+
+方針としていた。
+
+## 得られた情報
+
+卒業制作の審査では、審査員が本番URL上で、
+
+- Controlled Publish
+- 求職者向け求人表示
+- Decision View
+- paused
+
+までを確認できることに価値がある。
+
+一方、架空求人を実在求人のように表示することは避ける必要がある。
+
+## 意思決定
+
+卒業制作の審査期間中に限り、
+
+**Demoであることを明示した架空Company / Demo求人を本番公開可能**
+
+とする。
+
+最低条件：
+
+- 「卒業制作デモ」「応募不可」等を明示する
+- 実際の募集ではないことを求人詳細に明記する
+- 実在企業と誤認しにくいCompany名を利用する
+- 実在企業の社名・ロゴを流用しない
+- 実応募へ接続しない
+- 審査期間終了後は `paused` とする
+- 恒常的な一般公開求人として扱わない
+
+## 判断理由
+
+卒業制作の審査では、ローカル環境だけでなく本番URL上でJobDDの主要Lifecycleを確認できる方が、プロダクトの完成状態を示しやすいため。
+
+ただし、Demoであることを明示し、実応募を発生させないことを条件とする。
+
+## 影響範囲
+
+- 卒業制作Production Smoke / Demo運用
+- 求人タイトル / 求人本文
+- 応募導線
+- paused運用
+- Master v5.8以降
+
+## OPEN
+
+- Demo求人の公開終了日時
+- noindexの採否
+- 将来の実在求人Production Smoke
+
+
+
+---
+
+# D-109｜Demo専用システム分岐を追加せず、入力内容と安全な非応募URLで卒業制作Demoを運用する
+
+**日付：** 2026-10-03  
+**Status：** 現在採用中
+
+## それまでの状態
+
+D-108では、卒業制作審査期間中に限り、Demoであることを明示した架空Company / Demo求人を本番公開可能とした。
+
+その後のProduction Preflight監査で、現行実装では、
+
+- Publish Validatorが応募URLを必須としている
+- 承認時に応募URLからApplication Routeを生成する
+- 通常の公開フローにDemo専用CTA無効化処理は存在しない
+
+ことが確認された。
+
+そのため、
+
+「Demo求人だけ応募URLを不要にする」
+「Demo専用 `is_demo` フラグを追加する」
+「Demo専用Publish分岐を追加する」
+
+等の実装案を検討した。
+
+## 得られた情報
+
+卒業制作審査では、Demo専用システムを見せたいのではなく、
+
+**通常のJobDD企業アカウント / Dashboard / Controlled Publish / Decision View / pausedが、本番同様に動くこと**
+
+を確認してもらうことが目的である。
+
+また、卒業制作提出直前にDemo専用migration・状態・UI分岐を追加すると、
+
+- 通常求人ロジックへの影響
+- テスト範囲増加
+- 本番deployリスク
+- 卒業制作後に不要な特殊仕様が残る
+
+可能性がある。
+
+## 意思決定
+
+卒業制作Demoのために、
+
+- `companies.is_demo`
+- `job_postings.is_demo`
+- Demo専用Account Type
+- Demo専用Publish Validator
+- Demo専用Application Route
+- Demo専用CTA分岐
+
+等は追加しない。
+
+卒業制作審査では、通常の企業アカウントとして、
+
+```text
+JobDDテスト株式会社
+```
+
+を利用する。
+
+Demoであることは、システム状態ではなく**入力内容によって明示**する。
+
+求人タイトル例：
+
+```text
+【卒業制作デモ・応募不可】産業機械の機械設計エンジニア
+```
+
+求人詳細冒頭例：
+
+> この求人はJobDD卒業制作の動作確認用デモです。実際の募集ではありません。応募はできません。
+
+## 応募URL / Application Route
+
+通常のPublish Validator / Controlled Publishを変更しない。
+
+応募URL必須仕様を維持し、Demo求人には、
+
+**JobDD内の安全な非応募URL**
+
+を設定する。
+
+例：
+
+```text
+https://jobdd.jp/
+```
+
+Application Route / CTAが生成される場合も、このURLは実応募先ではない。
+
+実在企業、求人媒体、人材紹介会社等の応募先へ接続しない。
+
+したがって、卒業制作Demoは、
+
+**データはDemo、システム挙動は通常**
+
+という原則で運用する。
+
+## Dashboard / 審査体験
+
+審査員は `JobDDテスト株式会社` で通常の企業ログインを行い、
+
+- Company Dashboard
+- 求人状態
+- Level 1 / Level 2
+- Preview
+- 公開申請
+- 審査状況
+- Account Settings
+- paused / 再開
+
+等を通常企業と同じUI / Lifecycleで確認できる。
+
+Demo専用DashboardやDemo専用権限は作らない。
+
+## D-108との関係
+
+D-108の、
+
+- Demoであることを明示する
+- 実応募へ接続しない
+- 審査終了後 `paused` とする
+- 通常運用で架空求人を恒常公開しない
+
+という原則は維持する。
+
+一方、
+
+**Demo応募導線の実現方法**
+
+についてはD-109を最新Decisionとする。
+
+応募URLを空にすることやDemo専用CTA制御を必須とはせず、既存Publish仕様に従って安全なJobDD内URLを利用する。
+
+## 判断理由
+
+- 卒業制作専用コードを本番へ増やさないため
+- 通常のControlled Publishをそのまま審査してもらうため
+- Publish Validator / Application Routeの通常仕様を壊さないため
+- migrationを追加しないため
+- 提出直前の回帰リスクを最小化するため
+- Demo運用終了後に不要な特殊機能を残さないため
+
+## 影響範囲
+
+コード変更は原則不要。
+
+主に以下のDemo入力データ / 運用へ影響する。
+
+- Company名
+- 求人タイトル
+- 求人本文
+- application_url
+- Production Smoke手順
+- 卒業制作審査後のpaused運用
+
+## HYPOTHESIS
+
+なし。
+
+本Decisionは事業仮説ではなく、卒業制作審査の運用方針である。
+
+## OPEN
+
+- Demo求人の具体的な公開終了日時
+- `paused` 実行担当 / タイミング
+- `noindex` の採否
+- 将来のDemo案内専用ページ
+- 将来の実在Company / 実在求人を用いた正式Production Smoke
 

@@ -2,6 +2,7 @@
 <html lang="ja">
 
 <head>
+    @include('partials.favicon')
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>応募経路比較 | JobDD</title>
@@ -86,6 +87,7 @@
 <html lang="ja">
 
 <head>
+    @include('partials.favicon')
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 

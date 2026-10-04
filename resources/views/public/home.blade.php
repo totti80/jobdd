@@ -2,7 +2,7 @@
 <div class="homepage">
     <section class="home-hero" aria-labelledby="home-title">
         <div class="site-container home-hero-grid">
-            <div>
+            <div class="md:py-6">
                 <p class="site-eyebrow home-badge">近畿6府県 × 機械設計・電気設計 専門</p>
                 <h1 id="home-title"><span><span>求人を探すだけでは、</span><span>わからない。</span></span><span><span>仕事の中身まで</span><span>比べて、選ぶ。</span></span></h1>
                 <p class="home-intro">JobDDは、求人情報を<br>「確認できたこと・条件と異なること・未確認」に整理し、<br>根拠を見ながら比較できるDecision Supportサービスです。</p>
@@ -10,7 +10,6 @@
                     <a href="{{ route('jobs.start') }}" class="jobdd-button">希望条件を入力する</a>
                     <a href="{{ route('public.company') }}" class="home-secondary-link">企業の方はこちら</a>
                 </div>
-                <p class="home-scope">現在のJobDDは、近畿地方の機械設計・電気設計職に対象を絞った卒業制作版です。</p>
             </div>
             <div class="home-visual">
                 <div class="home-illustration"><img src="{{ asset('images/jobdd/jobdd-hero-kinki.png') }}" width="1672" height="941" alt="近畿の街並みと、機械・電気の仕事について考える技術者" fetchpriority="high"></div>

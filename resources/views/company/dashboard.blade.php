@@ -33,7 +33,7 @@
                     <article class="min-w-0 rounded-xl border border-blue-100 bg-white p-5">
                         <h3 class="break-words font-bold text-blue-950">{{ $job->title }}</h3><p class="mt-1 text-sm text-slate-600">{{ $job->occupation ?: '職種：未入力' }}</p>
                         <dl class="mt-4 grid min-w-0 grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                            <div><dt class="text-slate-500">入力状況</dt><dd class="mt-1">{{ $state['completion'] }}%<span class="block text-xs text-slate-500">基本情報・仕事の中身</span></dd></div>
+                            <div><dt class="text-slate-500">入力状況</dt><dd class="mt-1">{{ $state['completion'] }}%<span class="block text-xs text-slate-500">基本情報・仕事の中身。公開条件とは別です。</span></dd></div>
                             <div><dt class="text-slate-500">公開状況</dt><dd class="mt-1 font-semibold text-blue-950">{{ $state['publication'] }}</dd></div>
                             <div><dt class="text-slate-500">審査状況</dt><dd class="mt-1">{{ $state['review'] }}</dd>@if($job->status === 'published' && $state['changed'] && $job->review_status === 'approved')<p class="mt-1 text-amber-900">更新作業中</p>@endif</div>
                             <div><dt class="text-slate-500">最終更新</dt><dd class="mt-1">{{ $job->updated_at?->format('Y/m/d H:i') ?? '―' }}</dd></div>

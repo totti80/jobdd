@@ -70,7 +70,7 @@ test('guests and other companies cannot preview request or administer', function
     Mail::assertNothingSent();
 });
 
-test('each missing Core or Level 1 field prevents publication requests', function ($target, $field) {
+test('missing Level 1 fields and incomplete saved rows prevent publication requests', function ($target, $field) {
     [$owner,$job] = publishFixture();
     match ($target) {
         'basic' => $job->update([$field => $field === 'title' ? '' : null]),
@@ -86,8 +86,7 @@ test('each missing Core or Level 1 field prevents publication requests', functio
     Mail::assertNothingSent();
 })->with([
     ['basic', 'title'], ['basic', 'occupation'], ['basic', 'region'], ['basic', 'employment_type'], ['basic', 'description'], ['basic', 'application_requirements'], ['basic', 'source_url'], ['salary', 'salary'],
-    ['profile', 'design_target'], ['profile', 'design_phases'], ['profile', 'initial_assignment'], ['profile', 'collaborators'], ['profile', 'customer_contact_frequency'], ['profile', 'customer_contact_note'], ['profile', 'manufacturing_relation_frequency'], ['profile', 'manufacturing_relation_note'], ['profile', 'site_relation_frequency'], ['profile', 'site_relation_note'], ['profile', 'work_style'], ['profile', 'difficult_points'],
-    ['tool', 'tool_name'], ['tool', 'usage_context'], ['tool', 'experience_expectation'], ['day', 'time_label'], ['day', 'activity'], ['no_tools', 'tools'], ['no_days', 'days'],
+    ['tool', 'tool_name'], ['tool', 'usage_context'], ['tool', 'experience_expectation'], ['day', 'time_label'], ['day', 'activity'],
 ]);
 
 test('valid incomplete optional fields pass and invalid core keys or url fail', function () {

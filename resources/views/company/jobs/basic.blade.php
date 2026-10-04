@@ -21,38 +21,38 @@
             @if ($job->exists) @method('PATCH') @endif
             <fieldset @disabled($readOnly) class="min-w-0 space-y-5">
                 <legend class="mb-4 text-xl font-bold text-blue-950">Level 1 Basic</legend>
-                <p class="text-sm text-slate-600">下書き保存には求人タイトルが必要です。他の項目はあとから追記できます。</p>
+                <p class="text-sm text-slate-600">必須は公開申請時の条件です。途中保存できます。下書き保存には求人タイトルのみ必要です。Level 2はすべて任意です。</p>
                 <div>
-                    <label for="title" class="block font-semibold">求人タイトル <span class="text-sm text-red-800">必須</span></label>
+                    <label for="title" class="block font-semibold">求人タイトル @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.title'])</label>
                     <input aria-describedby="title-help" id="title" name="title" type="text" value="{{ old('title', $job->title) }}" required maxlength="255" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3" @if($errors->has('title')) aria-invalid="true" @endif>
                 </div>
                 <p id="title-help" class="text-sm leading-6 text-slate-500">求職者に表示される求人名です。職種だけでなく、担当する製品や設備が分かる名称がおすすめです。</p>
                 <div class="grid min-w-0 gap-5 sm:grid-cols-2">
                     <div>
-                        <label for="occupation" class="block font-semibold">職種</label>
+                        <label for="occupation" class="block font-semibold">職種 @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.occupation'])</label>
                         <select id="occupation" name="occupation" class="mt-2 min-h-12 w-full rounded-lg border border-slate-400 bg-white px-3 py-3">
                             <option value="">未入力</option>
                             @foreach(['機械設計', '電気設計'] as $occupation)<option value="{{ $occupation }}" @selected(old('occupation', $job->occupation) === $occupation)>{{ $occupation }}</option>@endforeach
                             @if($readOnly && $job->occupation && !in_array($job->occupation, ['機械設計', '電気設計']))<option selected>{{ $job->occupation }}</option>@endif
                         </select>
                     </div>
-                    <div><label for="region" class="block font-semibold">勤務地</label><input id="region" name="region" type="text" value="{{ old('region', $job->region) }}" maxlength="255" placeholder="例：兵庫県神戸市" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3"></div>
+                    <div><label for="region" class="block font-semibold">勤務地 @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.region'])</label><input id="region" name="region" type="text" value="{{ old('region', $job->region) }}" maxlength="255" placeholder="例：兵庫県神戸市" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3"></div>
                 </div>
                 <fieldset class="min-w-0">
-                    <legend class="font-semibold">想定年収（万円）</legend>
+                    <legend class="font-semibold">想定年収（万円） @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.salary_min'])</legend>
                     <div class="mt-2 grid grid-cols-2 gap-4">
                         @foreach(['salary_min' => '下限', 'salary_max' => '上限'] as $field => $label)
-                            <div><label for="{{ $field }}" class="text-sm text-slate-600">{{ $label }}</label><input id="{{ $field }}" name="{{ $field }}" type="number" min="1" max="10000" step="1" inputmode="numeric" value="{{ old($field, $job->$field) }}" class="mt-1 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3"></div>
+                            <div><label for="{{ $field }}" class="text-sm text-slate-600">{{ $label }} @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.'.$field])</label><input id="{{ $field }}" name="{{ $field }}" type="number" min="1" max="10000" step="1" inputmode="numeric" value="{{ old($field, $job->$field) }}" class="mt-1 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3"></div>
                         @endforeach
                     </div>
-                    <p class="mt-2 text-sm text-slate-500">未確定の場合は空欄にしてください。</p>
+                    <p class="mt-2 text-sm text-slate-500">下書きでは空欄にできます。公開申請には下限・上限のどちらか1つ以上が必要です。</p>
                 </fieldset>
-                <div><label for="employment_type" class="block font-semibold">雇用形態</label><input id="employment_type" name="employment_type" type="text" value="{{ old('employment_type', $job->employment_type) }}" maxlength="255" placeholder="例：正社員" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3"></div>
+                <div><label for="employment_type" class="block font-semibold">雇用形態 @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.employment_type'])</label><input id="employment_type" name="employment_type" type="text" value="{{ old('employment_type', $job->employment_type) }}" maxlength="255" placeholder="例：正社員" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3"></div>
                 @foreach(['description' => '仕事内容', 'application_requirements' => '最低限の応募条件'] as $field => $label)
-                    <div><label for="{{ $field }}" class="block font-semibold">{{ $label }}</label><textarea aria-describedby="{{ $field }}-help" id="{{ $field }}" name="{{ $field }}" rows="5" maxlength="10000" class="mt-2 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3">{{ old($field, $job->$field) }}</textarea><p id="{{ $field }}-help" class="mt-2 text-sm leading-6 text-slate-500">{{ $field === 'description' ? '一般的な求人情報として、仕事内容の概要を入力してください。詳しい工程・ツール・仕事の進め方は次のLevel 2で登録します。' : '応募を検討するために必要な最低条件を入力してください。' }}</p></div>
+                    <div><label for="{{ $field }}" class="block font-semibold">{{ $label }} @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.'.$field])</label><textarea aria-describedby="{{ $field }}-help" id="{{ $field }}" name="{{ $field }}" rows="5" maxlength="10000" class="mt-2 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3">{{ old($field, $job->$field) }}</textarea><p id="{{ $field }}-help" class="mt-2 text-sm leading-6 text-slate-500">{{ $field === 'description' ? '一般的な求人情報として、仕事内容の概要を入力してください。詳しい工程・ツール・仕事の進め方は次のLevel 2で登録します。' : '応募を検討するために必要な最低条件を入力してください。' }}</p></div>
                 @endforeach
                 <div>
-                    <label for="source_url" class="block font-semibold">応募URL</label>
+                    <label for="source_url" class="block font-semibold">応募URL @include('company.jobs.partials.publication-requirement', ['publicationPath' => 'level_one.source_url'])</label>
                     <input id="source_url" name="source_url" type="url" value="{{ old('source_url', $job->source_url) }}" maxlength="2048" placeholder="https://" aria-describedby="application-url-help" class="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-slate-400 px-3 py-3">
                     <p id="application-url-help" class="mt-2 text-sm text-slate-500">求職者が応募時に遷移する企業公式ページを入力してください。</p>
                 </div>

@@ -18,6 +18,7 @@
             <x-company-card id="publish-actions">
                 <h2 class="text-xl font-bold text-blue-950">{{ $canRequest ? '公開申請前の確認' : ($job->review_status === 'pending_review' ? '審査状況を確認する' : '次の操作') }}</h2>
                 @if($editable)<div class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap"><x-company-action :href="route('company.jobs.basic.edit', $job)">Level 1を編集</x-company-action><x-company-action :href="route('company.jobs.structured.edit', [$job, 1])">Level 2を編集</x-company-action></div>@endif
+                <p class="mt-4 text-sm leading-7 text-slate-600">公開申請の必須項目はLevel 1のみです。Level 2は任意です。入力した任意項目に不備がある場合は修正してください。入力充足率が100%である必要はありません。</p>
                 @include('company.jobs.partials.publish-requirements')
                 @if($canRequest)
                     <p id="publish-explanation" class="mt-5 rounded-lg bg-blue-50 p-4 text-sm leading-7 text-blue-950">公開申請後、JobDD運営が公開内容を確認します。承認後に求職者向けへ公開されます。</p>

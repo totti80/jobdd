@@ -58,7 +58,8 @@ test('homepage presents final sections and removes redundant editorial samples',
     foreach (['search-entry-title', 'pickup-title', 'home-decision-steps', 'home-sample', 'decision-title', '説明用サンプル', '求人A', '求人B', 'AIがおすすめ', '最適求人', 'No.1', '総合ランキング'] as $removed) {
         expect($html)->not->toContain($removed);
     }
-    foreach (['希望条件を入力する', '近畿6府県 × 機械設計・電気設計 専門', '卒業制作版', '求人票の記載例', 'JobDDで整理した表示例', 'jobdd-hero-kinki.png'] as $copy) {
+    expect($html)->not->toContain('現在のJobDDは、近畿地方の機械設計・電気設計職に対象を絞った卒業制作版です。');
+    foreach (['希望条件を入力する', '近畿6府県 × 機械設計・電気設計 専門', '求人票の記載例', 'JobDDで整理した表示例', 'jobdd-hero-kinki.png'] as $copy) {
         expect($html)->toContain($copy);
     }
 });

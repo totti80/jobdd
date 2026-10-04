@@ -4,7 +4,7 @@
             $options = \App\Support\StructuredJobOptions::options($field);
             $rowValue = is_scalar($row[$field] ?? null) ? $row[$field] : null;
         @endphp
-        <div class="min-w-0"><label for="{{ $rowName }}-{{ $index }}-{{ $field }}" class="block text-sm font-semibold">{{ $label }}</label>
+        <div class="min-w-0"><label for="{{ $rowName }}-{{ $index }}-{{ $field }}" class="block text-sm font-semibold">{{ $label }} @include('company.jobs.partials.publication-requirement', ['publicationPath' => ($rowName === 'tools' ? 'tool_usages' : 'typical_day_items').'.*.'.$field])</label>
         @if($options)
             <select id="{{ $rowName }}-{{ $index }}-{{ $field }}" name="{{ $rowName }}[{{ $index }}][{{ $field }}]" class="mt-1 min-h-12 w-full rounded-lg border border-slate-400 bg-white p-3"><option value="">未入力</option>@foreach($options as $key => $option)<option value="{{ $key }}" @selected($rowValue === $key)>{{ $option }}</option>@endforeach</select>
         @elseif(in_array($field, ['tool_name', 'time_label']))

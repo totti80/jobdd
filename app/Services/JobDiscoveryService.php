@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\JobPosting;
 use App\Models\UserQuery;
+use App\Support\JobCandidateRegion;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
 
@@ -30,10 +31,10 @@ class JobDiscoveryService
             throw new InvalidArgumentException('Invalid discovery occupation, region or pagination.');
         }
 
-        $scope = JobPosting::query()->forPublic()->where('status', 'published')->where('occupation', $query->occupation)
-            ->whereIn('region', self::REGIONS)->whereNull('unavailable_at');
+        $scope = JobCandidateRegion::apply(JobPosting::query()->forPublic()->where('status', 'published')->where('occupation', $query->occupation))
+            ->whereNull('unavailable_at');
         if ($query->region !== null) {
-            $scope->orderByRaw('CASE WHEN region = ? THEN 0 ELSE 1 END ASC', [$query->region]);
+            $scope->orderByRaw('CASE WHEN region LIKE ? THEN 0 ELSE 1 END ASC', [$query->region.'%']);
         }
         $scope->orderBy('id');
 

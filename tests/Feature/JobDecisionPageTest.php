@@ -103,7 +103,7 @@ test('decision pagination keeps tools and evaluates only twenty jobs', function 
     $expected = array_slice(decisionFitOrder($query, ['solidworks', 'autocad']), 20);
     $response = $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
         ->get(decisionPageUrl($query, ['page' => 2, 'tools' => ['solidworks', 'autocad']]));
-    $response->assertOk()->assertSee('前へ')->assertDontSee('次の求人を見る（')->assertSee('tools%5B0%5D=solidworks', false);
+    $response->assertOk()->assertSee('前の求人を見る（1〜20件）')->assertDontSee('次の求人を見る（')->assertSee('tools%5B0%5D=solidworks', false);
     expect($response->viewData('items'))->toHaveCount(3)
         ->and(array_map(fn ($i) => $i['job']->id, $response->viewData('items')))->toBe($expected)
         ->and($response->viewData('pagination'))->toBe(['page' => 2, 'has_previous' => true, 'has_next' => false]);
@@ -255,14 +255,24 @@ test('compact result cards preserve Fit values detail routes and twenty item fal
         $items = $response->viewData('items');
         $cards = $dom->query('//article[@data-job-id]');
         if ($page === 1) {
-            $response->assertSee('次の3件を見る')->assertSee('次の求人を見る（21〜25件）');
+            $response->assertSee('次の求人を見る（21〜25件）');
         } else {
             $response->assertDontSee('次の求人を見る（');
         }
         expect($response->viewData('total'))->toBe(25)->and($cards->length)->toBe(count($items))
             ->and($dom->query('//article[@hidden]')->length)->toBe(0)
-            ->and($dom->query('//*[@data-result-controls and @hidden]')->length)->toBe(1)
+            ->and($dom->query('//*[@data-result-controls or @data-result-window]')->length)->toBe(0)
             ->and($dom->query('//article//details | //article//a[@target="_blank"]')->length)->toBe(0);
+        expect($dom->query('//nav[@data-result-pagination]//a[@rel="prev"]')->length)->toBe($page > 1 ? 1 : 0)
+            ->and($dom->query('//nav[@data-result-pagination]//a[@rel="next"]')->length)->toBe($page === 1 ? 1 : 0)
+            ->and($dom->query('//nav[@data-result-pagination]//*[@aria-disabled="true" and not(@href)]')->length)->toBe(1)
+            ->and($dom->query('//nav[@data-result-pagination]//*[@aria-current="page"]')->item(0)->textContent)->toBe($page.'ページ目');
+        foreach ($dom->query('//nav[@data-result-pagination]//a') as $link) {
+            expect($link->getAttribute('class'))->toContain('jobdd-pagination-button');
+            parse_str(parse_url($link->getAttribute('href'), PHP_URL_QUERY), $context);
+            expect((int) $context['page'])->toBe($link->getAttribute('rel') === 'prev' ? $page - 1 : $page + 1)
+                ->and($context['tools'])->toBe(['autocad'])->and($context['sort'])->toBe('fit');
+        }
         $actual = [];
         foreach ($cards as $index => $card) {
             $actual[] = (int) $card->getAttribute('data-job-id');
@@ -276,7 +286,8 @@ test('compact result cards preserve Fit values detail routes and twenty item fal
             expect($dom->query('.//input[@name="jobs[]" and @form="compare-selection"]', $card)->length)->toBe(1);
         }
         expect($actual)->toBe(array_slice($expected, ($page - 1) * 20, 20));
-        $response->assertDontSee('希望職種と掲載職種が一致しています。')->assertDontSee('最終取得日時')
+        $response->assertDontSee('前の3件を見る')->assertDontSee('次の3件を見る')
+            ->assertDontSee('希望職種と掲載職種が一致しています。')->assertDontSee('最終取得日時')
             ->assertDontSee('情報提供元')->assertDontSee('求人元を見る')->assertDontSee('上位3件');
         if ($capture) {
             file_put_contents($capture.'/results-'.$page.'.html', $response->getContent());
@@ -296,6 +307,6 @@ test('next page copy describes the actual next page range', function (int $page,
     $query = decisionPageFixture(45);
     $this->withSession(['jobdd_query_token_'.$query->public_id => $query->session_token])
         ->get(decisionPageUrl($query, ['page' => $page]))->assertOk()
-        ->assertSee($label)->assertSee('data-next-label="'.$label.'"', false)
+        ->assertSee($label)->assertSee('rel="next"', false)->assertDontSee('data-next-label=', false)
         ->assertDontSee('次の20件を見る')->assertDontSee('他の求人を見る');
 })->with([[1, '次の求人を見る（21〜40件）'], [2, '次の求人を見る（41〜45件）']]);

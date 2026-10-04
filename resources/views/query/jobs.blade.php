@@ -3,6 +3,7 @@
     $url = route('query.jobs', ['userQuery' => $query['public_id']]);
     $nextUrl = $pagination['has_next'] ? $url.'?'.http_build_query(['page' => $pagination['page'] + 1, 'tools' => $selected_tools, 'sort' => $sort]) : '';
     $offset = ($pagination['page'] - 1) * 20;
+    $previousLabel = $pagination['has_previous'] ? '前の求人を見る（'.max(1, $offset - 19).'〜'.min($offset, $total).'件）' : '前の20件';
     $nextLabel = $pagination['has_next'] ? '次の求人を見る（'.($offset + 21).'〜'.min($offset + 40, $total).'件）' : '';
 @endphp
 <!DOCTYPE html>
@@ -53,7 +54,7 @@
     </div>
     <div data-discovery-layout class="jobdd-results-layout">
         @include('query.partials.map-view', ['map' => \App\Support\JobMapLocation::viewModel($items, $query, $pagination['page'], $selected_tools, $sort)])
-        <section id="jobdd-list-view" data-list-view data-result-window data-offset="{{ $offset }}" data-next-url="{{ $nextUrl }}" data-next-label="{{ $nextLabel }}" aria-label="求人候補" class="min-w-0">
+        <section id="jobdd-list-view" data-list-view aria-label="求人候補" class="min-w-0">
             <div class="jobdd-sort-row">
             <p id="result-range" data-result-range tabindex="-1" role="status" aria-live="polite" aria-atomic="true" class="jobdd-result-range">{{ count($items) ? ($offset + 1).'〜'.($offset + count($items)).'件を表示' : '表示できる求人はありません' }}</p>
             <form method="GET" action="{{ $url }}" class="jobdd-sort-form">
@@ -73,25 +74,25 @@
                     <p class="jobdd-card">このページに表示できる求人候補はありません。</p>
                 @endforelse
             </div>
-            <div data-result-controls hidden class="jobdd-result-controls" aria-label="表示する求人の切替">
-                <button type="button" data-result-previous class="site-button-secondary" aria-controls="jobdd-list-view">前の3件を見る</button>
-                <button type="button" data-result-next class="jobdd-button" aria-controls="jobdd-list-view">次の3件を見る</button>
-            </div>
-            <p data-result-end hidden class="mt-4 text-sm text-slate-600">この検索条件の求人はここまでです。</p>
         </section>
         @include('query.partials.compare-panel')
     </div>
     <nav data-result-pagination aria-label="ページ送り" class="jobdd-result-pagination">
         @if ($pagination['has_previous'])
-            <a rel="prev" href="{{ $url.'?'.http_build_query(['page' => $pagination['page'] - 1, 'tools' => $selected_tools, 'sort' => $sort]) }}" class="jobdd-link inline-flex min-h-12 items-center">前へ</a>
-        @else<span></span>@endif
-        <span>{{ $pagination['page'] }}ページ目</span>
+            <a rel="prev" href="{{ $url.'?'.http_build_query(['page' => $pagination['page'] - 1, 'tools' => $selected_tools, 'sort' => $sort]) }}" class="jobdd-pagination-button order-2 sm:order-1">← {{ $previousLabel }}</a>
+        @else
+            <span role="link" aria-disabled="true" class="jobdd-pagination-button order-2 sm:order-1">← {{ $previousLabel }}</span>
+        @endif
+        <span aria-current="page" class="order-1 col-span-2 text-center font-semibold sm:order-2 sm:col-span-1">{{ $pagination['page'] }}ページ目</span>
         @if ($pagination['has_next'])
-            <a rel="next" href="{{ $nextUrl }}" class="jobdd-link inline-flex min-h-12 items-center">{{ $nextLabel }}</a>
-        @else<span></span>@endif
+            <a rel="next" href="{{ $nextUrl }}" class="jobdd-pagination-button order-3">{{ $nextLabel }} →</a>
+        @else
+            <span role="link" aria-disabled="true" class="jobdd-pagination-button order-3">次の20件 →</span>
+        @endif
     </nav>
     <p class="text-xs leading-6 text-slate-600">掲載年収・募集状況は保証されません。根拠・掲載元は求人詳細で確認できます。最終判断はあなた自身で。</p>
 </main>
+<button type="button" data-back-to-top class="jobdd-back-to-top" aria-label="ページ上部へ戻る" hidden><span aria-hidden="true">↑</span> 上へ</button>
 <x-site-footer />
 </body>
 </html>

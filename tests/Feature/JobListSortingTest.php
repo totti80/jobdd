@@ -5,11 +5,18 @@ use App\Models\JobFact;
 use App\Models\JobPosting;
 use App\Models\JobPublishedProfile;
 use App\Models\UserQuery;
+use App\Services\CompanyJobAuthoringData;
+use App\Services\CompanyJobPublishService;
+use App\Services\CompanyJobReviewService;
 use App\Services\JobDecisionUseCaseService;
 use App\Services\JobFitService;
 use App\Services\JobListSort;
+use App\Services\JobSelectionUseCaseService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+
+require_once __DIR__.'/../Support/PublishFixture.php';
 
 function sortingFixture(int $count = 45): array
 {
@@ -73,6 +80,60 @@ test('newest uses published date then first seen with null last and ID tie', fun
         $job->update(['region' => '兵庫県', 'salary_min' => 600, 'salary_max' => 800]);
     }
     expect(sortingIds(app(JobDecisionUseCaseService::class)->run($query)))->toBe([$jobs[1]->id, $jobs[2]->id, $jobs[0]->id, $jobs[3]->id, $jobs[4]->id]);
+});
+
+test('ordinary first publication appears ahead of legacy jobs without becoming new again on edits', function () {
+    $this->travelTo(now()->setDate(2026, 10, 3)->setTime(12, 0));
+    Mail::fake();
+    [$query, $legacy] = sortingFixture();
+    [$owner, $job, $admin] = publishFixture();
+    expect($job->published_at)->toBeNull()->and($job->first_seen_at)->toBeNull();
+
+    $approve = function () use ($owner, $job, $admin) {
+        app(CompanyJobReviewService::class)->request($job->fresh(), $owner);
+        app(CompanyJobPublishService::class)->approve($job->fresh(), $admin, app(CompanyJobAuthoringData::class)->token($job->fresh()));
+    };
+    $approve();
+    $firstPublication = $job->fresh()->getRawOriginal('published_at');
+    expect($firstPublication)->not->toBeNull()
+        ->and(sortingIds(app(JobDecisionUseCaseService::class)->run($query, 1, [], 'newest')))
+        ->toBe([$job->id, ...$legacy->take(19)->pluck('id')->all()]);
+
+    $this->travelTo(now()->addDays(2));
+    $job->update(['description' => '承認済み求人の仕事内容を更新しました。']);
+    $approve();
+    expect($job->fresh()->getRawOriginal('published_at'))->toBe($firstPublication);
+    $legacy[0]->update(['published_at' => now()->subDay()]);
+    expect(sortingIds(app(JobDecisionUseCaseService::class)->run($query, 1, [], 'newest'))[0])->toBe($legacy[0]->id);
+});
+
+test('unknown publication dates stay last despite recent creation or provider update', function () {
+    [$query, $jobs] = sortingFixture(3);
+    $jobs[0]->update(['published_at' => null, 'first_seen_at' => null, 'created_at' => now()->addDay(), 'provider_updated_at' => now()->addDay()]);
+    $jobs[1]->update(['published_at' => null, 'first_seen_at' => '2026-01-01']);
+    $jobs[2]->update(['published_at' => '2026-02-01', 'first_seen_at' => '2026-03-01']);
+    expect(sortingIds(app(JobDecisionUseCaseService::class)->run($query, 1, [], 'newest')))
+        ->toBe([$jobs[2]->id, $jobs[1]->id, $jobs[0]->id]);
+});
+
+test('self service publication timestamp survives public projection ahead of over 500 older candidates', function () {
+    $this->travelTo(now()->setDate(2026, 10, 3)->setTime(13, 9, 51));
+    Mail::fake();
+    [$query, $legacy] = sortingFixture(525);
+    $legacy[0]->update(['published_at' => null, 'first_seen_at' => '2026-10-03 13:09:50']);
+    [$owner, $job, $admin] = publishFixture();
+    $job->update(['created_at' => '2026-10-03 11:52:13', 'region' => '兵庫県加古川市', 'source_url' => 'https://jobdd.jp/']);
+    app(CompanyJobReviewService::class)->request($job->fresh(), $owner);
+    app(CompanyJobPublishService::class)->approve($job->fresh(), $admin, app(CompanyJobAuthoringData::class)->token($job->fresh()));
+
+    $public = JobPosting::query()->forPublic()->findOrFail($job->id);
+    expect($public->getRawOriginal('published_at'))->toBe('2026-10-03 13:09:51')
+        ->and($public->getRawOriginal('first_seen_at'))->toBeNull();
+    $result = app(JobDecisionUseCaseService::class)->run($query, 1, [], 'newest');
+    expect($result['total'])->toBe(526)
+        ->and(sortingIds($result))->toBe([$job->id, ...$legacy->take(19)->pluck('id')->all()]);
+    expect(sortingIds(app(JobSelectionUseCaseService::class)->run($query, [$job->id, $legacy[0]->id])))
+        ->toBe([$job->id, $legacy[0]->id]);
 });
 
 test('salary floor upper tie and malformed values are safe', function () {

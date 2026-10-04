@@ -125,7 +125,7 @@ test('selected candidate access agrees with Discovery scope and Source gate', fu
     $this->get(detailCompareUrl($query, null, ['jobs' => [$jobs[1]->id, $jobs[0]->id]]))->assertNotFound();
 })->with([
     [['occupation' => '電気設計']], [['occupation' => null]], [['region' => '東京都']],
-    [['region' => '兵庫県西宮市']], [['region' => '東京都 / 兵庫県']], [['unavailable_at' => '2026-01-01']],
+    [['region' => '東京都新宿区']], [['region' => '東京都 / 兵庫県']], [['unavailable_at' => '2026-01-01']],
     [['source_url' => null]], [['source_url' => 'javascript:alert(1)']],
     [['source_url' => 'https://EXAMPLE.COM./job']], [['source_url' => 'https://foo.example.org/job']],
     [['source_url' => 'https://foo.example.net/job']], [['source_url' => 'https://foo.test/job']],

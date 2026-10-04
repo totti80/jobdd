@@ -78,14 +78,19 @@ test('discovery source gate respects URL syntax and host boundaries', function (
     'fixture port' => ['https://foo.example.net:443/job', false],
 ]);
 
-test('discovery uses only canonical stored scope and saved availability', function ($attributes, $accepted) {
+test('discovery uses supported prefectures and municipalities with saved availability', function ($attributes, $accepted) {
     $job = discoveryJob($attributes);
     expect((new JobDiscoveryService)->discover(discoveryQuery())->modelKeys())->toBe($accepted ? [$job->id] : []);
 })->with([
     'Hyogo' => [['region' => '兵庫県'], true], 'Osaka' => [['region' => '大阪府'], true],
     'Kyoto' => [['region' => '京都府'], true], 'Shiga' => [['region' => '滋賀県'], true],
     'Nara' => [['region' => '奈良県'], true], 'Wakayama' => [['region' => '和歌山県'], true],
-    'city' => [['region' => '兵庫県西宮市'], false],
+    'city' => [['region' => '兵庫県西宮市'], true],
+    'city address' => [['region' => '兵庫県加古川市加古川町'], true],
+    'ward' => [['region' => '大阪府大阪市北区'], true],
+    'village' => [['region' => '奈良県吉野郡十津川村'], true],
+    'outside city' => [['region' => '東京都新宿区'], false],
+    'unknown suffix' => [['region' => '兵庫県不明'], false],
     'multiple' => [['region' => '東京都 / 兵庫県'], false],
     'other multiple' => [['region' => '大阪府 / 徳島県'], false],
     'outside' => [['region' => '東京都'], false],

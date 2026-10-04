@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\JobPosting;
 use App\Models\UserQuery;
+use App\Support\JobCandidateRegion;
 use App\Support\SeekerPreferences;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use InvalidArgumentException;
@@ -26,10 +27,9 @@ class JobSelectionUseCaseService
             throw new InvalidArgumentException('Invalid candidate selection.');
         }
 
-        // Mirror the v0.1 Discovery contract for bounded ID access, not its first page.
-        // Contract-parity tests guard this boundary; core Discovery is deliberately unchanged.
-        $loaded = JobPosting::query()->forPublic()->where('status', 'published')->whereIn('id', $ids)->where('occupation', $query->occupation)
-            ->whereIn('region', self::REGIONS)->whereNull('unavailable_at')
+        // Use the same regional candidate boundary as Discovery for selected IDs.
+        $loaded = JobCandidateRegion::apply(JobPosting::query()->forPublic()->where('status', 'published')->whereIn('id', $ids)->where('occupation', $query->occupation))
+            ->whereNull('unavailable_at')
             ->with(['jobFacts' => fn ($facts) => $facts->orderBy('id')])->get()->keyBy('id');
         if ($loaded->count() !== count($ids) || $loaded->contains(fn ($job) => ! $this->candidateSource($job->source_url))) {
             throw (new ModelNotFoundException)->setModel(JobPosting::class);
